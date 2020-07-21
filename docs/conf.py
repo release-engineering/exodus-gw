@@ -94,6 +94,7 @@ html_theme_options = {
     "github_banner": True,
     "description": "Publishing microservice for Red Hat's Content Delivery Network",
     "extra_nav_links": {
+        "API": "api.html",
         "Source": "https://github.com/release-engineering/exodus-gw",
         "Index": "genindex.html",
     },
@@ -105,6 +106,10 @@ html_theme_options = {
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+
+# This dir contains the generated openapi spec and the static redoc-based
+# api.html for viewing. Copy it alongside the other docs.
+html_extra_path = ["openapi"]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
