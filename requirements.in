@@ -3,3 +3,4 @@ pydantic
 starlette
 aioboto3
 defusedxml
+uvicorn
