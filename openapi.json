@@ -1,0 +1,1 @@
+{"openapi": "3.0.2", "info": {"title": "exodus-gw", "version": "0.1.0"}, "paths": {"/healthcheck": {"get": {"summary": "Healthcheck", "description": "Returns a successful response if the service is running.", "operationId": "healthcheck_healthcheck_get", "responses": {"200": {"description": "Successful Response", "content": {"application/json": {"schema": {}}}}}}}}}
