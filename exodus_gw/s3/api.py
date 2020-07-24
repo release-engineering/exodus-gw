@@ -31,6 +31,7 @@ Differences from the AWS S3 API include:
 from typing import Optional
 import textwrap
 import logging
+import os
 
 import aioboto3
 from fastapi import Request, Response, Path, Query, HTTPException
@@ -51,6 +52,15 @@ LOG = logging.getLogger("s3")
 # - {bucket} shouldn't be a parameter, as the target bucket for each exodus env
 #   is predefined and not controlled by the caller.
 # - requests should be authenticated
+
+
+def s3_client():
+    # Certain aspects of the boto client can be tweaked by environment variables
+    # for development.
+    # This is expected to be replaced with a proper configuration system at some point.
+    return aioboto3.client(
+        "s3", endpoint_url=os.environ.get("EXODUS_GW_S3_ENDPOINT_URL") or None
+    )
 
 
 @app.post(
@@ -157,7 +167,7 @@ async def object_put(bucket: str, key: str, request: Request):
     # Single-part upload handler: entire object is written via one PUT.
     reader = RequestReader.get_reader(request)
 
-    async with aioboto3.client("s3") as s3:
+    async with s3_client() as s3:
         response = await s3.put_object(
             Bucket=bucket,
             Key=key,
@@ -178,7 +188,7 @@ async def complete_multipart_upload(
 
     LOG.debug("completing mpu for parts %s", parts)
 
-    async with aioboto3.client("s3") as s3:
+    async with s3_client() as s3:
         response = await s3.complete_multipart_upload(
             Bucket=bucket,
             Key=key,
@@ -197,7 +207,7 @@ async def complete_multipart_upload(
 
 
 async def create_multipart_upload(bucket: str, key: str):
-    async with aioboto3.client("s3") as s3:
+    async with s3_client() as s3:
         response = await s3.create_multipart_upload(Bucket=bucket, Key=key)
 
     return xml_response(
@@ -213,7 +223,7 @@ async def multipart_put(
 ):
     reader = RequestReader.get_reader(request)
 
-    async with aioboto3.client("s3") as s3:
+    async with s3_client() as s3:
         response = await s3.upload_part(
             Body=reader,
             Bucket=bucket,
@@ -248,7 +258,7 @@ async def abort_multipart_upload(
     """
     LOG.debug("Abort %s", uploadId)
 
-    async with aioboto3.client("s3") as s3:
+    async with s3_client() as s3:
         await s3.abort_multipart_upload(
             Bucket=bucket, Key=key, UploadId=uploadId
         )
