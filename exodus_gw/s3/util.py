@@ -60,3 +60,37 @@ def xml_response(operation: str, **kwargs) -> Response:
     xml = io.BytesIO()
     ElementTree(root).write(xml, encoding="UTF-8", xml_declaration=True)
     return Response(content=xml.getvalue(), media_type="application/xml")
+
+
+class RequestReader:
+    """Tiny wrapper to help pass streaming requests into aiobotocore.
+
+    This class is a bit of a trick to work around one point where botocore
+    and aiobotocore are not working well together:
+
+    - aiobotocore uses aiohttp and it fully supports accepting an async iterable
+      for a request body, so request.stream() should work there.
+
+    - but, botocore performs schema validation on incoming arguments and expects
+      Body to be a str, bytes or file-like object, so it refuses to accept request.stream(),
+      even though the underlying layer can cope with it just fine.
+
+    This wrapper makes the request stream look like a file-like object so
+    that boto will accept it (though note that actually *using it* as a file
+    would raise an error).
+    """
+
+    def __init__(self, request):
+        self._req = request
+
+    def __aiter__(self):
+        return self._req.stream().__aiter__()
+
+    def read(self, *_, **__):
+        raise NotImplementedError()
+
+    @classmethod
+    def get_reader(cls, request):
+        # a helper to make tests easier to write.
+        # tests can patch over this to effectively disable streaming.
+        return cls(request)
