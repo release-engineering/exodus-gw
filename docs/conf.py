@@ -94,7 +94,6 @@ html_theme_options = {
     "github_banner": True,
     "description": "Publishing microservice for Red Hat's Content Delivery Network",
     "extra_nav_links": {
-        "API": "api.html",
         "Source": "https://github.com/release-engineering/exodus-gw",
         "Index": "genindex.html",
     },
@@ -109,6 +108,9 @@ html_static_path = ["_static"]
 
 # This dir contains the generated openapi spec and the static redoc-based
 # api.html for viewing. Copy it alongside the other docs.
+# Note: to enable sphinx linking to api.html, we also have an api.rst
+# and it's expected to be overwritten here. We depend on the implementation
+# detail that html_extra_path copying happens after .rst rendering.
 html_extra_path = ["openapi"]
 
 # Custom sidebar templates, must be a dictionary that maps document names
