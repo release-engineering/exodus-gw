@@ -1,0 +1,207 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API User Guide &#8212; exodus-gw  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api.html" />
+    <link rel="prev" title="exodus-gw" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="api-user-guide">
+<span id="api-guide"></span><h1>API User Guide<a class="headerlink" href="#api-user-guide" title="Permalink to this headline">¶</a></h1>
+<p>This document provides an overview of the APIs available in exodus-gw
+along with general usage information.</p>
+<p>For a full reference on the available endpoints, see:
+<a class="reference internal" href="api.html#api-reference"><span class="std std-ref">API Reference</span></a>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>exodus-gw is in early stages of development. All APIs are subject
+to backwards-incompatible changes without warning.</p>
+</div>
+<div class="section" id="authentication">
+<h2>Authentication<a class="headerlink" href="#authentication" title="Permalink to this headline">¶</a></h2>
+<p>Authentication is currently unimplemented in exodus-gw; any clients with
+access to the service can perform all operations.</p>
+</div>
+<div class="section" id="uploading-blobs">
+<h2>Uploading blobs<a class="headerlink" href="#uploading-blobs" title="Permalink to this headline">¶</a></h2>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference external" href="api.html#tag/upload">Upload API reference</a></p>
+</div>
+<span class="target" id="module-exodus_gw.s3.api"></span><p>An API for uploading binary data.</p>
+<p>This API provides endpoints for uploading files into the data store
+used by the Exodus CDN. Uploading files does not immediately expose
+them to clients of the CDN, but is a prerequisite of publishing files,
+which is achieved via other APIs.</p>
+<p>The upload API is a partially compatible subset of the S3 API.
+It supports at least enough functionality such that the boto S3
+client and resource may be used.</p>
+<p>Differences from the AWS S3 API include:</p>
+<ul class="simple">
+<li><p>Most optional arguments are not supported.</p></li>
+<li><p>All <cite>x-amz-*</cite> headers are omitted from responses.</p></li>
+<li><p>The usual AWS authentication mechanism is unused; request signatures are ignored.
+Authentication is expected to be performed by other means.</p></li>
+<li><p>Object keys should always be SHA256 checksums of the objects being stored,
+in lowercase hex digest form. This allows the object store to be used
+as content-addressable storage.</p></li>
+<li><p>When uploading content, the Content-MD5 and Content-Length headers are mandatory;
+chunked encoding is not supported.</p></li>
+<li><p>The API may enforce stricter limits or policies on uploads than those imposed
+by the AWS API.</p></li>
+</ul>
+<div class="section" id="using-boto3-with-the-upload-api">
+<h3>Using boto3 with the upload API<a class="headerlink" href="#using-boto3-with-the-upload-api" title="Permalink to this headline">¶</a></h3>
+<p>As the upload API is partially compatible with S3, it is possible to use
+the AWS SDK to perform uploads. This is the recommended method of using the API.</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">endpoint_url</span></code> when creating a boto resource or client to point at exodus-gw.
+Region and credentials will be ignored.</p>
+<p>Note that, as the upload API provides only a subset of the S3 API, many boto methods
+will not work. Uploading files is supported.</p>
+<p>Usage:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">boto3</span>
+<span class="kn">from</span> <span class="nn">botocore.config</span> <span class="kn">import</span> <span class="n">Config</span>
+
+<span class="c1"># Prepare S3 resource pointing at exodus-gw</span>
+<span class="n">s3</span> <span class="o">=</span> <span class="n">boto3</span><span class="o">.</span><span class="n">resource</span><span class="p">(</span><span class="s1">&#39;s3&#39;</span><span class="p">,</span>
+                    <span class="n">endpoint_url</span><span class="o">=</span><span class="s1">&#39;https://exodus-gw.example.com/upload&#39;</span><span class="p">,</span>
+                    <span class="c1"># If SSL needs to be configured:</span>
+                    <span class="n">verify</span><span class="o">=</span><span class="s1">&#39;/path/to/bundle.pem&#39;</span><span class="p">,</span>
+                    <span class="n">config</span><span class="o">=</span><span class="n">Config</span><span class="p">(</span><span class="n">client_cert</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;client.crt&#39;</span><span class="p">,</span> <span class="s1">&#39;client.key&#39;</span><span class="p">)))</span>
+
+<span class="c1"># Basic APIs such as upload_file now work as usual</span>
+<span class="n">bucket</span> <span class="o">=</span> <span class="n">s3</span><span class="o">.</span><span class="n">Bucket</span><span class="p">(</span><span class="s1">&#39;exodus-cdn-dev&#39;</span><span class="p">)</span>
+<span class="n">bucket</span><span class="o">.</span><span class="n">upload_file</span><span class="p">(</span><span class="s1">&#39;/tmp/hello.txt&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="publishing-content">
+<h2>Publishing content<a class="headerlink" href="#publishing-content" title="Permalink to this headline">¶</a></h2>
+<p>exodus-gw is expected to provide an API for making uploaded content
+externally accessible on the exodus CDN. This API is not yet implemented.</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">exodus-gw</a></h1>
+
+
+
+<p class="blurb">Publishing microservice for Red Hat's Content Delivery Network</p>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API User Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#authentication">Authentication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#uploading-blobs">Uploading blobs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#publishing-content">Publishing content</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://github.com/release-engineering/exodus-gw">Source</a></li>
+    
+    <li class="toctree-l1"><a href="genindex.html">Index</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">exodus-gw</a></li>
+      <li>Next: <a href="api.html" title="next chapter">API Reference</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Red Hat.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/api-guide.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/release-engineering/exodus-gw" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>
