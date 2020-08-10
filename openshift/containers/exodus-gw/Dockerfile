@@ -24,4 +24,7 @@ USER exodus-gw
 EXPOSE 8080
 
 # Run the application
-ENTRYPOINT ["uvicorn", "exodus_gw:application", "--host", "0.0.0.0", "--port", "8080"]
+ENTRYPOINT ["gunicorn", \
+            "-k", "uvicorn.workers.UvicornWorker", \
+            "--bind", "0.0.0.0:8080", \
+            "exodus_gw:application"]

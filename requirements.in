@@ -4,3 +4,4 @@ starlette
 aioboto3
 defusedxml
 uvicorn
+gunicorn
