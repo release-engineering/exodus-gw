@@ -1,0 +1,14 @@
+attrs
+importlib-metadata
+mock
+more-itertools
+packaging
+pluggy
+py
+pyparsing
+pytest-asyncio
+pytest
+six
+wcwidth
+zipp
+
