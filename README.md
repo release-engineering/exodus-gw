@@ -27,6 +27,14 @@ pip install -r requirements-dev.txt
 pre-commit install
 ```
 
+Spinning DEV environment
+
+```
+cd exodus-gw
+uvicorn main:app --reload
+browse http://localhost:8000
+```
+
 
 License
 -------

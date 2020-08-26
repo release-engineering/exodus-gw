@@ -1,4 +1,8 @@
-from .app import app
+#!/usr/bin/env python3
+
+from fastapi import FastAPI
+
+app = FastAPI(title="exodus-gw")
 
 
 @app.get("/healthcheck")
