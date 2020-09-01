@@ -1,22 +1,13 @@
-import mock
-import pytest
 import textwrap
 
+import pytest
+
+import mock
+from exodus_gw.s3.api import abort_multipart_upload, multipart_upload
+from exodus_gw.s3.util import xml_response
 from fastapi import HTTPException
 
-from exodus_gw.s3.api import multipart_upload, abort_multipart_upload, upload
-from exodus_gw.s3.util import xml_response
-
 TEST_KEY = "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"
-
-
-@pytest.fixture(autouse=True)
-def mock_s3_client():
-    with mock.patch("aioboto3.client") as mock_client:
-        s3_client = mock.AsyncMock()
-        s3_client.__aenter__.return_value = s3_client
-        mock_client.return_value = s3_client
-        yield s3_client
 
 
 @pytest.mark.asyncio
@@ -126,7 +117,7 @@ async def test_complete_mpu(mock_s3_client):
 
 
 @pytest.mark.asyncio
-async def test_bad_mpu_call(mock_s3_client):
+async def test_bad_mpu_call():
     """Mixing uploadId and uploads arguments gives a validation error."""
 
     with pytest.raises(HTTPException) as exc_info:
