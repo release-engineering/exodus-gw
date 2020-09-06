@@ -1,0 +1,33 @@
+#!/usr/bin/env python3
+#
+# Generate a call context header appropriate for authorizing a request with arbitrary
+# exodus-gw roles. This helper script may be used during development to simplify the
+# process of issuing requests from the command line. As the call context header uses
+# base64 encoding, it is not practical to generate header values by hand.
+#
+# Usage:
+#
+#   scripts/call-context role1 role2 ...
+#
+# Example using curl to make a request with "qa-blob-viewer" role:
+#
+#   curl \
+#     -H "X-RhApiPlatform-CallContext: $(scripts/call-context qa-blob-viewer)" \
+#     http://localhost:8080/qa/blobs/a1b2c3
+#
+
+import base64
+import json
+import sys
+
+raw_context = {
+    "user": {
+        "authenticated": True,
+        "internalUsername": "fake-user",
+        "roles": sys.argv[1:],
+    }
+}
+
+json_context = json.dumps(raw_context).encode("utf-8")
+b64_context = base64.b64encode(json_context)
+print(b64_context.decode("utf-8"))
