@@ -1,4 +1,9 @@
 [MESSAGES CONTROL]
+
+# For unknown reasons, pylint otherwise wrongly reports:
+# E0611: No name 'BaseModel' in module 'pydantic' (no-name-in-module)
+extension-pkg-whitelist=pydantic
+
 disable=print-statement,
         parameter-unpacking,
         unpacking-in-except,
