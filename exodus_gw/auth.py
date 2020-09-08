@@ -54,7 +54,7 @@ def call_context(
     except Exception:
         summary = "Invalid %s header in request" % header
         LOG.exception(summary)
-        raise HTTPException(400, detail=summary)
+        raise HTTPException(400, detail=summary) from None
 
 
 def caller_roles(context: CallContext = Depends(call_context)) -> Set[str]:
