@@ -18,8 +18,13 @@ For a full reference on the available endpoints, see:
 Authentication
 --------------
 
-Authentication is currently unimplemented in exodus-gw; any clients with
-access to the service can perform all operations.
+The exodus-gw API does not include any direct support for authentication and is
+instead expected to be deployed behind a reverse-proxy implementing any desired
+authentication mechanism. Consult your organization's internal documentation for
+authentication info for your specific exodus-gw installation.
+
+See :ref:`deploy-guide` for more information on how to integrate an authentication
+mechanism.
 
 
 Uploading blobs
