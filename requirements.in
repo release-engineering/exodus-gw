@@ -5,3 +5,4 @@ aioboto3
 defusedxml
 uvicorn
 gunicorn
+dataclasses;python_version<'3.7'
