@@ -4,11 +4,10 @@ from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
-    """Settings for the server.
-
-    Each setting defined here can be overridden by an environment variable
-    of the same name, prefixed with "EXODUS_GW_".
-    """
+    # Settings for the server.
+    #
+    # Each setting defined here can be overridden by an environment variable
+    # of the same name, prefixed with "EXODUS_GW_".
 
     call_context_header: str = "X-RhApiPlatform-CallContext"
     """Name of the header from which to extract call context (for authentication
