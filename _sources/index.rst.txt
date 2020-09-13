@@ -9,6 +9,8 @@ Publishing microservice for Red Hat's Content Delivery Network.
 
    api-guide
    api
+   deployment
+   development
 
 Overview
 --------

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Python Module Index &#8212; exodus-gw  documentation</title>
+    <title>Development Guide &#8212; exodus-gw  documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
@@ -16,14 +16,12 @@
     <script src="_static/language_data.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-
+    <link rel="prev" title="Deployment Guide" href="deployment.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
   
   
   <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
-
-
 
   </head><body>
   
@@ -35,29 +33,31 @@
 
           <div class="body" role="main">
             
-
-   <h1>Python Module Index</h1>
-
-   <div class="modindex-jumpbox">
-   <a href="#cap-e"><strong>e</strong></a>
-   </div>
-
-   <table class="indextable modindextable">
-     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
-     <tr class="cap" id="cap-e"><td></td><td>
-       <strong>e</strong></td><td></td></tr>
-     <tr>
-       <td><img src="_static/minus.png" class="toggler"
-              id="toggle-1" style="display: none" alt="-" /></td>
-       <td>
-       <code class="xref">exodus_gw</code></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="api-guide.html#module-exodus_gw.s3.api"><code class="xref">exodus_gw.s3.api</code></a></td><td>
-       <em></em></td></tr>
-   </table>
+  <div class="section" id="development-guide">
+<span id="dev-guide"></span><h1>Development Guide<a class="headerlink" href="#development-guide" title="Permalink to this headline">¶</a></h1>
+<p>This document contains useful info for developers contributing
+to the exodus-gw project.</p>
+<div class="section" id="spoofing-authentication">
+<h2>Spoofing authentication<a class="headerlink" href="#spoofing-authentication" title="Permalink to this headline">¶</a></h2>
+<p>The exodus-gw service parses an <code class="docutils literal notranslate"><span class="pre">X-RhApiPlatform-CallContext</span></code> header for information
+relating to authentication &amp; authorization; see <a class="reference internal" href="deployment.html#deploy-guide"><span class="std std-ref">Deployment Guide</span></a> for more info on
+this scheme.</p>
+<p>During development, arbitrary values for this header may be used to test the
+behavior of endpoints with various roles. However, due to the format of this header,
+generating these values by hand can be cumbersome.</p>
+<p>To assist in this, a helper script is provided in the exodus-gw repo at
+<code class="docutils literal notranslate"><span class="pre">scripts/call-context</span></code>. This script accepts any number of role names as arguments
+and produces a header value which will produce an authenticated &amp; authorized request
+using those roles.</p>
+<p>For example, if we want to use <code class="docutils literal notranslate"><span class="pre">curl</span></code> to make a request to an endpoint needing
+<code class="docutils literal notranslate"><span class="pre">qa-uploader</span></code> role, we can use the following command:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>curl <span class="se">\</span>
+  -H <span class="s2">&quot;X-RhApiPlatform-CallContext: </span><span class="k">$(</span>scripts/call-context qa-uploader<span class="k">)</span><span class="s2">&quot;</span> <span class="se">\</span>
+  http://localhost:8080/some/qa/endpoint
+</pre></div>
+</div>
+</div>
+</div>
 
 
           </div>
@@ -81,11 +81,14 @@
 
 <h3>Navigation</h3>
 <p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="api-guide.html">API User Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="deployment.html">Deployment Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="development.html">Development Guide</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Development Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#spoofing-authentication">Spoofing authentication</a></li>
+</ul>
+</li>
 </ul>
 
 
@@ -101,6 +104,7 @@
 <h3>Related Topics</h3>
 <ul>
   <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="deployment.html" title="previous chapter">Deployment Guide</a></li>
   </ul></li>
 </ul>
 </div>
@@ -133,6 +137,9 @@
       Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
+      |
+      <a href="_sources/development.rst.txt"
+          rel="nofollow">Page source</a>
     </div>
 
     

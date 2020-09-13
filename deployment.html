@@ -1,0 +1,203 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Deployment Guide &#8212; exodus-gw  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Development Guide" href="development.html" />
+    <link rel="prev" title="API Reference" href="api.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="deployment-guide">
+<span id="deploy-guide"></span><h1>Deployment Guide<a class="headerlink" href="#deployment-guide" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="target-platform">
+<h2>Target platform<a class="headerlink" href="#target-platform" title="Permalink to this headline">¶</a></h2>
+<p>exodus-gw is an ASGI application which may be deployed using any ASGI-compliant
+web server. The development team’s recommended setup is summarized as:</p>
+<ul>
+<li><p>Use OpenShift &gt;= 4.x to deploy the service.</p></li>
+<li><p>Use the exodus-gw images at <a class="reference external" href="https://quay.io/repository/exodus/exodus-gw">https://quay.io/repository/exodus/exodus-gw</a> to run
+the service. These images run the service using gunicorn &amp; uvicorn on RHEL8.</p>
+<p>In general, the
+<a class="reference external" href="https://www.uvicorn.org/deployment/">uvicorn deployment advice</a>
+applies.</p>
+</li>
+<li><p>Deploy the service’s primary container behind a reverse-proxy implementing
+authentication according to your organization’s needs (see next section).</p></li>
+</ul>
+</div>
+<div class="section" id="authentication-authorization">
+<h2>Authentication &amp; Authorization<a class="headerlink" href="#authentication-authorization" title="Permalink to this headline">¶</a></h2>
+<p>The exodus-gw service does not implement any authentication mechanism. It is instead
+designed to integrate with a reverse-proxy implementing any desired mechanism.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>If exodus-gw is deployed without an authenticating reverse-proxy, the service must
+be considered completely unsecured - all users will be able to perform all operations.</p>
+</div>
+<p>This reverse-proxy must add an <code class="docutils literal notranslate"><span class="pre">X-RhApiPlatform-CallContext</span></code> header onto all incoming
+requests. This header must contain a base64-encoded form of the following JSON object:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">&quot;client&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;roles&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;someRole&quot;</span><span class="p">,</span> <span class="s2">&quot;anotherRole&quot;</span><span class="p">],</span>
+    <span class="nt">&quot;authenticated&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+    <span class="nt">&quot;serviceAccountId&quot;</span><span class="p">:</span> <span class="s2">&quot;clientappname&quot;</span>
+  <span class="p">},</span>
+  <span class="nt">&quot;user&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;roles&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;viewer&quot;</span><span class="p">],</span>
+    <span class="nt">&quot;authenticated&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+    <span class="nt">&quot;internalUsername&quot;</span><span class="p">:</span> <span class="s2">&quot;someuser&quot;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">roles</span></code> and <code class="docutils literal notranslate"><span class="pre">authenticated</span></code> fields influence whether an exodus-gw request will be
+permitted - the necessary roles are documented on relevant exodus-gw API endpoints.
+Other fields are unused or used only for logging.</p>
+<p>The separate <code class="docutils literal notranslate"><span class="pre">client</span></code> and <code class="docutils literal notranslate"><span class="pre">user</span></code> fields can be used to separate service accounts
+(machine users) from human users, but this does not affect exodus-gw.</p>
+<p>Within Red Hat, a container known as “platform-sidecar” is used as the reverse proxy - consult
+internal documentation for information on this component. In other contexts, any reverse
+proxy may be used as long as it produces headers according to the scheme documented above.</p>
+</div>
+<div class="section" id="settings">
+<h2>Settings<a class="headerlink" href="#settings" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="exodus_gw.settings.Settings">
+<em class="property">class </em><code class="sig-prename descclassname">exodus_gw.settings.</code><code class="sig-name descname">Settings</code><a class="reference internal" href="_modules/exodus_gw/settings.html#Settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#exodus_gw.settings.Settings" title="Permalink to this definition">¶</a></dt>
+<dd><p>exodus-gw may be configured by the following settings.</p>
+<p>Each settings value may be overridden using an environment variable of the
+same name, prefixed with <code class="docutils literal notranslate"><span class="pre">EXODUS_GW_</span></code> (example: <code class="docutils literal notranslate"><span class="pre">EXODUS_GW_CALL_CONTEXT_HEADER</span></code>).</p>
+<dl class="py attribute">
+<dt id="exodus_gw.settings.Settings.call_context_header">
+<code class="sig-name descname">call_context_header</code><em class="property">: <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)">str</a></em><a class="headerlink" href="#exodus_gw.settings.Settings.call_context_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of the header from which to extract call context (for authentication
+and authorization).</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">exodus-gw</a></h1>
+
+
+
+<p class="blurb">Publishing microservice for Red Hat's Content Delivery Network</p>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="api-guide.html">API User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Deployment Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#target-platform">Target platform</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#authentication-authorization">Authentication &amp; Authorization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#settings">Settings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development Guide</a></li>
+</ul>
+
+
+<hr />
+<ul>
+    
+    <li class="toctree-l1"><a href="https://github.com/release-engineering/exodus-gw">Source</a></li>
+    
+    <li class="toctree-l1"><a href="genindex.html">Index</a></li>
+    
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="api.html" title="previous chapter">API Reference</a></li>
+      <li>Next: <a href="development.html" title="next chapter">Development Guide</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Red Hat.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.2.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/deployment.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+    <a href="https://github.com/release-engineering/exodus-gw" class="github">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"  class="github"/>
+    </a>
+    
+
+    
+  </body>
+</html>

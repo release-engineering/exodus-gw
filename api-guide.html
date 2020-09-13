@@ -47,8 +47,12 @@ to backwards-incompatible changes without warning.</p>
 </div>
 <div class="section" id="authentication">
 <h2>Authentication<a class="headerlink" href="#authentication" title="Permalink to this headline">¶</a></h2>
-<p>Authentication is currently unimplemented in exodus-gw; any clients with
-access to the service can perform all operations.</p>
+<p>The exodus-gw API does not include any direct support for authentication and is
+instead expected to be deployed behind a reverse-proxy implementing any desired
+authentication mechanism. Consult your organization’s internal documentation for
+authentication info for your specific exodus-gw installation.</p>
+<p>See <a class="reference internal" href="deployment.html#deploy-guide"><span class="std std-ref">Deployment Guide</span></a> for more information on how to integrate an authentication
+mechanism.</p>
 </div>
 <div class="section" id="uploading-blobs">
 <h2>Uploading blobs<a class="headerlink" href="#uploading-blobs" title="Permalink to this headline">¶</a></h2>
@@ -142,6 +146,8 @@ externally accessible on the exodus CDN. This API is not yet implemented.</p>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="deployment.html">Deployment Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">Development Guide</a></li>
 </ul>
 
 
