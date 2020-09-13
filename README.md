@@ -23,7 +23,7 @@ The [Black](https://black.readthedocs.io/) code style is enforced.
 Enabling autoformatting via a pre-commit hook is recommended:
 
 ```
-pip install -r requirements-dev.txt
+pip install black pre-commit
 pre-commit install
 ```
 
