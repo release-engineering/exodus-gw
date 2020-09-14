@@ -28,3 +28,10 @@ def test_healthcheck():
 )
 def test_publish(env, expected):
     assert gateway.publish(env) == expected
+
+
+def test_whoami():
+    # All work is done by fastapi deserialization, so this doesn't actually
+    # do anything except return the passed object.
+    context = object()
+    assert gateway.whoami(context=context) is context
