@@ -10,15 +10,6 @@ from exodus_gw.s3.util import xml_response
 TEST_KEY = "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"
 
 
-@pytest.fixture(autouse=True)
-def mock_s3_client():
-    with mock.patch("aioboto3.client") as mock_client:
-        s3_client = mock.AsyncMock()
-        s3_client.__aenter__.return_value = s3_client
-        mock_client.return_value = s3_client
-        yield s3_client
-
-
 @pytest.fixture()
 def mock_request_reader():
     # We don't use the real request reader for these tests as it becomes
@@ -46,7 +37,7 @@ async def test_full_upload(mock_s3_client, mock_request_reader):
 
     response = await upload(
         request=request,
-        bucket="my-bucket",
+        env="test",
         key=TEST_KEY,
         uploadId=None,
         partNumber=None,
@@ -89,7 +80,7 @@ async def test_part_upload(mock_s3_client, mock_request_reader):
 
     response = await upload(
         request=request,
-        bucket="my-bucket",
+        env="test",
         key=TEST_KEY,
         uploadId="my-best-upload",
         partNumber=88,
@@ -114,3 +105,35 @@ async def test_part_upload(mock_s3_client, mock_request_reader):
 
     # It should have an empty body
     assert response.body == b""
+
+
+@pytest.mark.asyncio
+async def test_upload_invalid_env(mock_s3_client, mock_request_reader):
+    """Uploading to an invalid environment does not delegate to s3."""
+
+    mock_s3_client.put_object.return_value = {
+        "ETag": "a1b2c3",
+    }
+
+    request = mock.Mock(
+        headers={
+            "Content-MD5": "9d0568469d206c1aedf1b71f12f474bc",
+            "Content-Length": "10",
+        }
+    )
+    mock_request_reader.return_value = b"some bytes"
+
+    with pytest.raises(HTTPException) as err:
+        await upload(
+            request=request,
+            env="foo",
+            key=TEST_KEY,
+            uploadId=None,
+            partNumber=None,
+        )
+
+    # It should not delegate request to real S3
+    assert not mock_s3_client.put_object.called
+
+    # It should produce an error message
+    assert err.value.detail == "Invalid environment='foo'"

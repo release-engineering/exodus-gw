@@ -22,7 +22,7 @@ async def test_create_mpu(mock_s3_client):
 
     response = await multipart_upload(
         None,
-        bucket="my-bucket",
+        env="test",
         key=TEST_KEY,
         uploads="",
     )
@@ -80,7 +80,7 @@ async def test_complete_mpu(mock_s3_client):
 
     response = await multipart_upload(
         request=request,
-        bucket="my-bucket",
+        env="test",
         key=TEST_KEY,
         uploadId="my-better-upload",
         uploads=None,
@@ -123,7 +123,7 @@ async def test_bad_mpu_call():
     with pytest.raises(HTTPException) as exc_info:
         await multipart_upload(
             request=None,
-            bucket="my-bucket",
+            env="test",
             key=TEST_KEY,
             uploadId="oops",
             uploads="not valid to mix these args",
@@ -137,7 +137,7 @@ async def test_abort_mpu(mock_s3_client):
     """Aborting a multipart upload is correctly delegated to S3."""
 
     response = await abort_multipart_upload(
-        bucket="my-bucket",
+        env="test",
         key=TEST_KEY,
         uploadId="my-lame-upload",
     )

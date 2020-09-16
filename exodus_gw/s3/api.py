@@ -37,6 +37,7 @@ import aioboto3
 from fastapi import Request, Response, Path, Query, HTTPException
 
 from ..app import app
+from ..settings import get_environment
 
 from .util import extract_mpu_parts, xml_response, RequestReader
 
@@ -47,31 +48,31 @@ LOG = logging.getLogger("s3")
 # - format of 'key' should be enforced (sha256sum)
 # - a way to check if object is already uploaded, e.g. HEAD
 # - limits on chunk sizes during multipart upload should be decided and enforced
-# - should support configuration of the target S3 environment rather than using
-#   whatever's the boto default
-# - {bucket} shouldn't be a parameter, as the target bucket for each exodus env
-#   is predefined and not controlled by the caller.
 # - requests should be authenticated
 
 
-def s3_client():
+def s3_client(profile: str):
     # Certain aspects of the boto client can be tweaked by environment variables
     # for development.
-    # This is expected to be replaced with a proper configuration system at some point.
-    return aioboto3.client(
-        "s3", endpoint_url=os.environ.get("EXODUS_GW_S3_ENDPOINT_URL") or None
+
+    # Note: Session creation will fail if provided profile cannot be found.
+    session = aioboto3.Session(profile_name=profile)
+
+    return session.client(
+        "s3",
+        endpoint_url=os.environ.get("EXODUS_GW_S3_ENDPOINT_URL") or None,
     )
 
 
 @app.post(
-    "/upload/{bucket}/{key}",
+    "/upload/{env}/{key}",
     tags=["upload"],
     summary="Create/complete multipart upload",
     response_class=Response,
 )
 async def multipart_upload(
     request: Request,
-    bucket: str = Path(..., description="S3 bucket name"),
+    env: str = Path(..., description="Target CDN environment"),
     key: str = Path(..., description="S3 object key"),
     uploadId: Optional[str] = Query(
         None,
@@ -99,7 +100,7 @@ async def multipart_upload(
     """Create or complete a multi-part upload.
 
     To create a multi-part upload:
-    - include ``uploads`` in query string, with no value (e.g. ``POST /upload/{bucket}/{key}?uploads``)
+    - include ``uploads`` in query string, with no value (e.g. ``POST /upload/{env}/{key}?uploads``)
     - see also: https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateMultipartUpload.html
 
     To complete a multi-part upload:
@@ -110,11 +111,11 @@ async def multipart_upload(
 
     if uploads == "":
         # Means a new upload is requested
-        return await create_multipart_upload(bucket, key)
+        return await create_multipart_upload(env, key)
 
     elif uploads is None and uploadId:
         # Given an existing upload to complete
-        return await complete_multipart_upload(bucket, key, uploadId, request)
+        return await complete_multipart_upload(env, key, uploadId, request)
 
     # Caller did something wrong
     raise HTTPException(
@@ -125,14 +126,14 @@ async def multipart_upload(
 
 
 @app.put(
-    "/upload/{bucket}/{key}",
+    "/upload/{env}/{key}",
     tags=["upload"],
     summary="Upload bytes",
     response_class=Response,
 )
 async def upload(
     request: Request,
-    bucket: str = Path(..., description="S3 bucket name"),
+    env: str = Path(..., description="Target CDN environment"),
     key: str = Path(..., description="S3 object key"),
     uploadId: Optional[str] = Query(
         None, description="ID of an existing multi-part upload."
@@ -157,19 +158,20 @@ async def upload(
 
     if uploadId is None and partNumber is None:
         # Single-part upload
-        return await object_put(bucket, key, request)
+        return await object_put(env, key, request)
 
     # Multipart upload
-    return await multipart_put(bucket, key, uploadId, partNumber, request)
+    return await multipart_put(env, key, uploadId, partNumber, request)
 
 
-async def object_put(bucket: str, key: str, request: Request):
+async def object_put(env: str, key: str, request: Request):
     # Single-part upload handler: entire object is written via one PUT.
     reader = RequestReader.get_reader(request)
+    env_obj = get_environment(env)
 
-    async with s3_client() as s3:
+    async with s3_client(profile=env_obj.aws_profile) as s3:
         response = await s3.put_object(
-            Bucket=bucket,
+            Bucket=env_obj.bucket,
             Key=key,
             Body=reader,
             ContentMD5=request.headers["Content-MD5"],
@@ -180,17 +182,17 @@ async def object_put(bucket: str, key: str, request: Request):
 
 
 async def complete_multipart_upload(
-    bucket: str, key: str, uploadId: str, request: Request
+    env: str, key: str, uploadId: str, request: Request
 ):
+    env_obj = get_environment(env)
     body = await request.body()
-
     parts = extract_mpu_parts(body)
 
     LOG.debug("completing mpu for parts %s", parts)
 
-    async with s3_client() as s3:
+    async with s3_client(profile=env_obj.aws_profile) as s3:
         response = await s3.complete_multipart_upload(
-            Bucket=bucket,
+            Bucket=env_obj.bucket,
             Key=key,
             UploadId=uploadId,
             MultipartUpload={"Parts": parts},
@@ -206,9 +208,13 @@ async def complete_multipart_upload(
     )
 
 
-async def create_multipart_upload(bucket: str, key: str):
-    async with s3_client() as s3:
-        response = await s3.create_multipart_upload(Bucket=bucket, Key=key)
+async def create_multipart_upload(env: str, key: str):
+    env_obj = get_environment(env)
+
+    async with s3_client(profile=env_obj.aws_profile) as s3:
+        response = await s3.create_multipart_upload(
+            Bucket=env_obj.bucket, Key=key
+        )
 
     return xml_response(
         "CreateMultipartUploadOutput",
@@ -219,14 +225,15 @@ async def create_multipart_upload(bucket: str, key: str):
 
 
 async def multipart_put(
-    bucket: str, key: str, uploadId: str, partNumber: int, request: Request
+    env: str, key: str, uploadId: str, partNumber: int, request: Request
 ):
     reader = RequestReader.get_reader(request)
+    env_obj = get_environment(env)
 
-    async with s3_client() as s3:
+    async with s3_client(profile=env_obj.aws_profile) as s3:
         response = await s3.upload_part(
             Body=reader,
-            Bucket=bucket,
+            Bucket=env_obj.bucket,
             Key=key,
             PartNumber=partNumber,
             UploadId=uploadId,
@@ -238,14 +245,14 @@ async def multipart_put(
 
 
 @app.delete(
-    "/upload/{bucket}/{key}",
+    "/upload/{env}/{key}",
     tags=["upload"],
     summary="Abort multipart upload",
     response_description="Empty response",
     response_class=Response,
 )
 async def abort_multipart_upload(
-    bucket: str = Path(..., description="S3 bucket name"),
+    env: str = Path(..., description="Target CDN environment"),
     key: str = Path(..., description="S3 object key"),
     uploadId: str = Query(..., description="ID of a multipart upload"),
 ):
@@ -258,9 +265,11 @@ async def abort_multipart_upload(
     """
     LOG.debug("Abort %s", uploadId)
 
-    async with s3_client() as s3:
+    env_obj = get_environment(env)
+
+    async with s3_client(profile=env_obj.aws_profile) as s3:
         await s3.abort_multipart_upload(
-            Bucket=bucket, Key=key, UploadId=uploadId
+            Bucket=env_obj.bucket, Key=key, UploadId=uploadId
         )
 
     return Response()
