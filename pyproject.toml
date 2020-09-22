@@ -10,13 +10,3 @@ exclude = '''
   | \dist
 )/
 '''
-
-[tool.poetry.dev-dependencies]
-# The point of this setting is to force dependabot to use python 3.6
-# while updating our requirements files. This should match the python
-# version used in Travis CI and in container images.
-#
-# If we omit this, dependabot can use later python versions which can
-# result in stripping needed deps from the requirements files, e.g.
-# it may drop dataclasses which is not available on python >= 3.7.
-python = "~3.6"
