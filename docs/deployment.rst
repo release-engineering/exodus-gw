@@ -76,7 +76,7 @@ Settings
 
 To enable per-environment configuration of exodus-gw, exodus-gw.ini is available to point the
 application at specific AWS resources and declare the AWS profile to use when interacting with
-those resources. Each environment must appear in it's own section with the prefix "env.".
+those resources. Each environment must appear in its own section with the prefix "env.".
 
 .. code-block:: ini
 
