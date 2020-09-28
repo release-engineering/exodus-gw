@@ -67,9 +67,20 @@ Settings
 --------
 
 .. autoclass:: exodus_gw.settings.Settings()
-    :members:
+    :members: call_context_header
 
     exodus-gw may be configured by the following settings.
 
     Each settings value may be overridden using an environment variable of the
     same name, prefixed with ``EXODUS_GW_`` (example: ``EXODUS_GW_CALL_CONTEXT_HEADER``).
+
+To enable per-environment configuration of exodus-gw, exodus-gw.ini is available to point the
+application at specific AWS resources and declare the AWS profile to use when interacting with
+those resources. Each environment must appear in its own section with the prefix "env.".
+
+.. code-block:: ini
+
+  [env.prod]
+  aws_profile = production
+  bucket = cdn-prod-s3
+  table = cdn-prod-db

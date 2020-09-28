@@ -103,6 +103,15 @@ and authorization).</p>
 
 </dd></dl>
 
+<p>To enable per-environment configuration of exodus-gw, exodus-gw.ini is available to point the
+application at specific AWS resources and declare the AWS profile to use when interacting with
+those resources. Each environment must appear in its own section with the prefix “env.”.</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[env.prod]</span>
+<span class="na">aws_profile</span> <span class="o">=</span> <span class="s">production</span>
+<span class="na">bucket</span> <span class="o">=</span> <span class="s">cdn-prod-s3</span>
+<span class="na">table</span> <span class="o">=</span> <span class="s">cdn-prod-db</span>
+</pre></div>
+</div>
 </div>
 </div>
 
