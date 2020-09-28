@@ -60,8 +60,9 @@ Usage:
                         verify='/path/to/bundle.pem',
                         config=Config(client_cert=('client.crt', 'client.key')))
 
+    # Bucket name must match one of the environments defined in exodus-gw.ini
+    bucket = s3.Bucket('dev')
     # Basic APIs such as upload_file now work as usual
-    bucket = s3.Bucket('exodus-cdn-dev')
     bucket.upload_file('/tmp/hello.txt',
                        'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f')
 

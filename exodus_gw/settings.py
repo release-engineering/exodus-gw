@@ -1,6 +1,18 @@
+import os
+import configparser
+from typing import List
 from functools import lru_cache
 
 from pydantic import BaseSettings
+from fastapi import HTTPException
+
+
+class Environment(object):
+    def __init__(self, name, aws_profile, bucket, table):
+        self.name = name
+        self.aws_profile = aws_profile
+        self.bucket = bucket
+        self.table = table
 
 
 class Settings(BaseSettings):
@@ -13,6 +25,9 @@ class Settings(BaseSettings):
     """Name of the header from which to extract call context (for authentication
     and authorization).
     """
+
+    environments: List[Environment] = []
+    """List of environment objects derived from exodus-gw.ini"""
 
     class Config:
         env_prefix = "exodus_gw_"
@@ -28,4 +43,43 @@ def get_settings() -> Settings:
     afterward.
     """
 
-    return Settings()
+    settings = Settings()
+    config = configparser.ConfigParser()
+
+    config.read(
+        [
+            os.path.join(os.path.dirname(__file__), "../exodus-gw.ini"),
+            "/opt/app/config/exodus-gw.ini",
+        ]
+    )
+
+    for env in [sec for sec in config.sections() if sec.startswith("env.")]:
+        aws_profile = config.get(env, "aws_profile", fallback=None)
+        bucket = config.get(env, "bucket", fallback=None)
+        table = config.get(env, "table", fallback=None)
+        settings.environments.append(
+            Environment(
+                name=env.replace("env.", ""),
+                aws_profile=aws_profile,
+                bucket=bucket,
+                table=table,
+            )
+        )
+
+    return settings
+
+
+def get_environment(env: str):
+    """Return the corresponding environment object for the given environment
+    name.
+    """
+
+    settings = get_settings()
+
+    for env_obj in settings.environments:
+        if env_obj.name == env:
+            return env_obj
+
+    raise HTTPException(
+        status_code=404, detail="Invalid environment=%s" % repr(env)
+    )
