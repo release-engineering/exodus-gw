@@ -185,7 +185,7 @@ mock==4.0.2 \
 more-itertools==8.5.0 \
     --hash=sha256:6f83822ae94818eae2612063a5101a7311e68ae8002005b5e05f03fd74a86a20 \
     --hash=sha256:9b30f12df9393f0d28af9210ff8efe48d10c94f73e5daf886f10c4b0b0b4f03c \
-    # via -r test-requirements.in, pytest
+    # via -r test-requirements.in
 mypy-extensions==0.4.3 \
     --hash=sha256:090fedd75945a69ae91ce1303b5824f428daf5a028d2f6ab8a299250a846f15d \
     --hash=sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8 \
@@ -230,9 +230,9 @@ pytest-mock==3.3.1 \
     --hash=sha256:024e405ad382646318c4281948aadf6fe1135632bea9cc67366ea0c4098ef5f2 \
     --hash=sha256:a4d6d37329e4a893e77d9ffa89e838dd2b45d5dc099984cf03c703ac8411bb82 \
     # via -r test-requirements.in
-pytest==6.0.2 \
-    --hash=sha256:0e37f61339c4578776e090c3b8f6b16ce4db333889d65d0efb305243ec544b40 \
-    --hash=sha256:c8f57c2a30983f469bf03e68cdfa74dc474ce56b8f280ddcb080dfd91df01043 \
+pytest==6.1.1 \
+    --hash=sha256:7a8190790c17d79a11f847fba0b004ee9a8122582ebff4729a082c109e81a4c9 \
+    --hash=sha256:8f593023c1a0f916110285b6efd7f99db07d59546e3d8c36fc60e2ab05d3be92 \
     # via -r test-requirements.in, pytest-asyncio, pytest-cov, pytest-mock
 pytz==2020.1 \
     --hash=sha256:a494d53b6d39c3c6e44c3bec237336e14305e4f29bbf800b599253057fbb79ed \
