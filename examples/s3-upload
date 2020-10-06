@@ -19,10 +19,12 @@
 # and larger than 10MB to cover both multipart and single part
 # uploads.
 
-import boto3
+import logging
 import sys
 import hashlib
 import argparse
+
+import boto3
 
 
 def get_object_key(filename):
@@ -38,11 +40,18 @@ def get_object_key(filename):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--debug", action="store_true", help="Enable verbose logging"
+    )
     parser.add_argument("--endpoint-url", default=None)
     parser.add_argument("--bucket", default="exodus-cdn-dev")
     parser.add_argument("files", nargs="+")
 
     args = parser.parse_args()
+
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+
     s3 = boto3.resource("s3", endpoint_url=args.endpoint_url)
     bucket = s3.Bucket(args.bucket)
 
