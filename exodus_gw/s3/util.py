@@ -53,13 +53,19 @@ def xml_response(operation: str, **kwargs) -> Response:
     """
     root = Element(operation)
 
+    status_code = kwargs.get("Code", 200)
+
     for (key, value) in kwargs.items():
         child = SubElement(root, key)
         child.text = str(value)
 
     xml = io.BytesIO()
     ElementTree(root).write(xml, encoding="UTF-8", xml_declaration=True)
-    return Response(content=xml.getvalue(), media_type="application/xml")
+    return Response(
+        content=xml.getvalue(),
+        status_code=status_code,
+        media_type="application/xml",
+    )
 
 
 class RequestReader:

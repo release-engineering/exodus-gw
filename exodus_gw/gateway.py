@@ -1,8 +1,26 @@
 from fastapi import Depends
+from fastapi.exception_handlers import http_exception_handler
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .app import app
 from .publish import create_publish_id
 from .auth import call_context, CallContext
+from .s3.util import xml_response
+
+
+@app.exception_handler(StarletteHTTPException)
+async def custom_http_exception_handler(request, exc):
+    # Override HTTPException to produce XML error responses for the
+    # given endpoints.
+
+    path = request.scope.get("path")
+
+    if path.startswith("/upload"):
+        return xml_response(
+            "Error", Code=exc.status_code, Message=exc.detail, Endpoint=path
+        )
+
+    return await http_exception_handler(request, exc)
 
 
 @app.get("/healthcheck", tags=["service"])
