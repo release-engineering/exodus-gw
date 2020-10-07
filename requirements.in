@@ -3,6 +3,6 @@ pydantic
 starlette
 aioboto3
 defusedxml
-uvicorn
+uvicorn[standard]
 gunicorn
 dataclasses;python_version<'3.7'
