@@ -1,0 +1,22 @@
+#!/bin/bash
+set -e
+
+have_unit(){
+  systemctl --user cat $1 &>/dev/null
+}
+
+run(){
+  systemctl --user daemon-reload
+  systemctl --user stop exodus-gw-uvicorn.service
+  systemctl --user stop exodus-gw-db.service
+  systemctl --user stop exodus-gw-localstack.service
+
+  if have_unit exodus-gw-sidecar.service; then
+    systemctl --user stop exodus-gw-sidecar.service
+  fi
+
+  systemctl --user start exodus-gw.target
+  echo "exodus-gw units are restarted!"
+}
+
+run

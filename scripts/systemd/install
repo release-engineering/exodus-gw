@@ -1,0 +1,87 @@
+#!/bin/bash
+set -e
+set -o pipefail
+
+cd $(dirname $0)
+
+CONFIG_DIR=${XDG_CONFIG_HOME:-~/.config}/exodus-gw-dev
+
+use_sidecar(){
+  # are we on a network where this can be used?
+  host images.paas.redhat.com &>/dev/null
+}
+
+check_prereqs(){
+  failed=0
+  for cmd in podman sscg tox host hostname postgres; do
+    if ! test -x /usr/bin/$cmd; then
+      failed=1
+      echo "ERROR: not available: $cmd (try: 'sudo dnf install /usr/bin/$cmd')" 1>&2
+    fi
+  done
+
+  if test $failed -eq 1; then
+    echo "ERROR: missing packages. Install packages listed above, then try again." 1>&2
+    exit 50
+  fi
+}
+
+enable_units(){
+  systemctl --quiet --user enable $PWD/exodus-gw.target
+
+  systemctl --user enable $PWD/exodus-gw-db.service
+  systemctl --user enable $PWD/exodus-gw-localstack.service
+  systemctl --user enable $PWD/exodus-gw-uvicorn.service
+  systemctl --user enable $PWD/exodus-gw-cert.service
+
+  if use_sidecar; then
+    systemctl --user enable $PWD/exodus-gw-sidecar.service
+  else
+    echo "WARNING: sidecar image appears to be unavailable, cannot use HTTPS." 1>&2
+  fi
+}
+
+make_cert(){
+  systemctl --user start exodus-gw-cert.service
+}
+
+summarize(){
+  cat <<END
+exodus-gw units are installed!
+
+Suggested commands:
+
+  # Start development servers
+  systemctl --user start exodus-gw.target
+
+  # Observe server logs
+  journalctl --user '--unit=exodus-gw-*' -f
+
+  # Verify http server is working
+  curl http://localhost:8000/healthcheck
+
+  # Create a test bucket in localstack
+  aws --endpoint-url=http://localhost:3377 s3api create-bucket --bucket test
+
+  # Install CA certificate to system bundle
+  sudo cp $CONFIG_DIR/ca.crt /etc/pki/ca-trust/source/anchors/exodus-gw-dev.crt
+  sudo update-ca-trust
+END
+
+  if use_sidecar; then
+    cat <<END
+
+  # Verify https server is working
+  curl https://localhost:8010/healthcheck
+END
+  fi
+}
+
+run(){
+  check_prereqs
+  enable_units
+  make_cert
+  summarize
+}
+
+run

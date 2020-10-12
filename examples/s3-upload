@@ -43,7 +43,9 @@ def main():
     parser.add_argument(
         "--debug", action="store_true", help="Enable verbose logging"
     )
-    parser.add_argument("--endpoint-url", default=None)
+    parser.add_argument(
+        "--endpoint-url", default="https://localhost:8010/upload"
+    )
     parser.add_argument("--env", default="dev")
     parser.add_argument("files", nargs="+")
 
