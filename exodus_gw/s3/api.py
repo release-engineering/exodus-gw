@@ -31,15 +31,14 @@ Differences from the AWS S3 API include:
 from typing import Optional
 import textwrap
 import logging
-import os
 
-import aioboto3
 from fastapi import Request, Response, Path, Query, HTTPException
 
 from ..app import app
 from ..settings import get_environment
 
 from .util import extract_mpu_parts, xml_response, RequestReader
+from .client import S3ClientWrapper as s3_client
 
 
 LOG = logging.getLogger("s3")
@@ -49,19 +48,6 @@ LOG = logging.getLogger("s3")
 # - a way to check if object is already uploaded, e.g. HEAD
 # - limits on chunk sizes during multipart upload should be decided and enforced
 # - requests should be authenticated
-
-
-def s3_client(profile: str):
-    # Certain aspects of the boto client can be tweaked by environment variables
-    # for development.
-
-    # Note: Session creation will fail if provided profile cannot be found.
-    session = aioboto3.Session(profile_name=profile)
-
-    return session.client(
-        "s3",
-        endpoint_url=os.environ.get("EXODUS_GW_S3_ENDPOINT_URL") or None,
-    )
 
 
 @app.post(
