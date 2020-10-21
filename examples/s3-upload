@@ -44,7 +44,7 @@ def main():
         "--debug", action="store_true", help="Enable verbose logging"
     )
     parser.add_argument("--endpoint-url", default=None)
-    parser.add_argument("--bucket", default="exodus-cdn-dev")
+    parser.add_argument("--env", default="dev")
     parser.add_argument("files", nargs="+")
 
     args = parser.parse_args()
@@ -53,7 +53,7 @@ def main():
         logging.basicConfig(level=logging.DEBUG)
 
     s3 = boto3.resource("s3", endpoint_url=args.endpoint_url)
-    bucket = s3.Bucket(args.bucket)
+    bucket = s3.Bucket(args.env)
 
     print(
         "Using endpoint:",
