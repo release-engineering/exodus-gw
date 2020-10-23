@@ -60,7 +60,7 @@ Usage:
                         verify='/path/to/bundle.pem',
                         config=Config(client_cert=('client.crt', 'client.key')))
 
-    # Bucket name must match one of the environments defined in exodus-gw.ini
+    # Bucket name must match one of the section names in exodus-gw.ini without 'env.' prefix
     bucket = s3.Bucket('dev')
     # Basic APIs such as upload_file now work as usual
     bucket.upload_file('/tmp/hello.txt',

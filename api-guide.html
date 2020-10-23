@@ -101,7 +101,7 @@ will not work. Uploading files is supported.</p>
                     <span class="n">verify</span><span class="o">=</span><span class="s1">&#39;/path/to/bundle.pem&#39;</span><span class="p">,</span>
                     <span class="n">config</span><span class="o">=</span><span class="n">Config</span><span class="p">(</span><span class="n">client_cert</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;client.crt&#39;</span><span class="p">,</span> <span class="s1">&#39;client.key&#39;</span><span class="p">)))</span>
 
-<span class="c1"># Bucket name must match one of the environments defined in exodus-gw.ini</span>
+<span class="c1"># Bucket name must match one of the section names in exodus-gw.ini without &#39;env.&#39; prefix</span>
 <span class="n">bucket</span> <span class="o">=</span> <span class="n">s3</span><span class="o">.</span><span class="n">Bucket</span><span class="p">(</span><span class="s1">&#39;dev&#39;</span><span class="p">)</span>
 <span class="c1"># Basic APIs such as upload_file now work as usual</span>
 <span class="n">bucket</span><span class="o">.</span><span class="n">upload_file</span><span class="p">(</span><span class="s1">&#39;/tmp/hello.txt&#39;</span><span class="p">,</span>
