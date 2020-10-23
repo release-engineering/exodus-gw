@@ -84,3 +84,14 @@ those resources. Each environment must appear in its own section with the prefix
   aws_profile = production
   bucket = cdn-prod-s3
   table = cdn-prod-db
+
+Logger levels may also be configured via exodus-gw.ini. Under a section named "loglevels",
+users may specify a logger name and the level at which to set said logger.
+
+.. code-block:: ini
+
+  [loglevels]
+  root = NOTSET
+  exodus-gw = INFO
+  s3 = DEBUG
+  ...

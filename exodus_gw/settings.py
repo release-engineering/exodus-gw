@@ -26,8 +26,15 @@ class Settings(BaseSettings):
     and authorization).
     """
 
+    log_config: dict = {
+        "version": 1,
+        "incremental": True,
+        "disable_existing_loggers": False,
+    }
+    """Logging configuration in dictConfig schema."""
+
     environments: List[Environment] = []
-    """List of environment objects derived from exodus-gw.ini"""
+    """List of environment objects derived from exodus-gw.ini."""
 
     db_service_user: str = "exodus-gw"
     """db service user name"""
@@ -61,6 +68,15 @@ def get_settings() -> Settings:
             "/opt/app/config/exodus-gw.ini",
         ]
     )
+
+    for logger in config["loglevels"] if "loglevels" in config else []:
+        if "loggers" not in settings.log_config:
+            settings.log_config.update({"loggers": {}})
+
+        log_config = settings.log_config
+        dest = log_config if logger == "root" else log_config["loggers"]
+
+        dest.update({logger: {"level": config.get("loglevels", logger)}})
 
     for env in [sec for sec in config.sections() if sec.startswith("env.")]:
         aws_profile = config.get(env, "aws_profile", fallback=None)
