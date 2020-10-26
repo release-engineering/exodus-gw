@@ -1,8 +1,7 @@
 import pytest
+
+from exodus_gw.settings import get_environment, get_settings
 from fastapi import HTTPException
-
-from exodus_gw.settings import get_settings, get_environment
-
 
 # Note: get_settings is wrapped in lru_cache.
 # During tests, we want to test the real original function
@@ -21,6 +20,8 @@ def test_get_settings_default():
         "test2",
         "test3",
     ]
+    assert settings.db_service_user == "exodus-gw"
+    assert settings.db_service_pass == "exodus-gw"
 
 
 def test_get_settings_override(monkeypatch):
