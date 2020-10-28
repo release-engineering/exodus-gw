@@ -1,10 +1,10 @@
-import os
 import configparser
-from typing import List
+import os
 from functools import lru_cache
+from typing import List
 
-from pydantic import BaseSettings
 from fastapi import HTTPException
+from pydantic import BaseSettings
 
 
 class Environment(object):
@@ -28,6 +28,15 @@ class Settings(BaseSettings):
 
     environments: List[Environment] = []
     """List of environment objects derived from exodus-gw.ini"""
+
+    db_service_user: str = "exodus-gw"
+    """db service user name"""
+    db_service_pass: str = "exodus-gw"
+    """db service user password"""
+    db_service_host: str = "exodus-gw-db"
+    """db service host"""
+    db_service_port: str = "5432"
+    """db service port"""
 
     class Config:
         env_prefix = "exodus_gw_"

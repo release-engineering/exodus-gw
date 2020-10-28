@@ -6,3 +6,5 @@ defusedxml
 uvicorn[standard]
 gunicorn
 dataclasses;python_version<'3.7'
+psycopg2
+sqlalchemy

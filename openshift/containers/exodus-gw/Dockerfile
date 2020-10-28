@@ -9,12 +9,15 @@ RUN \
     microdnf -y install shadow-utils \
     # Install extra commands needed for build
     && microdnf -y install python3 python3-devel gcc make \
+    # Install packages needed for psycopg2 installation
+    && microdnf -y install postgresql-devel \
     && cd /usr/local/src/exodus-gw \
     # Install application itself
     && pip3 install --require-hashes -r requirements.txt \
     && pip3 install --no-deps . \
     # Clean up unnecessary data
     && microdnf clean all && rm -rf /var/cache/yum && rm -rf /usr/local/src/exodus-gw
+
 
 # Run as a non-root user
 RUN adduser exodus-gw
@@ -25,6 +28,6 @@ EXPOSE 8080
 
 # Run the application
 ENTRYPOINT ["gunicorn", \
-            "-k", "uvicorn.workers.UvicornWorker", \
-            "--bind", "0.0.0.0:8080", \
-            "exodus_gw:application"]
+    "-k", "uvicorn.workers.UvicornWorker", \
+    "--bind", "0.0.0.0:8080", \
+    "exodus_gw:application"]
