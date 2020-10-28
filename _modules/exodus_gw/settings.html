@@ -33,13 +33,13 @@
           <div class="body" role="main">
             
   <h1>Source code for exodus_gw.settings</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">configparser</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<span></span><span class="kn">import</span> <span class="nn">configparser</span>
+<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">lru_cache</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
 
-<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseSettings</span>
 <span class="kn">from</span> <span class="nn">fastapi</span> <span class="kn">import</span> <span class="n">HTTPException</span>
+<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseSettings</span>
 
 
 <span class="k">class</span> <span class="nc">Environment</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -63,6 +63,15 @@
 
     <span class="n">environments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Environment</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="sd">&quot;&quot;&quot;List of environment objects derived from exodus-gw.ini&quot;&quot;&quot;</span>
+
+    <span class="n">db_service_user</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;exodus-gw&quot;</span>
+    <span class="sd">&quot;&quot;&quot;db service user name&quot;&quot;&quot;</span>
+    <span class="n">db_service_pass</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;exodus-gw&quot;</span>
+    <span class="sd">&quot;&quot;&quot;db service user password&quot;&quot;&quot;</span>
+    <span class="n">db_service_host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;exodus-gw-db&quot;</span>
+    <span class="sd">&quot;&quot;&quot;db service host&quot;&quot;&quot;</span>
+    <span class="n">db_service_port</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;5432&quot;</span>
+    <span class="sd">&quot;&quot;&quot;db service port&quot;&quot;&quot;</span>
 
     <span class="k">class</span> <span class="nc">Config</span><span class="p">:</span>
         <span class="n">env_prefix</span> <span class="o">=</span> <span class="s2">&quot;exodus_gw_&quot;</span></div>
