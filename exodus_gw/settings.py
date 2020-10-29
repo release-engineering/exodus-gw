@@ -70,8 +70,7 @@ def get_settings() -> Settings:
     )
 
     for logger in config["loglevels"] if "loglevels" in config else []:
-        if "loggers" not in settings.log_config:
-            settings.log_config.update({"loggers": {}})
+        settings.log_config.setdefault("loggers", {})
 
         log_config = settings.log_config
         dest = log_config if logger == "root" else log_config["loggers"]
