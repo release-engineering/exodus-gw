@@ -112,6 +112,15 @@ those resources. Each environment must appear in its own section with the prefix
 <span class="na">table</span> <span class="o">=</span> <span class="s">cdn-prod-db</span>
 </pre></div>
 </div>
+<p>Logger levels may also be configured via exodus-gw.ini. Under a section named “loglevels”,
+users may specify a logger name and the level at which to set said logger.</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[loglevels]</span>
+<span class="na">root</span> <span class="o">=</span> <span class="s">NOTSET</span>
+<span class="na">exodus-gw</span> <span class="o">=</span> <span class="s">INFO</span>
+<span class="na">s3</span> <span class="o">=</span> <span class="s">DEBUG</span>
+<span class="na">...</span>
+</pre></div>
+</div>
 </div>
 </div>
 
