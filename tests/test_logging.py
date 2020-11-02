@@ -11,9 +11,9 @@ def test_log_levels():
     configure_loggers()
 
     # Should not alter existing loggers.
-    assert logging.getLogger("old-logger").level == 10
+    assert logging.getLogger("old-logger").level == logging.DEBUG
 
     # Should set level of new loggers according to exodus-gw.ini.
-    assert logging.getLogger().level == 20
-    assert logging.getLogger("exodus-gw").level == 30
-    assert logging.getLogger("s3").level == 10
+    assert logging.getLogger().level == logging.INFO
+    assert logging.getLogger("exodus-gw").level == logging.WARN
+    assert logging.getLogger("s3").level == logging.DEBUG
