@@ -1,22 +1,11 @@
 import mock
 import pytest
-import textwrap
 
 from fastapi import HTTPException
 
-from exodus_gw.s3.api import multipart_upload, abort_multipart_upload, upload
-from exodus_gw.s3.util import xml_response
+from exodus_gw.s3.api import upload
 
 TEST_KEY = "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"
-
-
-@pytest.fixture()
-def mock_request_reader():
-    # We don't use the real request reader for these tests as it becomes
-    # rather complicated to verify that boto methods were called with the
-    # correct expected value. The class is tested separately.
-    with mock.patch("exodus_gw.s3.util.RequestReader.get_reader") as m:
-        yield m
 
 
 @pytest.mark.asyncio

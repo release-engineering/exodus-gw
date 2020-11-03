@@ -12,3 +12,12 @@ def mock_s3_client():
         s3_client.meta = mock.MagicMock()
         mock_session().client.return_value = s3_client
         yield s3_client
+
+
+@pytest.fixture()
+def mock_request_reader():
+    # We don't use the real request reader for these tests as it becomes
+    # rather complicated to verify that boto methods were called with the
+    # correct expected value. The class is tested separately.
+    with mock.patch("exodus_gw.s3.util.RequestReader.get_reader") as m:
+        yield m
