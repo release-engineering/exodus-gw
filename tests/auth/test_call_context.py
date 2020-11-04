@@ -1,10 +1,10 @@
-import json
 import base64
+import json
 
 import mock
 import pytest
-
 from fastapi import HTTPException
+
 from exodus_gw.auth import call_context
 from exodus_gw.settings import Settings
 

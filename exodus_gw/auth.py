@@ -1,8 +1,8 @@
 import base64
 import logging
-from typing import List, Set, Optional
+from typing import List, Optional, Set
 
-from fastapi import Request, Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 from pydantic import BaseModel
 
 from .settings import Settings, get_settings

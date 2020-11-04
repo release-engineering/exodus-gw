@@ -19,10 +19,10 @@
 # and larger than 10MB to cover both multipart and single part
 # uploads.
 
+import argparse
+import hashlib
 import logging
 import sys
-import hashlib
-import argparse
 
 import boto3
 

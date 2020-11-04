@@ -1,6 +1,5 @@
-import pytest
-
 import aioboto3
+import pytest
 
 from exodus_gw.routers.api import s3_client
 

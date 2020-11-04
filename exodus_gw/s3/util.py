@@ -1,8 +1,8 @@
 import io
-from xml.etree.ElementTree import ElementTree, Element, SubElement
+from xml.etree.ElementTree import Element, ElementTree, SubElement
 
-from fastapi import Response
 from defusedxml.ElementTree import fromstring
+from fastapi import Response
 
 
 def extract_mpu_parts(

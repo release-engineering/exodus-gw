@@ -1,7 +1,7 @@
 import pytest
+from fastapi import HTTPException
 
 from exodus_gw.settings import get_environment, get_settings
-from fastapi import HTTPException
 
 # Note: get_settings is wrapped in lru_cache.
 # During tests, we want to test the real original function
