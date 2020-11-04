@@ -19,3 +19,4 @@ six
 sphinx
 wcwidth
 zipp
+flake8
