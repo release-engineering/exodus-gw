@@ -1,6 +1,6 @@
 import logging
 
-from exodus_gw.app import configure_loggers
+from exodus_gw.main import configure_loggers
 
 
 def test_log_levels():

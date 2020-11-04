@@ -28,20 +28,20 @@ Differences from the AWS S3 API include:
 - The API may enforce stricter limits or policies on uploads than those imposed
   by the AWS API.
 """
-from typing import Optional
-import textwrap
 import logging
+import textwrap
+from typing import Optional
 
-from fastapi import Request, Response, Path, Query, HTTPException
+from fastapi import APIRouter, HTTPException, Path, Query, Request, Response
 
-from ..app import app
+from ..s3.client import S3ClientWrapper as s3_client
+from ..s3.util import RequestReader, extract_mpu_parts, xml_response
 from ..settings import get_environment
 
-from .util import extract_mpu_parts, xml_response, RequestReader
-from .client import S3ClientWrapper as s3_client
-
-
 LOG = logging.getLogger("s3")
+
+router = APIRouter()
+
 
 # A partial TODO list for this API:
 # - format of 'key' should be enforced (sha256sum)
@@ -50,7 +50,7 @@ LOG = logging.getLogger("s3")
 # - requests should be authenticated
 
 
-@app.post(
+@router.post(
     "/upload/{env}/{key}",
     tags=["upload"],
     summary="Create/complete multipart upload",
@@ -111,7 +111,7 @@ async def multipart_upload(
     )
 
 
-@app.put(
+@router.put(
     "/upload/{env}/{key}",
     tags=["upload"],
     summary="Upload bytes",
@@ -230,7 +230,7 @@ async def multipart_put(
     return Response(headers={"ETag": response["ETag"]})
 
 
-@app.delete(
+@router.delete(
     "/upload/{env}/{key}",
     tags=["upload"],
     summary="Abort multipart upload",

@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 # Helper script to generate openapi JSON file
 # during publishing of docs.
-import os
 import json
 
-from exodus_gw import application
+from exodus_gw.main import app
 
-api = application.openapi()
+api = app.openapi()
 
 with open("docs/openapi/openapi.json", "wt") as f:
     json.dump(api, f)

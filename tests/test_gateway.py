@@ -1,6 +1,6 @@
 import pytest
 
-from exodus_gw import gateway
+from exodus_gw.routers import gateway
 
 
 def test_healthcheck():
