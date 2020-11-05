@@ -2,7 +2,7 @@ import pytest
 
 import aioboto3
 
-from exodus_gw.s3.api import s3_client
+from exodus_gw.routers.api import s3_client
 
 
 @pytest.mark.asyncio
