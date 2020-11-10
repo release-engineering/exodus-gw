@@ -1,6 +1,5 @@
-import pytest
-
 import mock
+import pytest
 from fastapi import HTTPException
 
 from exodus_gw.main import custom_http_exception_handler

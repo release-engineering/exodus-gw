@@ -1,5 +1,4 @@
 import pytest
-
 from fastapi import HTTPException
 
 from exodus_gw.auth import (

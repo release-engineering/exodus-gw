@@ -2,6 +2,7 @@
 # Helper script to generate openapi JSON file
 # during publishing of docs.
 import json
+import os
 
 from exodus_gw.main import app
 

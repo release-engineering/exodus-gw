@@ -1,8 +1,7 @@
 import textwrap
 
-import pytest
-
 import mock
+import pytest
 from fastapi import HTTPException
 
 from exodus_gw.routers.api import abort_multipart_upload, multipart_upload
