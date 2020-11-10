@@ -8,19 +8,15 @@ services: docker
 
 jobs:
   include:
-  - name: build docker image
-    script:
-    - docker --version
-    - docker build . -f openshift/containers/exodus-gw/Dockerfile
-  - python: "3.6"
-    env: TOX_ENV=cov-travis
-  - python: "3.6"
-    env: TOX_ENV=static
-  - python: "3.6"
-    env: TOX_ENV=docs
+    - python: "3.6"
+      env: TOX_ENV=cov-travis
+    - python: "3.6"
+      env: TOX_ENV=static
+    - python: "3.6"
+      env: TOX_ENV=docs
 
-script: 
-- tox -e $TOX_ENV
+script:
+  - tox -e $TOX_ENV
 
 after_success:
-- test $TOX_ENV = docs && scripts/push-docs
+  - test $TOX_ENV = docs && scripts/push-docs

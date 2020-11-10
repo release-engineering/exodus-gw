@@ -1,0 +1,26 @@
+name: Functional Tests
+
+on:
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.6
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.6
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # should be removed after unit PR is merged
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f test-requirements.txt ]; then pip install -r test-requirements.txt; fi
+          if [ -f tests/functional/requirements.txt ]; then pip install -r tests/functional/requirements.txt; fi
+      - name: Functional Test with pytest
+        run: |
+          pytest -p docker_compose tests/functional

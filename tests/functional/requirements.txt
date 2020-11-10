@@ -1,0 +1,1 @@
+pytest-docker-compose==3.2.0
