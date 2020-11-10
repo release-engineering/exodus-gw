@@ -1,0 +1,23 @@
+version: "3.3"
+services:
+  db:
+    image: docker.io/library/postgres:12
+    container_name: exodus-gw-db
+    environment:
+      - POSTGRES_USER=exodus-gw
+      - POSTGRES_PASSWORD=exodus-gw
+    ports:
+      - 5432:5432
+  app:
+    image: app
+    build:
+      context: .
+      dockerfile: openshift/containers/exodus-gw/Dockerfile
+    container_name: exodus-gw-app
+    environment:
+      - exodus_gw_db_service_user=exodus-gw
+      - exodus_gw_db_service_pass=exodus-gw
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
