@@ -17,3 +17,20 @@ def test_log_levels():
     assert logging.getLogger().level == logging.INFO
     assert logging.getLogger("exodus-gw").level == logging.WARN
     assert logging.getLogger("s3").level == logging.DEBUG
+
+
+def test_log_handler():
+    """Ensure handler is added to root logger when none are present"""
+
+    root_logger = logging.getLogger()
+    root_handlers = root_logger.handlers
+
+    # Clear existing handlers.
+    root_handlers.clear()
+    assert not root_handlers
+
+    configure_loggers()
+
+    # Should now have one (1) StreamHandler.
+    assert len(root_handlers) == 1
+    assert type(root_handlers[0]) == logging.StreamHandler
