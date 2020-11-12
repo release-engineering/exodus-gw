@@ -2,16 +2,16 @@ import mock
 import pytest
 from fastapi import HTTPException
 
-from exodus_gw.routers.api import upload
+from exodus_gw.routers.s3 import upload
 
 TEST_KEY = "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"
 
 
 @pytest.mark.asyncio
-async def test_full_upload(mock_s3_client, mock_request_reader):
+async def test_full_upload(mock_aws_client, mock_request_reader):
     """Uploading a complete object is delegated correctly to S3."""
 
-    mock_s3_client.put_object.return_value = {
+    mock_aws_client.put_object.return_value = {
         "ETag": "a1b2c3",
     }
 
@@ -32,7 +32,7 @@ async def test_full_upload(mock_s3_client, mock_request_reader):
     )
 
     # It should delegate request to real S3
-    mock_s3_client.put_object.assert_called_once_with(
+    mock_aws_client.put_object.assert_called_once_with(
         Bucket="my-bucket",
         Key=TEST_KEY,
         Body=b"some bytes",
@@ -51,10 +51,10 @@ async def test_full_upload(mock_s3_client, mock_request_reader):
 
 
 @pytest.mark.asyncio
-async def test_part_upload(mock_s3_client, mock_request_reader):
+async def test_part_upload(mock_aws_client, mock_request_reader):
     """Uploading part of an object is delegated correctly to S3."""
 
-    mock_s3_client.upload_part.return_value = {
+    mock_aws_client.upload_part.return_value = {
         "ETag": "aabbcc",
     }
 
@@ -75,7 +75,7 @@ async def test_part_upload(mock_s3_client, mock_request_reader):
     )
 
     # It should delegate request to real S3
-    mock_s3_client.upload_part.assert_called_once_with(
+    mock_aws_client.upload_part.assert_called_once_with(
         Bucket="my-bucket",
         Key=TEST_KEY,
         Body=b"best bytes",
@@ -96,10 +96,10 @@ async def test_part_upload(mock_s3_client, mock_request_reader):
 
 
 @pytest.mark.asyncio
-async def test_upload_invalid_env(mock_s3_client, mock_request_reader):
+async def test_upload_invalid_env(mock_aws_client, mock_request_reader):
     """Uploading to an invalid environment does not delegate to s3."""
 
-    mock_s3_client.put_object.return_value = {
+    mock_aws_client.put_object.return_value = {
         "ETag": "a1b2c3",
     }
 
@@ -121,7 +121,7 @@ async def test_upload_invalid_env(mock_s3_client, mock_request_reader):
         )
 
     # It should not delegate request to real S3
-    assert not mock_s3_client.put_object.called
+    assert not mock_aws_client.put_object.called
 
     # It should produce an error message
     assert err.value.detail == "Invalid environment='foo'"

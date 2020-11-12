@@ -4,15 +4,15 @@ from fastapi import FastAPI
 from fastapi.exception_handlers import http_exception_handler
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from .aws.util import xml_response
 from .database import get_db
-from .routers import api, gateway
-from .s3.util import xml_response
+from .routers import gateway, s3
 from .settings import get_settings
 
 db = get_db()
 app = FastAPI(title="exodus-gw")
 app.include_router(gateway.router)
-app.include_router(api.router)
+app.include_router(s3.router)
 
 
 @app.exception_handler(StarletteHTTPException)

@@ -34,8 +34,8 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Path, Query, Request, Response
 
-from ..s3.client import S3ClientWrapper as s3_client
-from ..s3.util import RequestReader, extract_mpu_parts, xml_response
+from ..aws.client import S3ClientWrapper as s3_client
+from ..aws.util import RequestReader, extract_mpu_parts, xml_response
 from ..settings import get_environment
 
 LOG = logging.getLogger("s3")

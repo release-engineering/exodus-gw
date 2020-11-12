@@ -1,6 +1,6 @@
 import textwrap
 
-from exodus_gw.s3.util import xml_response
+from exodus_gw.aws.util import xml_response
 
 
 def test_typical_response():

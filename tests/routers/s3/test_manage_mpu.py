@@ -4,17 +4,17 @@ import mock
 import pytest
 from fastapi import HTTPException
 
-from exodus_gw.routers.api import abort_multipart_upload, multipart_upload
-from exodus_gw.s3.util import xml_response
+from exodus_gw.aws.util import xml_response
+from exodus_gw.routers.s3 import abort_multipart_upload, multipart_upload
 
 TEST_KEY = "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"
 
 
 @pytest.mark.asyncio
-async def test_create_mpu(mock_s3_client):
+async def test_create_mpu(mock_aws_client):
     """Creating a multipart upload is delegated correctly to S3."""
 
-    mock_s3_client.create_multipart_upload.return_value = {
+    mock_aws_client.create_multipart_upload.return_value = {
         "Bucket": "my-bucket",
         "Key": TEST_KEY,
         "UploadId": "my-great-upload",
@@ -28,7 +28,7 @@ async def test_create_mpu(mock_s3_client):
     )
 
     # It should delegate request to real S3
-    mock_s3_client.create_multipart_upload.assert_called_once_with(
+    mock_aws_client.create_multipart_upload.assert_called_once_with(
         Bucket="my-bucket",
         Key=TEST_KEY,
     )
@@ -50,10 +50,10 @@ async def test_create_mpu(mock_s3_client):
 
 
 @pytest.mark.asyncio
-async def test_complete_mpu(mock_s3_client):
+async def test_complete_mpu(mock_aws_client):
     """Completing a multipart upload is delegated correctly to S3."""
 
-    mock_s3_client.complete_multipart_upload.return_value = {
+    mock_aws_client.complete_multipart_upload.return_value = {
         "Location": "https://example.com/some-object",
         "Bucket": "my-bucket",
         "Key": TEST_KEY,
@@ -87,7 +87,7 @@ async def test_complete_mpu(mock_s3_client):
     )
 
     # It should delegate request to real S3
-    mock_s3_client.complete_multipart_upload.assert_called_once_with(
+    mock_aws_client.complete_multipart_upload.assert_called_once_with(
         Bucket="my-bucket",
         Key=TEST_KEY,
         UploadId="my-better-upload",
@@ -133,7 +133,7 @@ async def test_bad_mpu_call():
 
 
 @pytest.mark.asyncio
-async def test_abort_mpu(mock_s3_client):
+async def test_abort_mpu(mock_aws_client):
     """Aborting a multipart upload is correctly delegated to S3."""
 
     response = await abort_multipart_upload(
@@ -143,7 +143,7 @@ async def test_abort_mpu(mock_s3_client):
     )
 
     # It should delegate the request to real S3
-    mock_s3_client.abort_multipart_upload.assert_called_once_with(
+    mock_aws_client.abort_multipart_upload.assert_called_once_with(
         Bucket="my-bucket",
         Key=TEST_KEY,
         UploadId="my-lame-upload",
