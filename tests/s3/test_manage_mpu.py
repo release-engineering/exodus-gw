@@ -21,16 +21,12 @@ async def test_create_mpu(mock_s3_client):
     }
 
     response = await multipart_upload(
-        None,
-        env="test",
-        key=TEST_KEY,
-        uploads="",
+        None, env="test", key=TEST_KEY, uploads="",
     )
 
     # It should delegate request to real S3
     mock_s3_client.create_multipart_upload.assert_called_once_with(
-        Bucket="my-bucket",
-        Key=TEST_KEY,
+        Bucket="my-bucket", Key=TEST_KEY,
     )
 
     # It should succeed
@@ -137,16 +133,12 @@ async def test_abort_mpu(mock_s3_client):
     """Aborting a multipart upload is correctly delegated to S3."""
 
     response = await abort_multipart_upload(
-        env="test",
-        key=TEST_KEY,
-        uploadId="my-lame-upload",
+        env="test", key=TEST_KEY, uploadId="my-lame-upload",
     )
 
     # It should delegate the request to real S3
     mock_s3_client.abort_multipart_upload.assert_called_once_with(
-        Bucket="my-bucket",
-        Key=TEST_KEY,
-        UploadId="my-lame-upload",
+        Bucket="my-bucket", Key=TEST_KEY, UploadId="my-lame-upload",
     )
 
     # It should be a successful, empty response

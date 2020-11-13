@@ -12,14 +12,8 @@ def test_healthcheck():
     [
         ("dev", {"detail": "Created Publish Id"}),
         ("qa", {"detail": "Created Publish Id"}),
-        (
-            "stage",
-            {"detail": "Created Publish Id"},
-        ),
-        (
-            "prod",
-            {"detail": "Created Publish Id"},
-        ),
+        ("stage", {"detail": "Created Publish Id"},),
+        ("prod", {"detail": "Created Publish Id"},),
         (
             "env_doesnt_exist",
             {"error": "environment env_doesnt_exist not found"},
