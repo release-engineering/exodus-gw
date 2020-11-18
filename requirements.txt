@@ -67,6 +67,10 @@ attrs==20.3.0 \
     --hash=sha256:31b2eced602aa8423c2aea9c76a724617ed67cf9513173fd3a4f03e3a929c7e6 \
     --hash=sha256:832aa3cde19744e49938b91fea06d69ecb9e649c93ba974535d08ad92164f700 \
     # via aiohttp
+backoff==1.10.0 \
+    --hash=sha256:5e73e2cbe780e1915a204799dba0a01896f45f4385e636bcca7a0614d879d0cd \
+    --hash=sha256:b8fba021fac74055ac05eb7c7bfce4723aedde6cd0a504e5326bcb0bdd6d19a4 \
+    # via -r requirements.in
 boto3==1.12.32 \
     --hash=sha256:57398de1b5e074e715c866441e69f90c9468959d5743a021d8aeed04fbaa1078 \
     --hash=sha256:60ac1124597231ed36a7320547cd0d16a001bb92333ab30ad20514f77e585225 \

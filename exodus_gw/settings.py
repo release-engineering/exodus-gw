@@ -45,6 +45,9 @@ class Settings(BaseSettings):
     db_service_port: str = "5432"
     """db service port"""
 
+    write_max_time: int = 60
+    """Maximum time for DynamoDB write operations."""
+
     class Config:
         env_prefix = "exodus_gw_"
 
