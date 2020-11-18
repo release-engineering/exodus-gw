@@ -1,4 +1,4 @@
-from exodus_gw.s3.util import extract_mpu_parts
+from exodus_gw.aws.util import extract_mpu_parts
 
 
 def test_typical_body():

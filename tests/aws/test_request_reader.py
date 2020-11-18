@@ -1,6 +1,6 @@
 import pytest
 
-from exodus_gw.s3.util import RequestReader
+from exodus_gw.aws.util import RequestReader
 
 
 class FakeRequest:
