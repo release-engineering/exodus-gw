@@ -1,9 +1,20 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 
+from .. import schemas
 from ..auth import CallContext, call_context
-from ..publish import create_publish_id
+from ..crud import create_publish
+from ..database import SessionLocal
 
 router = APIRouter()
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 @router.get("/healthcheck", tags=["service"])
@@ -12,13 +23,15 @@ def healthcheck():
     return {"detail": "exodus-gw is running"}
 
 
-@router.post("/{env}/publish")
-def publish(env: str):
-    """WIP: Returns a new, empty publish id"""
+@router.post(
+    "/{env}/publish", response_model=schemas.Publish, tags=["service"]
+)
+async def publish(env: str, db: Session = Depends(get_db)):
+    """Returns a new, empty publish object"""
     if env not in ["dev", "qa", "stage", "prod"]:
         return {"error": "environment {0} not found".format(env)}
-    create_publish_id()
-    return {"detail": "Created Publish Id"}
+
+    return create_publish(db)
 
 
 @router.get(

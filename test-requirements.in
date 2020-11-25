@@ -1,5 +1,4 @@
 alabaster
-attrs
 black
 coveralls
 dataclasses;python_version<'3.7'
@@ -20,3 +19,5 @@ sphinx
 wcwidth
 zipp
 flake8
+docutils==0.15.2
+urllib3==1.25.11

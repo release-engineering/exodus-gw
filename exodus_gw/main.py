@@ -4,12 +4,12 @@ from fastapi import FastAPI
 from fastapi.exception_handlers import http_exception_handler
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from . import models
 from .aws.util import xml_response
-from .database import get_db
+from .database import engine
 from .routers import gateway, s3
 from .settings import get_settings
 
-db = get_db()
 app = FastAPI(title="exodus-gw")
 app.include_router(gateway.router)
 app.include_router(s3.router)
@@ -44,3 +44,8 @@ def configure_loggers():
         hdlr = logging.StreamHandler()
         hdlr.setFormatter(fmtr)
         root.addHandler(hdlr)
+
+
+@app.on_event("startup")
+def db_init() -> None:
+    models.Base.metadata.create_all(bind=engine)

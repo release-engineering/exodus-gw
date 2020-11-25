@@ -4,6 +4,11 @@
 # E0611: No name 'BaseModel' in module 'pydantic' (no-name-in-module)
 extension-pkg-whitelist=pydantic
 
+# Avoid Pylint warning E1101: 'Instance of 'Session' has no 'close' member'.
+# 'Session' class has dynamic attributes
+[TYPECHECK]
+ignored-classes=Session
+
 disable=print-statement,
         parameter-unpacking,
         unpacking-in-except,
