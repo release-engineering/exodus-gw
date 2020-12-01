@@ -1,5 +1,7 @@
 import mock
 import pytest
+from mock import MagicMock
+from sqlalchemy.orm.session import Session
 
 
 @pytest.fixture(autouse=True)
@@ -20,3 +22,11 @@ def mock_request_reader():
     # correct expected value. The class is tested separately.
     with mock.patch("exodus_gw.aws.util.RequestReader.get_reader") as m:
         yield m
+
+
+@pytest.fixture()
+def mock_db_session():
+    db_session = Session()
+    db_session.add = MagicMock()
+    db_session.refresh = MagicMock()
+    yield db_session
