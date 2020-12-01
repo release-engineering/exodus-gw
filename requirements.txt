@@ -96,9 +96,9 @@ docutils==0.15.2 \
     --hash=sha256:9e4d7ecfc600058e07ba661411a2b7de2fd0fafa17d1a7f7361cd47b1175c827 \
     --hash=sha256:a2aeea129088da402665e92e0b25b04b073c04b2dce4ab65caaa38b7ce2e1a99 \
     # via botocore
-fastapi==0.61.2 \
-    --hash=sha256:8c8517680a221e69eb34073adf46c503092db2f24845b7bdc7f85b54f24ff0df \
-    --hash=sha256:9e0494fcbba98f85b8cc9b2606bb6b625246e1b12f79ca61f508b0b00843eca6 \
+fastapi==0.62.0 \
+    --hash=sha256:62074dd38541d9d7245f3aacbbd0d44340c53d56186c9b249d261a18dad4874b \
+    --hash=sha256:8f4c64cd9cea67fb7dd175ca5015961efa572b9f43a8731014dac8929d86225f \
     # via -r requirements.in
 gunicorn==20.0.4 \
     --hash=sha256:1904bb2b8a43658807108d59c3f3d56c2b6121a701161de0ddf9ad140073c626 \
