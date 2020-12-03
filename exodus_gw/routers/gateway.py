@@ -1,10 +1,14 @@
+from typing import List
+from uuid import UUID
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from .. import schemas
+from .. import models, schemas
 from ..auth import CallContext, call_context
-from ..crud import create_publish
+from ..crud import create_publish, update_publish
 from ..database import SessionLocal
+from ..settings import get_environment
 
 router = APIRouter()
 
@@ -24,14 +28,33 @@ def healthcheck():
 
 
 @router.post(
-    "/{env}/publish", response_model=schemas.Publish, tags=["service"]
+    "/{env}/publish",
+    response_model=schemas.Publish,
+    status_code=200,
+    tags=["publish"],
 )
-async def publish(env: str, db: Session = Depends(get_db)):
+async def publish(env: str, db: Session = Depends(get_db)) -> models.Publish:
     """Returns a new, empty publish object"""
-    if env not in ["dev", "qa", "stage", "prod"]:
-        return {"error": "environment {0} not found".format(env)}
+    get_environment(env)
 
     return create_publish(db)
+
+
+@router.put(
+    "/{env}/publish/{publish_id}",
+    status_code=200,
+    tags=["publish"],
+)
+async def update_publish_items(
+    env: str,
+    publish_id: UUID,
+    items: List[schemas.ItemBase],
+    db: Session = Depends(get_db),
+) -> dict:
+    """Update the publish objects with items"""
+    get_environment(env)
+    update_publish(db, items, publish_id)
+    return {}
 
 
 @router.get(
