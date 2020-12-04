@@ -78,3 +78,31 @@ class S3ClientWrapper:
         request_dict = kwargs.get("request_dict") or {}
         context = request_dict.get("context") or {}
         context["s3_redirected"] = True
+
+
+class DynamoDBClientWrapper:
+    """Helper class to obtain preconfigured DynamoDB clients.
+
+    Clients may be wrapped with additional config and event handlers.
+    """
+
+    def __init__(self, profile: str):
+        """Prepare a client for the given profile. This object must be used
+        via 'async with' in order to obtain access to the client.
+
+        Note: Session creation will fail if provided profile cannot be found.
+        """
+
+        session = aioboto3.Session(profile_name=profile)
+
+        self._client_context = session.client(
+            "dynamodb",
+            endpoint_url=os.environ.get("EXODUS_GW_DYNAMODB_ENDPOINT_URL")
+            or None,
+        )
+
+    async def __aenter__(self):
+        return await self._client_context.__aenter__()
+
+    async def __aexit__(self, exc_type, exc, tb):
+        await self._client_context.__aexit__(exc_type, exc, tb)
