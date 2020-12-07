@@ -1,7 +1,7 @@
 version: "3.3"
 services:
   db:
-    image: docker.io/library/postgres:12
+    image: quay.io/exodus/postgres:12
     container_name: exodus-gw-db
     environment:
       - POSTGRES_USER=exodus-gw
