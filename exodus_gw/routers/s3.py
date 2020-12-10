@@ -99,7 +99,7 @@ async def multipart_upload(
         # Means a new upload is requested
         return await create_multipart_upload(env, key)
 
-    elif uploads is None and uploadId:
+    if uploads is None and uploadId:
         # Given an existing upload to complete
         return await complete_multipart_upload(env, key, uploadId, request)
 
