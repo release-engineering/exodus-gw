@@ -12,8 +12,48 @@ TEST_ITEMS = [
 @pytest.mark.parametrize(
     "delete,expected_request",
     [
-        (False, {"PutRequest": {"Item": item} for item in TEST_ITEMS}),
-        (True, {"DeleteRequest": {"Key": item} for item in TEST_ITEMS}),
+        (
+            False,
+            [
+                {
+                    "PutRequest": {
+                        "Item": {
+                            "web_uri": {"S": "/example/one"},
+                            "from_date": {"S": "2021-01-01"},
+                        }
+                    }
+                },
+                {
+                    "PutRequest": {
+                        "Item": {
+                            "web_uri": {"S": "/example/two"},
+                            "from_date": {"S": "2021-01-01"},
+                        }
+                    }
+                },
+            ],
+        ),
+        (
+            True,
+            [
+                {
+                    "DeleteRequest": {
+                        "Key": {
+                            "web_uri": {"S": "/example/one"},
+                            "from_date": {"S": "2021-01-01"},
+                        }
+                    }
+                },
+                {
+                    "DeleteRequest": {
+                        "Key": {
+                            "web_uri": {"S": "/example/two"},
+                            "from_date": {"S": "2021-01-01"},
+                        }
+                    }
+                },
+            ],
+        ),
     ],
     ids=["Put", "Delete"],
 )
@@ -27,7 +67,7 @@ async def test_batch_write(mock_aws_client, delete, expected_request):
 
     # Should've requested write of all items.
     mock_aws_client.batch_write_item.assert_called_once_with(
-        RequestItems={"my-table": [expected_request]}
+        RequestItems={"my-table": expected_request}
     )
 
 
