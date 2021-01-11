@@ -45,6 +45,9 @@ class Settings(BaseSettings):
     db_service_port: str = "5432"
     """db service port"""
 
+    max_write_retries: str = "20"
+    """Maximum retry attempts for DynamoDB write operations."""
+
     class Config:
         env_prefix = "exodus_gw_"
 

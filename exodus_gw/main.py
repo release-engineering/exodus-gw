@@ -1,5 +1,7 @@
 import logging.config
 
+import dramatiq
+from dramatiq.brokers.rabbitmq import RabbitmqBroker
 from fastapi import FastAPI
 from fastapi.exception_handlers import http_exception_handler
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -49,3 +51,8 @@ def configure_loggers():
 @app.on_event("startup")
 def db_init() -> None:
     models.Base.metadata.create_all(bind=engine)
+
+
+@app.on_event("startup")
+def set_broker() -> None:
+    dramatiq.set_broker(RabbitmqBroker(host="rabbitmq"))
