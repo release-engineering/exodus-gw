@@ -1,7 +1,7 @@
 from typing import List, Union
 
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Query, Session, lazyload
 
 from . import models, schemas
 
@@ -28,3 +28,14 @@ def update_publish(
         db.add(models.Item(**item.dict(), publish_id=publish_id))
 
     db.commit()
+
+
+def get_publish_by_id(
+    db: Session, publish_id: UUID
+) -> Query:  # pragma: no cover
+    return (
+        db.query(models.Publish)
+        .filter(models.Publish.id == publish_id)
+        .options(lazyload(models.Publish.items))
+        .first()
+    )
