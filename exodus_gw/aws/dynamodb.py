@@ -22,10 +22,10 @@ async def batch_write(env: str, items: List[dict], delete: bool = False):
     table = env_obj.table
 
     if delete:
-        request = {table: [{"DeleteRequest": {"Key": item} for item in items}]}
+        request = {table: [{"DeleteRequest": {"Key": item}} for item in items]}
         exc_msg = "Exception while deleting %s items from table '%s'"
     else:
-        request = {table: [{"PutRequest": {"Item": item} for item in items}]}
+        request = {table: [{"PutRequest": {"Item": item}} for item in items]}
         exc_msg = "Exception while writing %s items to table '%s'"
 
     try:
