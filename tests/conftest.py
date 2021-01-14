@@ -3,6 +3,8 @@ import pytest
 from mock import MagicMock
 from sqlalchemy.orm.session import Session
 
+from exodus_gw import schemas
+
 
 @pytest.fixture(autouse=True)
 def mock_aws_client():
@@ -30,3 +32,19 @@ def mock_db_session():
     db_session.add = MagicMock()
     db_session.refresh = MagicMock()
     yield db_session
+
+
+@pytest.fixture()
+def mock_item_list():
+    return [
+        schemas.ItemBase(
+            web_uri="/some/path",
+            object_key="abcde",
+            from_date="2021-01-01T00:00:00.0",
+        ),
+        schemas.ItemBase(
+            web_uri="/other/path",
+            object_key="a1b2",
+            from_date="2021-01-01T00:00:00.0",
+        ),
+    ]
