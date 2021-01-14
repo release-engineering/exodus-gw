@@ -1,12 +1,19 @@
 import logging
 from typing import List
 
+import backoff
+
 from ..aws.client import DynamoDBClientWrapper as ddb_client
-from ..settings import get_environment
+from ..settings import get_environment, get_settings
 
 LOG = logging.getLogger("exodus-gw")
 
 
+@backoff.on_predicate(
+    wait_gen=backoff.expo,
+    predicate=lambda response: response["UnprocessedItems"],
+    max_tries=get_settings().max_tries,
+)
 async def batch_write(env: str, items: List[dict], delete: bool = False):
     """Write or delete up to 25 items on the given environment's table.
 
