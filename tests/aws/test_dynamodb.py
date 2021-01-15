@@ -77,11 +77,11 @@ async def test_batch_write_item_limit(mock_aws_client, caplog):
 
     items = TEST_ITEMS * 13
 
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError) as exc_info:
         await dynamodb.batch_write("test", items)
 
     assert "Cannot process more than 25 items" in caplog.text
-    assert str(exc.value) == "Received too many items (26)"
+    assert str(exc_info.value) == "Received too many items (26)"
 
 
 @pytest.mark.asyncio
