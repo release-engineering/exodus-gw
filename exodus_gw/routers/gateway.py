@@ -31,7 +31,7 @@ def healthcheck():
     "/{env}/publish",
     response_model=schemas.Publish,
     status_code=200,
-    tags=["service"],
+    tags=["publish"],
 )
 async def publish(env: str, db: Session = Depends(get_db)) -> models.Publish:
     """Returns a new, empty publish object"""
