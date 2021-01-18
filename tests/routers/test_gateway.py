@@ -12,6 +12,15 @@ def test_healthcheck():
     assert gateway.healthcheck() == {"detail": "exodus-gw is running"}
 
 
+def test_healthcheck_worker(stub_worker):
+    # This test exercises "real" dramatiq message handling via stub
+    # broker & worker, demonstrating that messages can be used from
+    # within tests.
+    assert gateway.healthcheck_worker() == {
+        "detail": "background worker is running: ping => pong"
+    }
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "env",

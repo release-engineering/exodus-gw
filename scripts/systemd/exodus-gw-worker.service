@@ -1,0 +1,20 @@
+[Unit]
+Description=exodus-gw background worker
+Wants=network.target
+After=network-online.target exodus-gw-db.service
+
+[Service]
+EnvironmentFile=-%S/exodus-gw-dev/.env
+Environment=EXODUS_GW_SRC_PATH=%h/src/exodus-gw
+Environment=EXODUS_GW_DB_SERVICE_PORT=3355
+Environment=EXODUS_GW_DB_SERVICE_HOST=localhost
+Restart=on-failure
+
+ExecStart=/bin/sh -c "cd ${EXODUS_GW_SRC_PATH}; \
+ exec tox\
+ -e dev-worker\
+"
+Type=exec
+
+[Install]
+WantedBy=exodus-gw.target

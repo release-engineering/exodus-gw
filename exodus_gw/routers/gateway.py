@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from .. import models, schemas
+from .. import models, schemas, worker
 from ..auth import CallContext, call_context
 from ..aws.dynamodb import batch_write
 from ..crud import create_publish, get_publish_by_id, update_publish
@@ -30,6 +30,19 @@ def get_db():
 def healthcheck():
     """Returns a successful response if the service is running."""
     return {"detail": "exodus-gw is running"}
+
+
+@router.get("/healthcheck-worker", tags=["service"])
+def healthcheck_worker():
+    """Returns a successful response if background workers are running."""
+
+    msg = worker.ping.send()
+
+    # If we don't get a response in time, this will raise an exception and we'll
+    # respond with a 500 error, which seems reasonable.
+    result = msg.get_result(block=True, timeout=5000)
+
+    return {"detail": "background worker is running: ping => %s" % result}
 
 
 @router.post(

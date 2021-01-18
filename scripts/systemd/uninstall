@@ -16,11 +16,13 @@ do_unit(){
 
 disable_units(){
   do_unit stop exodus-gw-uvicorn.service
+  do_unit stop exodus-gw-worker.service
   do_unit stop exodus-gw-db.service
   do_unit stop exodus-gw-localstack.service
   do_unit stop exodus-gw-sidecar.service
   do_unit stop exodus-gw.target
   do_unit disable exodus-gw-uvicorn.service
+  do_unit disable exodus-gw-worker.service
   do_unit disable exodus-gw-db.service
   do_unit disable exodus-gw-localstack.service
   do_unit disable exodus-gw-sidecar.service
