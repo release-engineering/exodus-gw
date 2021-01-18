@@ -111,7 +111,7 @@ async def test_upload_invalid_env(mock_aws_client, mock_request_reader):
     )
     mock_request_reader.return_value = b"some bytes"
 
-    with pytest.raises(HTTPException) as err:
+    with pytest.raises(HTTPException) as exc_info:
         await upload(
             request=request,
             env="foo",
@@ -124,4 +124,4 @@ async def test_upload_invalid_env(mock_aws_client, mock_request_reader):
     assert not mock_aws_client.put_object.called
 
     # It should produce an error message
-    assert err.value.detail == "Invalid environment='foo'"
+    assert exc_info.value.detail == "Invalid environment='foo'"

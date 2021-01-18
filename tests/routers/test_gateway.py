@@ -29,10 +29,10 @@ async def test_publish_env_exists(env, mock_db_session):
 @pytest.mark.asyncio
 async def test_publish_env_doesnt_exist(mock_db_session):
     env = "foo"
-    with pytest.raises(HTTPException) as e:
+    with pytest.raises(HTTPException) as exc_info:
         await gateway.publish(env=env, db=mock_db_session)
-    assert e.value.status_code == 404
-    assert e.value.detail == "Invalid environment='foo'"
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Invalid environment='foo'"
 
 
 @pytest.mark.asyncio
@@ -69,7 +69,7 @@ async def test_update_publish_items_env_doesnt_exist(
     env = "foo"
     publish_id = "123e4567-e89b-12d3-a456-426614174000"
 
-    with pytest.raises(HTTPException) as e:
+    with pytest.raises(HTTPException) as exc_info:
         await gateway.update_publish_items(
             env=env,
             publish_id=publish_id,
@@ -77,8 +77,8 @@ async def test_update_publish_items_env_doesnt_exist(
             db=mock_db_session,
         )
 
-    assert e.value.status_code == 404
-    assert e.value.detail == "Invalid environment='foo'"
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Invalid environment='foo'"
 
 
 def test_whoami():
