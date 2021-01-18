@@ -27,21 +27,9 @@ disable_units(){
   do_unit disable exodus-gw.target
 }
 
-summarize(){
-  cat <<END
-  do_unit disable exodus-gw-sidecar.service
-  do_unit disable exodus-gw.target
-}
-
-summarize(){
-  cat <<END
-exodus-gw units are uninstalled!
-END
-}
-
 run(){
   disable_units
-  summarize
+  echo 'exodus-gw units are uninstalled!'
 }
 
 run
