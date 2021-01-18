@@ -1,0 +1,47 @@
+#!/bin/bash
+set -e
+set -o pipefail
+
+cd $(dirname $0)
+
+have_unit(){
+  systemctl --user cat $1 &>/dev/null
+}
+
+do_unit(){
+  if have_unit $2; then
+    systemctl --user $1 $2
+  fi
+}
+
+disable_units(){
+  do_unit stop exodus-gw-uvicorn.service
+  do_unit stop exodus-gw-db.service
+  do_unit stop exodus-gw-localstack.service
+  do_unit stop exodus-gw-sidecar.service
+  do_unit stop exodus-gw.target
+  do_unit disable exodus-gw-uvicorn.service
+  do_unit disable exodus-gw-db.service
+  do_unit disable exodus-gw-localstack.service
+  do_unit disable exodus-gw-sidecar.service
+  do_unit disable exodus-gw.target
+}
+
+summarize(){
+  cat <<END
+  do_unit disable exodus-gw-sidecar.service
+  do_unit disable exodus-gw.target
+}
+
+summarize(){
+  cat <<END
+exodus-gw units are uninstalled!
+END
+}
+
+run(){
+  disable_units
+  summarize
+}
+
+run

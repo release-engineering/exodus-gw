@@ -1,0 +1,32 @@
+#!/bin/bash
+set -e
+set -o pipefail
+
+cd $(dirname $0)
+
+CONFIG_DIR=${XDG_CONFIG_HOME:-~/.config}/exodus-gw-dev
+
+remove_files(){
+  rm -rvf "$CONFIG_DIR"
+}
+
+remove_containers(){
+  if podman inspect exodus-gw-sidecar &>/dev/null; then
+    podman rm exodus-gw-sidecar
+  fi
+}
+
+summarize(){
+  cat <<END
+exodus-gw development data has been removed!
+END
+}
+
+run(){
+  ./uninstall
+  remove_files
+  remove_containers
+  summarize
+}
+
+run

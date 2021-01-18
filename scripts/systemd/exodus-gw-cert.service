@@ -1,0 +1,19 @@
+# Service file for ensuring exodus-gw development cert & key exists.
+
+[Unit]
+Description=exodus-gw development cert
+
+[Service]
+Type=oneshot
+ExecStartPre=mkdir -p %S/exodus-gw-dev
+ExecStart=sscg \
+  --cert-file=%S/exodus-gw-dev/service.pem \
+  --cert-key-file=%S/exodus-gw-dev/service-key.pem \
+  --ca-file=%S/exodus-gw-dev/ca.crt \
+  --subject-alt-name localhost
+
+# This exit code means the cert already exists, which is OK.
+SuccessExitStatus=17
+
+[Install]
+WantedBy=exodus-gw.target
