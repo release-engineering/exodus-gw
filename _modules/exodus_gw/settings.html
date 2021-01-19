@@ -79,6 +79,11 @@
     <span class="n">db_service_port</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;5432&quot;</span>
     <span class="sd">&quot;&quot;&quot;db service port&quot;&quot;&quot;</span>
 
+    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">25</span>
+    <span class="sd">&quot;&quot;&quot;Maximum number of items to write at one time&quot;&quot;&quot;</span>
+    <span class="n">max_tries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span>
+    <span class="sd">&quot;&quot;&quot;Maximum attempts to write to DynamoDB table.&quot;&quot;&quot;</span>
+
     <span class="k">class</span> <span class="nc">Config</span><span class="p">:</span>
         <span class="n">env_prefix</span> <span class="o">=</span> <span class="s2">&quot;exodus_gw_&quot;</span></div>
 
