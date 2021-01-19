@@ -1,3 +1,5 @@
+import logging
+from itertools import islice
 from typing import List, Union
 from uuid import UUID
 
@@ -6,9 +8,12 @@ from sqlalchemy.orm import Session
 
 from .. import models, schemas
 from ..auth import CallContext, call_context
-from ..crud import create_publish, update_publish
+from ..aws.dynamodb import batch_write
+from ..crud import create_publish, get_publish_by_id, update_publish
 from ..database import SessionLocal
-from ..settings import get_environment
+from ..settings import get_environment, get_settings
+
+LOG = logging.getLogger("exodus-gw")
 
 router = APIRouter()
 
@@ -59,6 +64,58 @@ async def update_publish_items(
     get_environment(env)
 
     update_publish(db, items, publish_id)
+
+    return {}
+
+
+@router.post(
+    "/{env}/publish/{publish_id}/commit",
+    status_code=200,
+    tags=["publish"],
+)
+async def commit_publish(
+    env: str, publish_id: UUID, db: Session = Depends(get_db)
+) -> dict:
+    """Write the publish's items, in batches, to DynamoDB table"""
+
+    # Validate environment from caller.
+    get_environment(env)
+
+    publish_obj = get_publish_by_id(db, publish_id)
+    items_iter = iter(publish_obj.items)
+    batch_size = get_settings().batch_size
+    batches = list(iter(lambda: tuple(islice(items_iter, batch_size)), ()))
+
+    write_failed = False
+    for batch in batches:
+        response = await batch_write(env, batch)
+
+        if response["UnprocessedItems"]:
+            write_failed = True
+            break
+
+    if write_failed:
+        LOG.info("One or more writes were unsuccessful")
+        LOG.info("Cleaning up written items. . .")
+
+        unprocessed_items = []
+        for batch in batches:
+            response = await batch_write(env, batch, delete=True)
+
+            if response["UnprocessedItems"]:
+                unprocessed_items.append(response["UnprocessedItems"])
+
+        if unprocessed_items:
+            LOG.error(
+                "Unprocessed items:\n\t%s",
+                ("\n\t".join([str(item) for item in unprocessed_items])),
+            )
+            raise RuntimeError(
+                "Cleanup failed: partial publish persists!\n"
+                "See error log for details"
+            )
+
+        LOG.info("Publish erased.")
 
     return {}
 

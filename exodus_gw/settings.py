@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     db_service_port: str = "5432"
     """db service port"""
 
+    batch_size: int = 25
+    """Maximum number of items to write at one time"""
+    max_tries: int = 20
+    """Maximum attempts to write to DynamoDB table."""
+
     class Config:
         env_prefix = "exodus_gw_"
 

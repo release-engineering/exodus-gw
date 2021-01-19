@@ -10,3 +10,4 @@ psycopg2
 sqlalchemy
 async-exit-stack
 async-generator
+backoff
