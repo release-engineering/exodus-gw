@@ -32,6 +32,7 @@ enable_units(){
   systemctl --user enable $PWD/exodus-gw-db.service
   systemctl --user enable $PWD/exodus-gw-localstack.service
   systemctl --user enable $PWD/exodus-gw-uvicorn.service
+  systemctl --user enable $PWD/exodus-gw-worker.service
   systemctl --user enable $PWD/exodus-gw-cert.service
 
   if use_sidecar; then
@@ -88,6 +89,9 @@ Suggested commands:
 
   # Verify http server is working
   curl http://localhost:8000/healthcheck
+
+  # Verify background worker is running
+  curl http://localhost:8000/healthcheck-worker
 
   # Create a test bucket in localstack
   aws --endpoint-url=http://localhost:3377 s3api create-bucket --bucket test
