@@ -23,7 +23,7 @@ setup(
     name="exodus-gw",
     version="0.0.1",
     packages=find_packages(exclude=["tests"]),
-    package_data={},
+    include_package_data=True,
     url="https://github.com/release-engineering/exodus-gw",
     license="GNU General Public License",
     description=get_description(),
