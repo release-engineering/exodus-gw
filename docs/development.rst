@@ -94,6 +94,25 @@ changes written to the DB and localstack), run:
   scripts/systemd/clean
 
 
+Configuration
+.............
+
+If you need to adjust the configuration of the development environment, such as
+using custom ports for services to avoid conflicts, you can edit the environment
+file at ``$HOME/.config/exodus-gw-dev/.env``.
+
+For example, if you need to run the development postgres server using a different
+port, you may add to this file:
+
+.. code-block:: shell
+
+  # use this port for postgres rather than default
+  EXODUS_GW_DB_SERVICE_PORT=8899
+
+The development environment installation process will generate a template file with
+the most useful environment variables listed.
+
+
 Cheat sheet
 ...........
 

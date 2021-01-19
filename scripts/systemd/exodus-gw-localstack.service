@@ -9,6 +9,7 @@ Wants=network.target
 After=network-online.target exodus-gw-cert.service
 
 [Service]
+EnvironmentFile=-%S/exodus-gw-dev/.env
 Environment=EXODUS_GW_LOCALSTACK_IMAGE=quay.io/exodus/localstack:0.12.2
 Environment=EXODUS_GW_LOCALSTACK_PORT=3377
 

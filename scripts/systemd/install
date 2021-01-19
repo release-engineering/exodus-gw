@@ -41,6 +41,35 @@ enable_units(){
   fi
 }
 
+create_env_file(){
+  # Create a .env file read by the rest of the units via EnvironmentFile.
+  # The main reason we need to do this is to ensure an accurate source path,
+  # since not every dev may clone the repo to the same location.
+  if ! test -f ~/.config/exodus-gw-dev/.env; then
+    mkdir -p ~/.config/exodus-gw-dev
+    cat >~/.config/exodus-gw-dev/.env <<END
+# Environment for exodus-gw development services.
+#
+# Arbitrary environment variables can be set here.
+# The most commonly used are listed here as examples.
+
+# Path to git repo
+EXODUS_GW_SRC_PATH=$(realpath -L ../..)
+
+# Port numbers for various things. You might have to change these
+# if you're having a clash with other services.
+#EXODUS_GW_DB_SERVICE_PORT=3355
+#EXODUS_GW_LOCALSTACK_PORT=3377
+#EXODUS_GW_HTTP_PORT=8000
+#EXODUS_GW_HTTPS_PORT=8010
+
+# You'll have to change this too if you change the localstack port.
+#EXODUS_GW_S3_ENDPOINT_URL=https://localhost:3377
+END
+  fi
+
+}
+
 make_cert(){
   systemctl --user start exodus-gw-cert.service
 }
@@ -79,6 +108,7 @@ END
 
 run(){
   check_prereqs
+  create_env_file
   enable_units
   make_cert
   summarize
