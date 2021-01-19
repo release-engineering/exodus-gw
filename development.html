@@ -102,6 +102,20 @@ changes written to the DB and localstack), run:</p>
 </pre></div>
 </div>
 </div>
+<div class="section" id="configuration">
+<h3>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h3>
+<p>If you need to adjust the configuration of the development environment, such as
+using custom ports for services to avoid conflicts, you can edit the environment
+file at <code class="docutils literal notranslate"><span class="pre">$HOME/.config/exodus-gw-dev/.env</span></code>.</p>
+<p>For example, if you need to run the development postgres server using a different
+port, you may add to this file:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># use this port for postgres rather than default</span>
+<span class="nv">EXODUS_GW_DB_SERVICE_PORT</span><span class="o">=</span><span class="m">8899</span>
+</pre></div>
+</div>
+<p>The development environment installation process will generate a template file with
+the most useful environment variables listed.</p>
+</div>
 <div class="section" id="cheat-sheet">
 <h3>Cheat sheet<a class="headerlink" href="#cheat-sheet" title="Permalink to this headline">¶</a></h3>
 <p>Various example commands are listed here which may be useful when working with
