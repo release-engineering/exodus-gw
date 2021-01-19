@@ -1,5 +1,5 @@
 import logging
-from itertools import islice
+from os.path import basename
 from typing import List, Union
 from uuid import UUID
 
@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from .. import models, schemas, worker
 from ..auth import CallContext, call_context
-from ..aws.dynamodb import batch_write
+from ..aws.dynamodb import write_batches
 from ..crud import create_publish, get_publish_by_id, update_publish
 from ..database import SessionLocal
 from ..settings import get_environment, get_settings
@@ -52,7 +52,7 @@ def healthcheck_worker():
     tags=["publish"],
 )
 async def publish(env: str, db: Session = Depends(get_db)) -> models.Publish:
-    """Returns a new, empty publish object"""
+    """Returns a new, empty publish object."""
 
     # Validate environment from caller.
     get_environment(env)
@@ -71,7 +71,7 @@ async def update_publish_items(
     items: Union[schemas.ItemBase or List[schemas.ItemBase]],
     db: Session = Depends(get_db),
 ) -> dict:
-    """Update the publish objects with items"""
+    """Update the publish objects with items."""
 
     # Validate environment from caller.
     get_environment(env)
@@ -89,46 +89,37 @@ async def update_publish_items(
 async def commit_publish(
     env: str, publish_id: UUID, db: Session = Depends(get_db)
 ) -> dict:
-    """Write the publish's items, in batches, to DynamoDB table"""
+    """Write the publish's items, in batches, to DynamoDB table."""
 
     # Validate environment from caller.
     get_environment(env)
 
-    publish_obj = get_publish_by_id(db, publish_id)
-    items_iter = iter(publish_obj.items)
-    batch_size = get_settings().batch_size
-    batches = list(iter(lambda: tuple(islice(items_iter, batch_size)), ()))
+    settings = get_settings()
 
-    write_failed = False
-    for batch in batches:
-        response = await batch_write(env, batch)
+    items = []
+    items_written = False
+    last_items = []
+    last_items_written = False
 
-        if response["UnprocessedItems"]:
-            write_failed = True
-            break
+    for item in get_publish_by_id(db, publish_id).items:
+        if basename(item.web_uri) in settings.entry_point_files:
+            last_items.append(item)
+        else:
+            items.append(item)
 
-    if write_failed:
-        LOG.info("One or more writes were unsuccessful")
-        LOG.info("Cleaning up written items. . .")
+    if items:
+        items_written = await write_batches(env, items)
 
-        unprocessed_items = []
-        for batch in batches:
-            response = await batch_write(env, batch, delete=True)
+    if not items_written:
+        # Delete all items if failed to write any items.
+        await write_batches(env, items, delete=True)
+    elif last_items:
+        # Write any last_items if successfully wrote all items.
+        last_items_written = await write_batches(env, last_items)
 
-            if response["UnprocessedItems"]:
-                unprocessed_items.append(response["UnprocessedItems"])
-
-        if unprocessed_items:
-            LOG.error(
-                "Unprocessed items:\n\t%s",
-                ("\n\t".join([str(item) for item in unprocessed_items])),
-            )
-            raise RuntimeError(
-                "Cleanup failed: partial publish persists!\n"
-                "See error log for details"
-            )
-
-        LOG.info("Publish erased.")
+        if not last_items_written:
+            # Delete everything if failed to write last_items.
+            await write_batches(env, items + last_items, delete=True)
 
     return {}
 

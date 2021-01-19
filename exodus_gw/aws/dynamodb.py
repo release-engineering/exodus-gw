@@ -1,4 +1,5 @@
 import logging
+from itertools import islice
 from typing import List
 
 import backoff
@@ -15,38 +16,82 @@ LOG = logging.getLogger("exodus-gw")
     predicate=lambda response: response["UnprocessedItems"],
     max_tries=get_settings().max_tries,
 )
-async def batch_write(
-    env: str, items: List[models.Item], delete: bool = False
-):
-    """Write or delete up to 25 items on the given environment's table.
+async def batch_write(env: str, request: dict):
+    """Wrapper for batch_write_item with retries and item count validation.
 
     Item limit of 25 is, at this time, imposed by AWS's boto3 library.
     """
 
-    if len(items) > 25:
-        LOG.error("Cannot process more than 25 items")
-        raise ValueError("Received too many items (%s)" % len(items))
+    environment = get_environment(env)
+    item_count = len(request[environment.table])
 
-    env_obj = get_environment(env)
-    profile = env_obj.aws_profile
-    table = env_obj.table
+    if item_count > 25:
+        LOG.error("Cannot process more than 25 items per request")
+        raise ValueError("Request contains too many items (%s)" % item_count)
 
-    if delete:
-        request = {
-            table: [{"DeleteRequest": {"Key": item.aws_fmt}} for item in items]
-        }
-        exc_msg = "Exception while deleting %s items from table '%s'"
-    else:
-        request = {
-            table: [{"PutRequest": {"Item": item.aws_fmt}} for item in items]
-        }
-        exc_msg = "Exception while writing %s items to table '%s'"
-
-    try:
-        async with ddb_client(profile=profile) as ddb:
-            response = await ddb.batch_write_item(RequestItems=request)
-    except Exception:
-        LOG.exception(exc_msg, len(items), table)
-        raise
+    async with ddb_client(profile=environment.aws_profile) as ddb:
+        response = await ddb.batch_write_item(RequestItems=request)
 
     return response
+
+
+def create_request(env: str, items: List[models.Item], delete: bool = False):
+    """Create the dictionary structure expected by batch_write_item."""
+
+    table = get_environment(env).table
+
+    if delete:
+        req_type = "DeleteRequest"
+        item_type = "Key"
+    else:
+        req_type = "PutRequest"
+        item_type = "Item"
+
+    return {table: [{req_type: {item_type: item.aws_fmt}} for item in items]}
+
+
+async def write_batches(
+    env: str, items: List[models.Item], delete: bool = False
+):
+    """Submit batches of given items for writing via batch_write."""
+
+    environment = get_environment(env)
+    settings = get_settings()
+
+    it = iter(items)
+    batches = list(iter(lambda: tuple(islice(it, settings.batch_size)), ()))
+    unprocessed_items = []
+
+    for batch in batches:
+        request = create_request(env, list(batch), delete)
+
+        try:
+            response = await batch_write(env, request)
+        except Exception:
+            LOG.exception(
+                "Exception while %s %s items on table '%s'",
+                ("deleting" if delete else "writing"),
+                len(batch),
+                environment.table,
+            )
+            raise
+
+        # Abort immediately for put requests.
+        # Collect and log unprocessed items for delete requests.
+        if response["UnprocessedItems"]:
+            if delete:
+                unprocessed_items.append(response["UnprocessedItems"])
+                continue
+
+            LOG.info("One or more writes were unsuccessful")
+            return False
+
+    if unprocessed_items:
+        LOG.error(
+            "Unprocessed items:\n\t%s",
+            ("\n\t".join([str(item) for item in unprocessed_items])),
+        )
+        raise RuntimeError("Deletion failed\nSee error log for details")
+
+    LOG.info("Items successfully %s", "deleted" if delete else "written")
+    return True
