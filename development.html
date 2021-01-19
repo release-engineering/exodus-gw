@@ -36,15 +36,19 @@
 <span id="dev-guide"></span><h1>Development Guide<a class="headerlink" href="#development-guide" title="Permalink to this headline">¶</a></h1>
 <p>This document contains useful info for developers contributing
 to the exodus-gw project.</p>
-<div class="section" id="running-exodus-gw-with-tox">
-<h2>Running exodus-gw with tox<a class="headerlink" href="#running-exodus-gw-with-tox" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="running-exodus-gw-services-with-tox">
+<h2>Running exodus-gw services with tox<a class="headerlink" href="#running-exodus-gw-services-with-tox" title="Permalink to this headline">¶</a></h2>
 <p>A development instance of the exodus-gw service may be run locally
-using tox:</p>
-<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>tox -e dev-server
+using tox. Commands are provided for running both the API and background
+worker components of exodus-gw:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># runs uvicorn with hot reload</span>
+tox -e dev-server
+
+<span class="c1"># runs dramatiq worker with hot reload</span>
+tox -e dev-worker
 </pre></div>
 </div>
-<p>This will run the service using uvicorn with hot reload enabled.</p>
-<p>The service will use <code class="docutils literal notranslate"><span class="pre">exodus-gw.ini</span></code> from the source directory for
+<p>The services will use <code class="docutils literal notranslate"><span class="pre">exodus-gw.ini</span></code> from the source directory for
 configuration, along with any <code class="docutils literal notranslate"><span class="pre">EXODUS_GW_*</span></code> environment variables,
 as described in <a class="reference internal" href="deployment.html#deploy-guide"><span class="std std-ref">Deployment Guide</span></a>.</p>
 <p>Note that tox will not start or manage any dependencies of exodus-gw.
@@ -61,6 +65,7 @@ a complete instance of the service in Kubernetes/OpenShift.</p>
 <ul class="simple">
 <li><p>exodus-gw uvicorn server (http)</p></li>
 <li><p>sidecar proxy container (https)</p></li>
+<li><p>exodus-gw dramatiq worker, for background tasks</p></li>
 <li><p>postgres container</p></li>
 <li><p>localstack container</p></li>
 <li><p>helpers for managing development certs</p></li>
@@ -154,17 +159,20 @@ libraries when using HTTPS vs HTTP.</p>
 <p>This should not require <code class="docutils literal notranslate"><span class="pre">--insecure</span></code> or other means of disabling SSL verification.</p>
 </td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">curl</span> <span class="pre">--cert</span> <span class="pre">my.crt</span> <span class="pre">--key</span> <span class="pre">my.key</span> <span class="pre">https://localhost:8010/whoami</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">curl</span> <span class="pre">http://localhost:8000/healthcheck-worker</span></code></p></td>
+<td><p>Sanity check for background worker</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">curl</span> <span class="pre">--cert</span> <span class="pre">my.crt</span> <span class="pre">--key</span> <span class="pre">my.key</span> <span class="pre">https://localhost:8010/whoami</span></code></p></td>
 <td><p>Sanity check of an exodus-gw endpoint using authentication.</p>
 <p>If using the sidecar proxy provided on Red Hat’s internal network, this requires
 you to have a valid certificate and key produced by RHCS.
 The method of obtaining these is beyond the scope of this documentation.</p>
 </td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">curl</span> <span class="pre">https://localhost:3377</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">curl</span> <span class="pre">https://localhost:3377</span></code></p></td>
 <td><p>Sanity check for localstack</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">aws</span> <span class="pre">configure</span> <span class="pre">--profile</span> <span class="pre">test</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">aws</span> <span class="pre">configure</span> <span class="pre">--profile</span> <span class="pre">test</span></code></p></td>
 <td><p>Create a <code class="docutils literal notranslate"><span class="pre">test</span></code> profile for AWS CLI.</p>
 <p>In order for exodus-gw to work, an AWS profile must exist in <code class="docutils literal notranslate"><span class="pre">~/.aws/credentials</span></code>
 matching the <code class="docutils literal notranslate"><span class="pre">aws_profile</span></code> in <code class="docutils literal notranslate"><span class="pre">exodus-gw.ini</span></code>.  This command will help to create
@@ -178,32 +186,38 @@ but must be present.</p></li>
 </ul>
 </td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">aws</span> <span class="pre">--endpoint-url=https://localhost:3377</span> <span class="pre">s3api</span> <span class="pre">create-bucket</span> <span class="pre">--bucket</span> <span class="pre">my-bucket</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">aws</span> <span class="pre">--endpoint-url=https://localhost:3377</span> <span class="pre">s3api</span> <span class="pre">create-bucket</span> <span class="pre">--bucket</span> <span class="pre">my-bucket</span></code></p></td>
 <td><p>Create a bucket in localstack.</p>
 <p>The localstack environment is initially empty, which will make it impossible to
 upload any objects. For upload to work with exodus-gw, you’ll want to create one
 or more buckets matching the info in <code class="docutils literal notranslate"><span class="pre">exodus-gw.ini</span></code>.</p>
 </td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">examples/s3-upload</span> <span class="pre">--endpoint-url</span> <span class="pre">https://localhost:8010/upload</span> <span class="pre">--env</span> <span class="pre">test</span> <span class="pre">some-file</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">examples/s3-upload</span> <span class="pre">--endpoint-url</span> <span class="pre">https://localhost:8010/upload</span> <span class="pre">--env</span> <span class="pre">test</span> <span class="pre">some-file</span></code></p></td>
 <td><p>Upload an object via exodus-gw.</p>
 <p>This will write to the localstack service.
 If you’re not sure whether anything really happened, check the logs of
 exodus-gw-localstack.service.</p>
 </td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">psql</span> <span class="pre">-h</span> <span class="pre">localhost</span> <span class="pre">-p</span> <span class="pre">3355</span> <span class="pre">-U</span> <span class="pre">exodus-gw</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">psql</span> <span class="pre">-h</span> <span class="pre">localhost</span> <span class="pre">-p</span> <span class="pre">3355</span> <span class="pre">-U</span> <span class="pre">exodus-gw</span></code></p></td>
 <td><p>Connect to the postgres database.</p>
 <p>The database will be empty until exodus-gw has started successfully at least once.</p>
 </td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">systemctl</span> <span class="pre">--user</span> <span class="pre">stop</span> <span class="pre">exodus-gw-db</span></code></p>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">env</span> <span class="pre">PGHOST=localhost</span> <span class="pre">PGPORT=3355</span> <span class="pre">PGUSER=exodus-gw</span> <span class="pre">dramatiq-pg</span> <span class="pre">stats</span></code></p></td>
+<td><p>Show stats on background tasks/messages</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">env</span> <span class="pre">PGHOST=localhost</span> <span class="pre">PGPORT=3355</span> <span class="pre">PGUSER=exodus-gw</span> <span class="pre">dramatiq-pg</span> <span class="pre">flush</span></code></p></td>
+<td><p>Force all dramatiq queues to be emptied (i.e. drop all messages)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">systemctl</span> <span class="pre">--user</span> <span class="pre">stop</span> <span class="pre">exodus-gw-db</span></code></p>
 <p><code class="docutils literal notranslate"><span class="pre">rm</span> <span class="pre">-rf</span> <span class="pre">~/.config/exodus-gw-dev/postgresql/</span></code></p>
 <p><code class="docutils literal notranslate"><span class="pre">systemctl</span> <span class="pre">--user</span> <span class="pre">start</span> <span class="pre">exodus-gw.target</span></code></p>
 </td>
 <td><p>Clean database while leaving other data untouched.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">systemctl</span> <span class="pre">--user</span> <span class="pre">stop</span> <span class="pre">exodus-gw-localstack</span></code></p>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">systemctl</span> <span class="pre">--user</span> <span class="pre">stop</span> <span class="pre">exodus-gw-localstack</span></code></p>
 <p><code class="docutils literal notranslate"><span class="pre">rm</span> <span class="pre">-rf</span> <span class="pre">~/.config/exodus-gw-dev/localstack/</span></code></p>
 <p><code class="docutils literal notranslate"><span class="pre">systemctl</span> <span class="pre">--user</span> <span class="pre">start</span> <span class="pre">exodus-gw.target</span></code></p>
 </td>
@@ -268,7 +282,7 @@ used for production may be used in your local environment.</p>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="deployment.html">Deployment Guide</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Development Guide</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#running-exodus-gw-with-tox">Running exodus-gw with tox</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#running-exodus-gw-services-with-tox">Running exodus-gw services with tox</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#systemd-based-development-environment">Systemd-based development environment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#spoofing-authentication">Spoofing authentication</a></li>
 </ul>

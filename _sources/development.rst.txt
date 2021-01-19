@@ -7,19 +7,22 @@ This document contains useful info for developers contributing
 to the exodus-gw project.
 
 
-Running exodus-gw with tox
---------------------------
+Running exodus-gw services with tox
+-----------------------------------
 
 A development instance of the exodus-gw service may be run locally
-using tox:
+using tox. Commands are provided for running both the API and background
+worker components of exodus-gw:
 
 .. code-block:: shell
 
+  # runs uvicorn with hot reload
   tox -e dev-server
 
-This will run the service using uvicorn with hot reload enabled.
+  # runs dramatiq worker with hot reload
+  tox -e dev-worker
 
-The service will use ``exodus-gw.ini`` from the source directory for
+The services will use ``exodus-gw.ini`` from the source directory for
 configuration, along with any ``EXODUS_GW_*`` environment variables,
 as described in :ref:`deploy-guide`.
 
@@ -40,6 +43,7 @@ This development environment includes:
 
 - exodus-gw uvicorn server (http)
 - sidecar proxy container (https)
+- exodus-gw dramatiq worker, for background tasks
 - postgres container
 - localstack container
 - helpers for managing development certs
@@ -149,6 +153,9 @@ the development environment.
 
        This should not require ``--insecure`` or other means of disabling SSL verification.
 
+   * - ``curl http://localhost:8000/healthcheck-worker``
+     - Sanity check for background worker
+
    * - ``curl --cert my.crt --key my.key https://localhost:8010/whoami``
      - Sanity check of an exodus-gw endpoint using authentication.
 
@@ -193,6 +200,12 @@ the development environment.
      - Connect to the postgres database.
 
        The database will be empty until exodus-gw has started successfully at least once.
+
+   * - ``env PGHOST=localhost PGPORT=3355 PGUSER=exodus-gw dramatiq-pg stats``
+     - Show stats on background tasks/messages
+
+   * - ``env PGHOST=localhost PGPORT=3355 PGUSER=exodus-gw dramatiq-pg flush``
+     - Force all dramatiq queues to be emptied (i.e. drop all messages)
 
    * - ``systemctl --user stop exodus-gw-db``
 
