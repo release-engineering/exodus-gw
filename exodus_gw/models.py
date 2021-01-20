@@ -44,6 +44,14 @@ class Item(Base):
 
     publish = relationship("Publish", back_populates="items")
 
+    @property
+    def aws_fmt(self):
+        return {
+            "web_uri": {"S": self.web_uri},
+            "object_key": {"S": self.object_key},
+            "from_date": {"S": self.from_date},
+        }
+
     def __init__(
         self,
         web_uri=web_uri,
