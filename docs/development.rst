@@ -182,19 +182,44 @@ the development environment.
 
        - Other parameters can be omitted.
 
-   * - ``aws --endpoint-url=https://localhost:3377 s3api create-bucket --bucket my-bucket``
+   * - ``scripts/localstack-s3-init``
+
+       ``scripts/localstack-s3-init some-bucket``
+
      - Create a bucket in localstack.
 
        The localstack environment is initially empty, which will make it impossible to
        upload any objects. For upload to work with exodus-gw, you'll want to create one
-       or more buckets matching the info in ``exodus-gw.ini``.
+       or more buckets matching the info in ``exodus-gw.ini``. The script will make a bucket
+       matching the ``test`` environment if no name is specified.
+
+   * - ``scripts/localstack-dynamodb-init``
+
+       ``scripts/localstack-dynamodb-init some-table``
+
+     - Create a table in localstack.
+
+       The localstack environment is initially empty, which will make it impossible to
+       execute any publish tasks. For publish to work with exodus-gw, you'll want to create
+       one or more tables matching the info in ``exodus-gw.ini``. The script will make a table
+       matching the ``test`` environment if no name is specified.
+
+   * - ``aws --endpoint-url=https://localhost:3377 s3 ls s3://my-bucket``
+     - List files in localstack s3 bucket.
+
+       Can be used to check the outcome of an upload.
+
+   * - ``aws --endpoint-url=https://localhost:3377 dynamodb scan --table-name my-table``
+     - Dump all content of a dynamodb table in localstack.
+
+       Can be used to check the outcome of a publish.
 
    * - ``examples/s3-upload --endpoint-url https://localhost:8010/upload --env test some-file``
      - Upload an object via exodus-gw.
 
        This will write to the localstack service.
        If you're not sure whether anything really happened, check the logs of
-       exodus-gw-localstack.service.
+       exodus-gw-localstack.service or use the ``s3 ls`` command above.
 
    * - ``psql -h localhost -p 3355 -U exodus-gw``
      - Connect to the postgres database.
