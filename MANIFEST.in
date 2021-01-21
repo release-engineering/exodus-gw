@@ -3,3 +3,4 @@ include CHANGELOG.md
 include LICENSE
 include requirements.txt
 include requirements.in
+recursive-include exodus_gw *.sql

@@ -20,9 +20,6 @@ class Publish(Base):
     )
     items = relationship("Item", back_populates="publish")
 
-    def __init__(self):
-        pass
-
 
 class Item(Base):
 
@@ -51,15 +48,3 @@ class Item(Base):
             "object_key": {"S": self.object_key},
             "from_date": {"S": self.from_date},
         }
-
-    def __init__(
-        self,
-        web_uri=web_uri,
-        object_key=object_key,
-        from_date=from_date,
-        publish_id=publish_id,
-    ):
-        self.web_uri = web_uri
-        self.object_key = object_key
-        self.from_date = from_date
-        self.publish_id = publish_id
