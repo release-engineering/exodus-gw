@@ -1,0 +1,166 @@
+#!/usr/bin/env python3
+#
+# Upload and publish an entire directory tree via exodus-gw.
+#
+# This command behaves similar to a recursive scp or rsync.
+# It'll walk all files in a source directory and upload them.
+#
+# Once all files have been uploaded, they will be atomically
+# published to destination paths matching the source paths,
+# relative to the top-level directory.
+#
+# Example:
+#
+#  examples/exodus-sync . /sync-test
+#
+# ...would publish the exodus-gw source tree under a 'sync-test' prefix.
+#
+
+import argparse
+import hashlib
+import logging
+import os
+from collections import namedtuple
+from urllib.parse import urljoin
+
+import boto3
+import requests
+
+# Represents a single item to be uploaded & published.
+Item = namedtuple("Item", ["src_path", "dest_path", "object_key"])
+
+
+def get_object_key(filename):
+    with open(filename, "rb") as f:
+        hasher = hashlib.sha256()
+        while True:
+            chunk = f.read(1024 * 1024 * 10)
+            if not chunk:
+                break
+            hasher.update(chunk)
+        return hasher.hexdigest()
+
+
+def get_items(args):
+    # Walk the source tree and get all items to be processed.
+    items = []
+
+    for (dirpath, _, filenames) in os.walk(args.src):
+        dirpath_rel = os.path.relpath(dirpath, args.src)
+        for filename in filenames:
+            src_path = os.path.join(dirpath, filename)
+            src_path = os.path.normpath(src_path)
+
+            dest_path = os.path.join(args.dest, dirpath_rel, filename)
+            dest_path = os.path.normpath(dest_path)
+
+            object_key = get_object_key(src_path)
+            items.append(Item(src_path, dest_path, object_key))
+
+    return items
+
+
+def upload_items(args, items):
+    # Upload all of the items.
+    #
+    # This will ensure all blobs exist in the CDN's s3 bucket (if they weren't
+    # already), but won't yet publish them, so they won't be exposed to clients
+    # of the CDN.
+
+    s3_endpoint = urljoin(args.exodus_gw_url, "upload")
+    s3 = boto3.resource("s3", endpoint_url=s3_endpoint)
+    bucket = s3.Bucket(args.env)
+
+    print("Uploading {} item(s) via {}".format(len(items), s3_endpoint))
+
+    for item in items:
+        object = bucket.Object(item.object_key)
+
+        # Check if we have it already - if so, we don't need to upload again.
+        # (TODO: we must implement RHELDST-4705 first)
+        # object.load()
+
+        object.upload_file(item.src_path)
+        print("Uploaded {} <= {}".format(item.object_key, item.src_path))
+
+
+def publish_items(args, items):
+    # Publish all the items which have previously been uploaded. This
+    # will make the items downloadable from the CDN via exodus-lambda,
+    # near-atomically.
+
+    # TODO: when exodus-gw-url is switched to https, and when exodus-gw
+    # starts enforcing that the caller has certain roles, this will need to
+    # support certificate-based auth.
+    session = requests.Session()
+
+    response = session.post(
+        os.path.join(args.exodus_gw_url, args.env, "publish")
+    )
+    response.raise_for_status()
+    publish = response.json()
+
+    print("Created publish {}".format(publish))
+
+    # TODO: we shouldn't have to assemble these URLs themselves, the object
+    # should have come with 'links' already - RHELDST-4706.
+    publish["links"] = {
+        "self": "/{env}/publish/{id}".format(env=args.env, id=publish["id"]),
+        "commit": "/{env}/publish/{id}/commit".format(
+            env=args.env, id=publish["id"]
+        ),
+    }
+
+    put_url = urljoin(args.exodus_gw_url, publish["links"]["self"])
+    for item in items:
+        r = session.put(
+            put_url,
+            json={
+                "web_uri": item.dest_path,
+                "object_key": item.object_key,
+                "from_date": "abc123",
+            },
+        )
+        r.raise_for_status()
+        print("Added to publish: {}".format(item))
+
+    commit_url = urljoin(args.exodus_gw_url, publish["links"]["commit"])
+
+    r = session.post(commit_url)
+    r.raise_for_status()
+
+    # TODO: committing is expected to be moved into a background task, at which
+    # point we expect to be given some kind of task object here, which we should
+    # poll to completion.
+
+    print("Started commit of publish: {}".format(r.json()))
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--debug", action="store_true", help="Enable verbose logging"
+    )
+
+    # TODO: we should point this at https by default, but that won't work
+    # well until RHELDST-3478 is fixed
+    parser.add_argument("--exodus-gw-url", default="http://localhost:8000")
+
+    parser.add_argument("--env", default="test")
+    parser.add_argument("src", help="source directory")
+    parser.add_argument(
+        "dest", nargs="?", default="/exodus-sync", help="target directory"
+    )
+
+    args = parser.parse_args()
+
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+
+    items = get_items(args)
+    upload_items(args, items)
+    publish_items(args, items)
+
+
+if __name__ == "__main__":
+    main()
