@@ -41,7 +41,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/%n-pid --cidfile %t/%n-cid --c
   --log-driver journald\
   -v %S/exodus-gw-dev/localstack:/tmp/localstack:z\
   -e DATA_DIR=/tmp/localstack/data\
-  -e SERVICES=s3\
+  -e SERVICES=s3,dynamodb\
   -e DEBUG=1\
   -e EDGE_PORT=${EXODUS_GW_LOCALSTACK_PORT}\
   ${EXODUS_GW_LOCALSTACK_IMAGE}

@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# Create a dynamodb table in the dev env's localstack instance.
+#
+# You will need to run this when:
+# - initially creating the dev env, or
+# - after cleaning it, or
+# - if you want to use a different table
+#
+
+# should match table for the environment you want to use in exodus-gw.ini
+TABLE_NAME="${1:-my-table}"
+
+ENV_FILE="~/.config/exodus-gw-dev/.env"
+
+if test -f "$ENV_FILE"; then
+  . "$ENV_FILE"
+fi
+
+set -xe
+
+exec aws \
+  --endpoint-url="${EXODUS_GW_DYNAMODB_ENDPOINT_URL:-https://localhost:3377}" \
+   dynamodb \
+   create-table \
+   --table-name "${TABLE_NAME}" \
+  --attribute-definitions AttributeName=web_uri,AttributeType=S \
+                          AttributeName=from_date,AttributeType=S \
+  --key-schema AttributeName=web_uri,KeyType=HASH \
+               AttributeName=from_date,KeyType=RANGE \
+  --provisioned-throughput ReadCapacityUnits=10,WriteCapacityUnits=10

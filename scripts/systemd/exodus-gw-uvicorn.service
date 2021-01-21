@@ -10,6 +10,7 @@ Environment=EXODUS_GW_SRC_PATH=%h/src/exodus-gw
 Environment=EXODUS_GW_DB_SERVICE_PORT=3355
 Environment=EXODUS_GW_DB_SERVICE_HOST=localhost
 Environment=EXODUS_GW_S3_ENDPOINT_URL=https://localhost:3377
+Environment=EXODUS_GW_DYNAMODB_ENDPOINT_URL=https://localhost:3377
 Restart=on-failure
 
 ExecStart=/bin/sh -c "cd ${EXODUS_GW_SRC_PATH}; \
