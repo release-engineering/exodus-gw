@@ -3,6 +3,7 @@ from typing import List
 
 import backoff
 
+from .. import models
 from ..aws.client import DynamoDBClientWrapper as ddb_client
 from ..settings import get_environment, get_settings
 
@@ -14,7 +15,9 @@ LOG = logging.getLogger("exodus-gw")
     predicate=lambda response: response["UnprocessedItems"],
     max_tries=get_settings().max_tries,
 )
-async def batch_write(env: str, items: List[dict], delete: bool = False):
+async def batch_write(
+    env: str, items: List[models.Item], delete: bool = False
+):
     """Write or delete up to 25 items on the given environment's table.
 
     Item limit of 25 is, at this time, imposed by AWS's boto3 library.
@@ -29,10 +32,14 @@ async def batch_write(env: str, items: List[dict], delete: bool = False):
     table = env_obj.table
 
     if delete:
-        request = {table: [{"DeleteRequest": {"Key": item}} for item in items]}
+        request = {
+            table: [{"DeleteRequest": {"Key": item.aws_fmt}} for item in items]
+        }
         exc_msg = "Exception while deleting %s items from table '%s'"
     else:
-        request = {table: [{"PutRequest": {"Item": item}} for item in items]}
+        request = {
+            table: [{"PutRequest": {"Item": item.aws_fmt}} for item in items]
+        }
         exc_msg = "Exception while writing %s items to table '%s'"
 
     try:

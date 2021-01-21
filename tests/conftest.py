@@ -10,7 +10,7 @@ from sqlalchemy.orm.session import Session
 # anything from the exodus_gw.worker module.
 os.environ["EXODUS_GW_STUB_BROKER"] = "1"
 
-from exodus_gw import schemas  # noqa
+from exodus_gw import models, schemas  # noqa
 
 
 @pytest.fixture(autouse=True)
@@ -59,8 +59,12 @@ def mock_item_list():
 
 @pytest.fixture()
 def mock_publish(mock_item_list):
-    publish = schemas.Publish(id="123e4567-e89b-12d3-a456-426614174000")
-    publish.items = mock_item_list
+    publish = models.Publish()
+    publish.id = "123e4567-e89b-12d3-a456-426614174000"
+    publish.items = [
+        models.Item(**item.dict(), publish_id=publish.id)
+        for item in mock_item_list
+    ]
     yield publish
 
 

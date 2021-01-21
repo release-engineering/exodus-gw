@@ -2,11 +2,6 @@ import pytest
 
 from exodus_gw.aws import dynamodb
 
-TEST_ITEMS = [
-    {"web_uri": {"S": "/example/one"}, "from_date": {"S": "2021-01-01"}},
-    {"web_uri": {"S": "/example/two"}, "from_date": {"S": "2021-01-01"}},
-]
-
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
@@ -18,16 +13,18 @@ TEST_ITEMS = [
                 {
                     "PutRequest": {
                         "Item": {
-                            "web_uri": {"S": "/example/one"},
-                            "from_date": {"S": "2021-01-01"},
+                            "web_uri": {"S": "/some/path"},
+                            "object_key": {"S": "abcde"},
+                            "from_date": {"S": "2021-01-01T00:00:00.0"},
                         }
                     }
                 },
                 {
                     "PutRequest": {
                         "Item": {
-                            "web_uri": {"S": "/example/two"},
-                            "from_date": {"S": "2021-01-01"},
+                            "web_uri": {"S": "/other/path"},
+                            "object_key": {"S": "a1b2"},
+                            "from_date": {"S": "2021-01-01T00:00:00.0"},
                         }
                     }
                 },
@@ -39,16 +36,18 @@ TEST_ITEMS = [
                 {
                     "DeleteRequest": {
                         "Key": {
-                            "web_uri": {"S": "/example/one"},
-                            "from_date": {"S": "2021-01-01"},
+                            "web_uri": {"S": "/some/path"},
+                            "object_key": {"S": "abcde"},
+                            "from_date": {"S": "2021-01-01T00:00:00.0"},
                         }
                     }
                 },
                 {
                     "DeleteRequest": {
                         "Key": {
-                            "web_uri": {"S": "/example/two"},
-                            "from_date": {"S": "2021-01-01"},
+                            "web_uri": {"S": "/other/path"},
+                            "object_key": {"S": "a1b2"},
+                            "from_date": {"S": "2021-01-01T00:00:00.0"},
                         }
                     }
                 },
@@ -57,13 +56,14 @@ TEST_ITEMS = [
     ],
     ids=["Put", "Delete"],
 )
-async def test_batch_write(mock_aws_client, delete, expected_request):
+async def test_batch_write(
+    mock_aws_client, mock_publish, delete, expected_request
+):
     """Ensure batch_write/delete delegates correctly to DynamoDB."""
 
     # Represent successful write/delete of all items to the table.
     mock_aws_client.batch_write_item.return_value = {"UnprocessedItems": {}}
-
-    await dynamodb.batch_write("test", TEST_ITEMS, delete)
+    await dynamodb.batch_write("test", mock_publish.items, delete)
 
     # Should've requested write of all items.
     mock_aws_client.batch_write_item.assert_called_once_with(
@@ -72,10 +72,10 @@ async def test_batch_write(mock_aws_client, delete, expected_request):
 
 
 @pytest.mark.asyncio
-async def test_batch_write_item_limit(mock_aws_client, caplog):
+async def test_batch_write_item_limit(mock_aws_client, mock_publish, caplog):
     """Ensure batch_write does not accept more than 25 items."""
 
-    items = TEST_ITEMS * 13
+    items = mock_publish.items * 13
 
     with pytest.raises(ValueError) as exc_info:
         await dynamodb.batch_write("test", items)
@@ -93,12 +93,14 @@ async def test_batch_write_item_limit(mock_aws_client, caplog):
     ],
     ids=["Put", "Delete"],
 )
-async def test_batch_write_excs(mock_aws_client, delete, expected_msg, caplog):
+async def test_batch_write_excs(
+    mock_aws_client, mock_publish, delete, expected_msg, caplog
+):
     """Ensure messages are emitted for exceptions."""
 
     mock_aws_client.batch_write_item.side_effect = ValueError()
 
     with pytest.raises(ValueError):
-        await dynamodb.batch_write("test", TEST_ITEMS, delete)
+        await dynamodb.batch_write("test", mock_publish.items, delete)
 
     assert expected_msg in caplog.text
