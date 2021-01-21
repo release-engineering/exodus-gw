@@ -1,5 +1,8 @@
+import asyncio
 import logging
 
+import dramatiq
+import pytest
 from psycopg2.errors import DuplicateSchema
 
 from exodus_gw.worker.broker import ExodusGwBroker, new_broker
@@ -16,8 +19,8 @@ class FakeCursor:
     def __exit__(self, type, value, tb):
         pass
 
-    def execute(self, sql):
-        self._pool._record_execute(sql)
+    def execute(self, sql, parameters=None):
+        self._pool._record_execute(sql, parameters)
         if self._pool.raises:
             raise self._pool.raises.pop(0)
 
@@ -38,8 +41,16 @@ class FakeConnectionPool:
     def cursor(self):
         return FakeCursor(self)
 
-    def _record_execute(self, sql):
-        self.executes.append((self.in_transaction, sql))
+    def _record_execute(self, sql, parameters):
+        self.executes.append((self.in_transaction, sql, parameters))
+
+
+class FakeSession:
+    def __init__(self):
+        self.pool = FakeConnectionPool()
+
+    def connection(self):
+        return self.pool.cursor()
 
 
 def test_broker_class(monkeypatch):
@@ -62,7 +73,7 @@ def test_broker_initialize_on_consume():
     # instantiated our schema
     assert len(pool.executes) == 1
 
-    (in_transaction, sql) = pool.executes[0]
+    (in_transaction, sql, parameters) = pool.executes[0]
 
     # it should have been done in a transaction
     assert in_transaction
@@ -88,3 +99,92 @@ def test_broker_already_initialized(caplog):
 
     # ...and it should also note that the schema was already in place
     assert "dramatiq schema was already in place" in caplog.messages
+
+
+def test_broker_enqueues_via_session():
+    """If a session is set on broker, SQL is executed via that session"""
+    broker = ExodusGwBroker(url=None, pool=object())
+
+    session = FakeSession()
+    broker.set_session(session)
+
+    @dramatiq.actor(broker=broker)
+    def some_fn():
+        pass
+
+    # This should work
+    some_fn.send()
+
+    # And it should have executed a statement via the session we provided.
+    assert len(session.pool.executes) == 1
+
+    (in_transaction, sql, parameters) = session.pool.executes[0]
+
+    # It should have been some enqueue SQL
+    assert 'INSERT INTO "dramatiq"."queue"' in sql
+
+
+def test_broker_cannot_enqueue_missing_session():
+    """Meaningful error is raised if broker is used with no session"""
+
+    broker = ExodusGwBroker(url=None, pool=object())
+
+    broker.set_session(None)
+
+    @dramatiq.actor(broker=broker)
+    def some_fn():
+        pass
+
+    # We won't be able to send this.
+    with pytest.raises(RuntimeError) as exc_info:
+        some_fn.send()
+
+    assert (
+        "BUG: attempted to use session-aware broker while no session is active"
+        in str(exc_info.value)
+    )
+
+
+@pytest.mark.asyncio
+async def test_broker_context_aware_session():
+    """Coroutines running concurrently can set broker session without interfering
+    with each other.
+    """
+
+    broker = ExodusGwBroker(url=None, pool=object())
+
+    observed1 = []
+    observed2 = []
+    sequence = []
+
+    async def pool_spy(out):
+        # Set a session from this coro (which should create a new pool)
+        broker.set_session(FakeSession())
+
+        # Record current pool
+        out.append(broker.pool)
+        sequence.append(out)
+
+        # Wait a bit, yielding to another coro which will set
+        # a different session
+        await asyncio.sleep(0.2)
+
+        # Check again:
+        out.append(broker.pool)
+        sequence.append(out)
+
+    awt1 = pool_spy(observed1)
+    awt2 = pool_spy(observed2)
+
+    # Run these concurrently
+    await asyncio.gather(awt1, awt2)
+
+    # Execution of the coros should have been interleaved...
+    assert sequence[0] != sequence[1]
+
+    # ...yet each coro should not see changes to each other's pool,
+    # i.e. each coro saw only one value for pool, and each coro saw
+    # a different value than the other
+    assert observed1[0] is observed1[1]
+    assert observed2[0] is observed2[1]
+    assert observed1[0] is not observed2[0]

@@ -28,10 +28,14 @@ def healthcheck():
 
 
 @router.get("/healthcheck-worker", tags=["service"])
-def healthcheck_worker():
+def healthcheck_worker(db: Session = Depends(get_db)):
     """Returns a successful response if background workers are running."""
 
     msg = worker.ping.send()
+
+    # Message would not normally be sent until commit after the request succeeds.
+    # Since we want to get the result, we'll commit early.
+    db.commit()
 
     # If we don't get a response in time, this will raise an exception and we'll
     # respond with a 500 error, which seems reasonable.

@@ -14,7 +14,7 @@ def test_healthcheck_worker(stub_worker):
     # This test exercises "real" dramatiq message handling via stub
     # broker & worker, demonstrating that messages can be used from
     # within tests.
-    assert gateway.healthcheck_worker() == {
+    assert gateway.healthcheck_worker(db=mock.Mock()) == {
         "detail": "background worker is running: ping => pong"
     }
 
