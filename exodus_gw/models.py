@@ -2,6 +2,7 @@ import uuid
 
 from sqlalchemy import Column, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -48,3 +49,12 @@ class Item(Base):
             "object_key": {"S": self.object_key},
             "from_date": {"S": self.from_date},
         }
+
+
+###############################################################################
+# Make some postgres dialect compatible with sqlite, for use within tests.
+
+
+@compiles(UUID, "sqlite")
+def sqlite_uuid(*_args, **_kwargs):
+    return "UUID"

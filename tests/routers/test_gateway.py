@@ -1,5 +1,3 @@
-from types import GeneratorType
-
 import mock
 import pytest
 from fastapi import HTTPException
@@ -191,15 +189,3 @@ def test_whoami():
     # do anything except return the passed object.
     context = object()
     assert gateway.whoami(context=context) is context
-
-
-def test_get_db(monkeypatch) -> None:
-    monkeypatch.setattr(
-        "exodus_gw.routers.gateway.SessionLocal", mock.MagicMock()
-    )
-
-    db = gateway.get_db()
-    assert isinstance(db, GeneratorType)
-
-    for session in db:
-        assert isinstance(session, mock.MagicMock)
