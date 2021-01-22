@@ -275,9 +275,9 @@ pytest-cov==2.11.1 \
     --hash=sha256:359952d9d39b9f822d9d29324483e7ba04a3a17dd7d05aa6beb7ea01e359e5f7 \
     --hash=sha256:bdb9fdb0b85a7cc825269a4c56b48ccaa5c7e365054b6038772c32ddcdc969da
     # via -r test-requirements.in
-pytest-mock==3.3.1 \
-    --hash=sha256:024e405ad382646318c4281948aadf6fe1135632bea9cc67366ea0c4098ef5f2 \
-    --hash=sha256:a4d6d37329e4a893e77d9ffa89e838dd2b45d5dc099984cf03c703ac8411bb82
+pytest-mock==3.5.1 \
+    --hash=sha256:379b391cfad22422ea2e252bdfc008edd08509029bcde3c25b2c0bd741e0424e \
+    --hash=sha256:a1e2aba6af9560d313c642dae7e00a2a12b022b80301d9d7fc8ec6858e1dd9fc
     # via -r test-requirements.in
 pytest==6.2.1 \
     --hash=sha256:1969f797a1a0dbd8ccf0fecc80262312729afea9c17f1d70ebf85c5e76c6f7c8 \
