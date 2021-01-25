@@ -54,6 +54,11 @@ def mock_item_list():
             object_key="a1b2",
             from_date="2021-01-01T00:00:00.0",
         ),
+        schemas.ItemBase(
+            web_uri="/to/repomd.xml",
+            object_key="c3d4",
+            from_date="2021-01-01T00:00:00.0",
+        ),
     ]
 
 

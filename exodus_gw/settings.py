@@ -50,6 +50,13 @@ class Settings(BaseSettings):
     max_tries: int = 20
     """Maximum attempts to write to DynamoDB table."""
 
+    entry_point_files: List[str] = [
+        "repomd.xml",
+        "repomd.xml.asc",
+        "PULP_MANIFEST",
+    ]
+    """List of file names that should be saved for last when publishing."""
+
     class Config:
         env_prefix = "exodus_gw_"
 

@@ -99,12 +99,17 @@ async def test_update_publish_items_env_doesnt_exist(
         "test3",
     ],
 )
+@mock.patch("exodus_gw.routers.gateway.write_batches")
 @mock.patch("exodus_gw.routers.gateway.get_publish_by_id")
 async def test_commit_publish(
-    mock_get_publish, env, mock_aws_client, mock_publish, mock_db_session
+    mock_get_publish,
+    mock_write_batches,
+    env,
+    mock_publish,
+    mock_db_session,
 ):
     mock_get_publish.return_value = mock_publish
-    mock_aws_client.batch_write_item.return_value = {"UnprocessedItems": {}}
+    mock_write_batches.return_value = True
 
     assert (
         await gateway.commit_publish(
@@ -112,16 +117,19 @@ async def test_commit_publish(
         )
         == {}
     )
+    # Should write repomd.xml file separately after other items.
+    mock_write_batches.assert_has_calls(
+        calls=[
+            mock.call(env, mock_publish.items[:2]),
+            mock.call(env, [mock_publish.items[2]]),
+        ],
+        any_order=False,
+    )
 
 
 @pytest.mark.asyncio
 @mock.patch("exodus_gw.routers.gateway.get_publish_by_id")
-async def test_commit_publish_env_doesnt_exist(
-    mock_get_publish, mock_aws_client, mock_publish, mock_db_session
-):
-    mock_get_publish.return_value = mock_publish
-    mock_aws_client.batch_write_item.return_value = {"UnprocessedItems": {}}
-
+async def test_commit_publish_env_doesnt_exist(mock_publish, mock_db_session):
     env = "foo"
 
     with pytest.raises(HTTPException) as exc_info:
@@ -134,95 +142,48 @@ async def test_commit_publish_env_doesnt_exist(
 
 
 @pytest.mark.asyncio
-@mock.patch("exodus_gw.routers.gateway.batch_write")
+@mock.patch("exodus_gw.routers.gateway.write_batches")
 @mock.patch("exodus_gw.routers.gateway.get_publish_by_id")
 async def test_commit_publish_write_failed(
-    mock_get_publish, mock_batch_write, mock_publish, mock_db_session, caplog
+    mock_get_publish, mock_write_batches, mock_publish, mock_db_session
 ):
     mock_get_publish.return_value = mock_publish
-
-    fake_responses = {
-        "puts": {
-            "UnprocessedItems": {
-                "my-table": [
-                    {
-                        "PutRequest": {
-                            "Item": {
-                                "web_uri": "/some/path",
-                                "object_key": "abcde",
-                                "from_date": "2021-01-01T00:00:00.0",
-                            }
-                        }
-                    },
-                    {
-                        "PutRequest": {
-                            "Item": {
-                                "web_uri": "/other/path",
-                                "object_key": "a1b2",
-                                "from_date": "2021-01-01T00:00:00.0",
-                            }
-                        }
-                    },
-                ]
-            }
-        },
-        "deletes": {
-            "UnprocessedItems": {
-                "my-table": [
-                    {
-                        "DeleteRequest": {
-                            "Key": {
-                                "web_uri": "/some/path",
-                                "object_key": "abcde",
-                                "from_date": "2021-01-01T00:00:00.0",
-                            }
-                        }
-                    },
-                    {
-                        "DeleteRequest": {
-                            "Key": {
-                                "web_uri": "/other/path",
-                                "object_key": "a1b2",
-                                "from_date": "2021-01-01T00:00:00.0",
-                            }
-                        }
-                    },
-                ]
-            }
-        },
-    }
-
-    # Fail with successful cleanup.
-    mock_batch_write.side_effect = [
-        # Put unsuccessful.
-        fake_responses["puts"],
-        # Delete successful.
-        {"UnprocessedItems": {}},
-    ]
+    mock_write_batches.side_effect = [False, True]
 
     await gateway.commit_publish(
         env="test", publish_id=mock_publish.id, db=mock_db_session
     )
 
-    # Fail with unsuccessful cleanup.
-    mock_batch_write.side_effect = [
-        # Put unsuccessful.
-        fake_responses["puts"],
-        # Delete unsuccessful.
-        fake_responses["deletes"],
-    ]
-
-    with pytest.raises(RuntimeError) as exc_info:
-        await gateway.commit_publish(
-            env="test", publish_id=mock_publish.id, db=mock_db_session
-        )
-
-    assert (
-        "Unprocessed items:\n\t%s"
-        % str(fake_responses["deletes"]["UnprocessedItems"])
-        in caplog.text
+    mock_write_batches.assert_has_calls(
+        calls=[
+            mock.call("test", mock_publish.items[:2]),
+            mock.call("test", mock_publish.items[:2], delete=True),
+        ],
+        any_order=False,
     )
-    assert "Cleanup failed" in str(exc_info.value)
+
+
+@pytest.mark.asyncio
+@mock.patch("exodus_gw.routers.gateway.write_batches")
+@mock.patch("exodus_gw.routers.gateway.get_publish_by_id")
+async def test_commit_publish_entry_point_files_failed(
+    mock_get_publish, mock_write_batches, mock_publish, mock_db_session
+):
+    mock_get_publish.return_value = mock_publish
+    mock_write_batches.side_effect = [True, False, True]
+
+    await gateway.commit_publish(
+        env="test", publish_id=mock_publish.id, db=mock_db_session
+    )
+
+    mock_write_batches.assert_has_calls(
+        calls=[
+            mock.call("test", mock_publish.items[:2]),
+            mock.call("test", [mock_publish.items[2]]),
+            mock.call("test", mock_publish.items, delete=True),
+        ],
+        any_order=False,
+    )
 
 
 def test_whoami():
