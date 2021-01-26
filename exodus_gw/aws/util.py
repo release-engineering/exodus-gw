@@ -5,6 +5,20 @@ from defusedxml.ElementTree import fromstring
 from fastapi import Response
 
 
+def content_md5(request):
+    """Produce ContentMD5 value expected by S3 APIs.
+
+    When uploading empty files, the Content-MD5 header may not be
+    included in the request when content length is 0. In such cases,
+    return the appropriate base64 encoded md5.
+    """
+
+    if int(request.headers["Content-Length"]) == 0:
+        return "1B2M2Y8AsgTpgAmY7PhCfg=="
+
+    return request.headers["Content-MD5"]
+
+
 def extract_mpu_parts(
     body: str, xmlns: str = "http://s3.amazonaws.com/doc/2006-03-01/"
 ):
