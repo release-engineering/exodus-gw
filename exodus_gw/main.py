@@ -1,12 +1,12 @@
 import logging.config
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.exception_handlers import http_exception_handler
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import models
 from .aws.util import xml_response
-from .database import engine
+from .database import SessionLocal
 from .routers import gateway, s3
 from .settings import get_settings
 
@@ -48,4 +48,24 @@ def configure_loggers():
 
 @app.on_event("startup")
 def db_init() -> None:
-    models.Base.metadata.create_all(bind=engine)
+    models.Base.metadata.create_all(bind=SessionLocal().get_bind())
+
+
+@app.middleware("http")
+async def db_session(request: Request, call_next):
+    """Maintain a DB session around each request.
+
+    An implicit commit occurs if and only if the request succeeds.
+    """
+
+    request.state.db = SessionLocal()
+
+    response = await call_next(request)
+
+    if response.status_code >= 200 and response.status_code < 300:
+        request.state.db.commit()
+
+    request.state.db.close()
+    request.state.db = None
+
+    return response

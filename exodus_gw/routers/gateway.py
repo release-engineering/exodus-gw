@@ -3,14 +3,13 @@ from os.path import basename
 from typing import List, Union
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from .. import models, schemas, worker
 from ..auth import CallContext, call_context
 from ..aws.dynamodb import write_batches
 from ..crud import create_publish, get_publish_by_id, update_publish
-from ..database import SessionLocal
 from ..settings import get_environment, get_settings
 
 LOG = logging.getLogger("exodus-gw")
@@ -18,12 +17,8 @@ LOG = logging.getLogger("exodus-gw")
 router = APIRouter()
 
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+def get_db(request: Request):
+    return request.state.db
 
 
 @router.get("/healthcheck", tags=["service"])

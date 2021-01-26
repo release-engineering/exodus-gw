@@ -10,7 +10,7 @@ from sqlalchemy.orm.session import Session
 # anything from the exodus_gw.worker module.
 os.environ["EXODUS_GW_STUB_BROKER"] = "1"
 
-from exodus_gw import models, schemas  # noqa
+from exodus_gw import database, models, schemas  # noqa
 
 
 @pytest.fixture(autouse=True)
@@ -60,6 +60,31 @@ def mock_item_list():
             from_date="2021-01-01T00:00:00.0",
         ),
     ]
+
+
+@pytest.fixture(autouse=True)
+def sqlite_in_tests():
+    """Any 'real' usage of sqlalchemy during this test suite makes use of
+    a fresh sqlite DB for each test run. Tests may either make use of this to
+    exercise all the ORM code, or may inject mock DB sessions into endpoints.
+    """
+
+    filename = "exodus-gw-test.db"
+
+    try:
+        # clean before test
+        os.remove(filename)
+    except FileNotFoundError:
+        # no problem
+        pass
+
+    try:
+        database.SessionLocal.configure(
+            bind=database.create_engine("sqlite:///%s" % filename)
+        )
+        yield
+    finally:
+        database.SessionLocal.configure(bind=database.engine)
 
 
 @pytest.fixture()
