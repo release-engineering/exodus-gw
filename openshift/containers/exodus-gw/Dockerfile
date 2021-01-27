@@ -8,7 +8,7 @@ RUN \
     # Install shadow-utils for adduser functionality
     microdnf -y install shadow-utils \
     # Install extra commands needed for build
-    && microdnf -y install python3 python3-devel gcc make \
+    && microdnf -y install python38 python38-devel gcc make \
     # Install packages needed for psycopg2 installation
     && microdnf -y install postgresql-devel \
     && cd /usr/local/src/exodus-gw \
