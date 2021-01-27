@@ -12,11 +12,11 @@ jobs:
     script:
     - docker --version
     - docker build . -f openshift/containers/exodus-gw/Dockerfile
-  - python: "3.6"
+  - python: "3.8"
     env: TOX_ENV=cov-travis
-  - python: "3.6"
+  - python: "3.8"
     env: TOX_ENV=static
-  - python: "3.6"
+  - python: "3.8"
     env: TOX_ENV=docs
 
 script: 
