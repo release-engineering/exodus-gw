@@ -32,6 +32,7 @@ import logging
 import textwrap
 from typing import Optional
 
+from botocore.exceptions import ClientError
 from fastapi import APIRouter, HTTPException, Path, Query, Request, Response
 
 from ..aws.client import S3ClientWrapper as s3_client
@@ -261,3 +262,28 @@ async def abort_multipart_upload(
         )
 
     return Response()
+
+
+@router.head(
+    "/upload/{env}/{key}",
+    tags=["upload"],
+    summary="Request head object",
+    response_class=Response,
+)
+async def head(
+    env: str = Path(..., description="Target CDN environment"),
+    key: str = Path(..., description="S3 object key"),
+):
+    """Retrieve metadata from an S3 object."""
+
+    env_obj = get_environment(env)
+
+    try:
+        async with s3_client(profile=env_obj.aws_profile) as s3:
+            response = await s3.head_object(Bucket=env_obj.bucket, Key=key)
+    except ClientError as exc_info:
+        # According to botocore documentation, it is safe to rely on
+        # the API to throw exceptions for any non-2xx response.
+        return Response(status_code=int(exc_info.response["Error"]["Code"]))
+
+    return Response(headers={"ETag": response["ETag"]})
