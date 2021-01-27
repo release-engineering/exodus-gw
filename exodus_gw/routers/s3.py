@@ -35,7 +35,12 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Path, Query, Request, Response
 
 from ..aws.client import S3ClientWrapper as s3_client
-from ..aws.util import RequestReader, extract_mpu_parts, xml_response
+from ..aws.util import (
+    RequestReader,
+    content_md5,
+    extract_mpu_parts,
+    xml_response,
+)
 from ..settings import get_environment
 
 LOG = logging.getLogger("s3")
@@ -160,7 +165,7 @@ async def object_put(env: str, key: str, request: Request):
             Bucket=env_obj.bucket,
             Key=key,
             Body=reader,
-            ContentMD5=request.headers["Content-MD5"],
+            ContentMD5=content_md5(request),
             ContentLength=int(request.headers["Content-Length"]),
         )
 
@@ -223,7 +228,7 @@ async def multipart_put(
             Key=key,
             PartNumber=partNumber,
             UploadId=uploadId,
-            ContentMD5=request.headers["Content-MD5"],
+            ContentMD5=content_md5(request),
             ContentLength=int(request.headers["Content-Length"]),
         )
 
