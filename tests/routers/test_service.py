@@ -1,8 +1,5 @@
 import mock
-import pytest
-from fastapi import HTTPException
 
-from exodus_gw import models
 from exodus_gw.routers import service
 
 
@@ -14,7 +11,7 @@ def test_healthcheck_worker(stub_worker):
     # This test exercises "real" dramatiq message handling via stub
     # broker & worker, demonstrating that messages can be used from
     # within tests.
-    assert service.healthcheck_worker() == {
+    assert service.healthcheck_worker(db=mock.Mock()) == {
         "detail": "background worker is running: ping => pong"
     }
 
