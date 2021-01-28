@@ -3,7 +3,7 @@
 This API provides endpoints for uploading files into the data store
 used by the Exodus CDN. Uploading files does not immediately expose
 them to clients of the CDN, but is a prerequisite of publishing files,
-which is achieved via other APIs.
+which is achieved via the [publish](#tag/publish) APIs.
 
 The upload API is a partially compatible subset of the S3 API.
 It supports at least enough functionality such that the boto S3
@@ -27,6 +27,38 @@ Differences from the AWS S3 API include:
 
 - The API may enforce stricter limits or policies on uploads than those imposed
   by the AWS API.
+
+## Using boto3 with the upload API
+
+As the upload API is partially compatible with S3, it is possible to use
+existing S3 clients such as the AWS SDK to perform uploads. This is the
+recommended method of using the API.
+
+Use `endpoint_url` when creating a boto resource or client to point at exodus-gw.
+Region and credentials will be ignored.
+
+Note that, as the upload API provides only a subset of the S3 API, many boto methods
+will not work. Uploading objects and querying the existence of an object are
+supported.
+
+```python
+import boto3
+from botocore.config import Config
+
+# Prepare S3 resource pointing at exodus-gw
+s3 = boto3.resource('s3',
+                    endpoint_url='https://exodus-gw.example.com/upload',
+                    # If SSL needs to be configured:
+                    verify='/path/to/bundle.pem',
+                    config=Config(client_cert=('client.crt', 'client.key')))
+
+# Bucket name must match one of the section names in exodus-gw.ini without 'env.' prefix
+bucket = s3.Bucket('dev')
+
+# Basic APIs such as upload_file now work as usual
+bucket.upload_file('/tmp/hello.txt',
+                   'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f')
+```
 """
 import logging
 import textwrap
@@ -45,7 +77,9 @@ from ..settings import get_environment
 
 LOG = logging.getLogger("s3")
 
-router = APIRouter(tags=["upload"])
+openapi_tag = {"name": "upload", "description": __doc__}
+
+router = APIRouter(tags=[openapi_tag["name"]])
 
 
 # A partial TODO list for this API:

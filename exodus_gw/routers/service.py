@@ -1,3 +1,5 @@
+"""APIs for inspecting the state of the exodus-gw service."""
+
 import logging
 
 from fastapi import APIRouter, Depends
@@ -9,7 +11,9 @@ from ..database import get_db
 
 LOG = logging.getLogger("exodus-gw")
 
-router = APIRouter(tags=["service"])
+openapi_tag = {"name": "service", "description": __doc__}
+
+router = APIRouter(tags=[openapi_tag["name"]])
 
 
 @router.get("/healthcheck")
