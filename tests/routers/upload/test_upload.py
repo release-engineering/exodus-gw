@@ -2,7 +2,7 @@ import mock
 import pytest
 from fastapi import HTTPException
 
-from exodus_gw.routers.s3 import upload
+from exodus_gw.routers.upload import upload
 
 TEST_KEY = "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"
 

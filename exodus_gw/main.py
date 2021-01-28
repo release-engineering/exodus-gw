@@ -7,12 +7,13 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from . import models
 from .aws.util import xml_response
 from .database import SessionLocal
-from .routers import gateway, s3
+from .routers import publish, service, upload
 from .settings import get_settings
 
 app = FastAPI(title="exodus-gw")
-app.include_router(gateway.router)
-app.include_router(s3.router)
+app.include_router(service.router)
+app.include_router(upload.router)
+app.include_router(publish.router)
 
 
 @app.exception_handler(StarletteHTTPException)

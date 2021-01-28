@@ -45,7 +45,7 @@ from ..settings import get_environment
 
 LOG = logging.getLogger("s3")
 
-router = APIRouter()
+router = APIRouter(tags=["upload"])
 
 
 # A partial TODO list for this API:
@@ -57,7 +57,6 @@ router = APIRouter()
 
 @router.post(
     "/upload/{env}/{key}",
-    tags=["upload"],
     summary="Create/complete multipart upload",
     response_class=Response,
 )
@@ -118,7 +117,6 @@ async def multipart_upload(
 
 @router.put(
     "/upload/{env}/{key}",
-    tags=["upload"],
     summary="Upload bytes",
     response_class=Response,
 )
@@ -237,7 +235,6 @@ async def multipart_put(
 
 @router.delete(
     "/upload/{env}/{key}",
-    tags=["upload"],
     summary="Abort multipart upload",
     response_description="Empty response",
     response_class=Response,
