@@ -1,0 +1,62 @@
+#!/bin/sh
+#
+# Simple helper script to establish exodus-gw development environment.
+# Assumes any configuration is already in place.
+#
+# Use -l to launch service log monitoring in gnome-terminal.
+# Use -c to remove all persistent data and the dev env installation
+
+CONFIG_DIR=${XDG_CONFIG_HOME:-~/.config}/exodus-gw-dev
+LAUNCH_LOGS=false
+
+set -e
+
+while getopts ":lc" arg; do
+    case ${arg} in
+        l) LAUNCH_LOGS=true ;;
+        c) echo "Cleaning up. . ." && scripts/systemd/clean && exit ;;
+        ?) echo "Invalid option: '-${OPTARG}'" && exit ;;
+    esac
+done
+
+install(){
+    scripts/systemd/install
+}
+
+start_services(){
+    systemctl --user start exodus-gw.target
+    echo "Waiting for services to start. . ."
+    # There's no single process to wait for so we just have to give localstack
+    # a little time to get setup before we can init our bucket and table.
+    sleep 12
+}
+
+launch_log_terminal(){
+    if [ $LAUNCH_LOGS == true ]; then
+        if command -v gnome-terminal; then
+            gnome-terminal -- journalctl --user "--unit=exodus-gw-*" -f
+        fi
+    fi
+}
+
+setup_certs(){
+    sudo cp $CONFIG_DIR/ca.crt /etc/pki/ca-trust/source/anchors/exodus-gw-dev.crt
+    sudo update-ca-trust
+}
+
+init_aws_infra(){
+    scripts/localstack-s3-init
+    scripts/localstack-dynamodb-init
+}
+
+run(){
+    install
+    launch_log_terminal
+    start_services
+    setup_certs
+    init_aws_infra
+
+    echo exodus-gw dev environment ready.
+}
+
+run
