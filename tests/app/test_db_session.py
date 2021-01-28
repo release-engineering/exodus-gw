@@ -4,10 +4,9 @@ from fastapi import Depends, HTTPException
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from exodus_gw.database import SessionLocal
+from exodus_gw.database import SessionLocal, get_db
 from exodus_gw.main import app
 from exodus_gw.models import Publish
-from exodus_gw.routers.gateway import get_db
 
 # A hardcoded UUID so we can find what we've created.
 TEST_UUID = uuid.UUID("{12345678-1234-5678-1234-567812345678}")

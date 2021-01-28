@@ -32,7 +32,7 @@ Uploading blobs
 
 .. seealso:: `Upload API reference <api.html#tag/upload>`_
 
-.. automodule:: exodus_gw.routers.s3
+.. automodule:: exodus_gw.routers.upload
 
 Using boto3 with the upload API
 ...............................
