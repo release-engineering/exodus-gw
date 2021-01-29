@@ -1,4 +1,5 @@
 from typing import List, Union
+from uuid import uuid4
 
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Query, Session, lazyload
@@ -6,8 +7,8 @@ from sqlalchemy.orm import Query, Session, lazyload
 from . import models, schemas
 
 
-def create_publish(db: Session) -> models.Publish:
-    db_publish = models.Publish()
+def create_publish(env: str, db: Session) -> models.Publish:
+    db_publish = models.Publish(id=uuid4(), env=env)
     db.add(db_publish)
     db.commit()
     db.refresh(db_publish)
