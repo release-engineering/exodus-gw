@@ -25,6 +25,7 @@ from urllib.parse import urljoin
 
 import boto3
 import requests
+from botocore.exceptions import ClientError
 
 # Represents a single item to be uploaded & published.
 Item = namedtuple("Item", ["src_path", "dest_path", "object_key"])
@@ -76,12 +77,19 @@ def upload_items(args, items):
     for item in items:
         object = bucket.Object(item.object_key)
 
-        # Check if we have it already - if so, we don't need to upload again.
-        # (TODO: we must implement RHELDST-4705 first)
-        # object.load()
+        # Check if object is present in the bucket using object.load(),
+        # catching ClientErrors raised for non-2xx codes.
+        # Upload the file object only when it isn't already present.
+        try:
+            object.load()
+        except ClientError as exc_info:
+            if exc_info.response["Error"]["Code"] == "404":
+                object.upload_file(item.src_path)
+                print("Uploaded {} <= {}".format(item.object_key, item.src_path))
+                continue
+            raise
 
-        object.upload_file(item.src_path)
-        print("Uploaded {} <= {}".format(item.object_key, item.src_path))
+        print("Won't upload {}: already present".format(item.object_key))
 
 
 def publish_items(args, items):
