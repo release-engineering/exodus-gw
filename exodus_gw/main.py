@@ -1,3 +1,45 @@
+"""The exodus-gw service provides APIs for uploading and publishing content on the exodus CDN.
+
+Available APIs are grouped into the following categories:
+
+- [service](#tag/service): inspect the state of the exodus-gw service.
+- [upload](#tag/upload): upload blobs to the CDN without exposing them to end-users.
+  S3 compatible.
+- [publish](#tag/publish): atomically publish a set of blobs on the CDN under specified paths,
+  making them accessible to end-users.
+
+## Warning
+
+exodus-gw is in early stages of development. All APIs are subject
+to backwards-incompatible changes without warning.
+
+## Overview of API usage
+
+A typical content publishing workflow using exodus-gw will consist of:
+
+- Use the upload APIs to ensure desired blobs are uploaded.
+   - As this API is partially S3-compatible, this can typically be done using
+     an existing S3 client library.
+- Use the publish API to create a publish object and create a (URI => blob)
+  mapping for the blobs you want to publish.
+- When you are ready to expose content to end-users, commit the publish object.
+  This will atomically unveil new content at all of the requested URIs.
+
+
+## Authentication
+
+The exodus-gw API does not include any direct support for authentication and is
+instead expected to be deployed behind a reverse-proxy implementing any desired
+authentication mechanism.
+
+If you are deploying an instance of exodus-gw, see
+[the deployment guide](https://release-engineering.github.io/exodus-gw/deployment.html)
+for information on how to integrate an authentication mechanism.
+
+If you are a client looking to make use of exodus-gw, consult your organization's
+internal documentation for advice on how to authenticate with exodus-gw.
+"""
+
 import logging.config
 
 import dramatiq
@@ -11,7 +53,15 @@ from .database import SessionLocal
 from .routers import publish, service, upload
 from .settings import get_settings
 
-app = FastAPI(title="exodus-gw")
+app = FastAPI(
+    title="exodus-gw",
+    description=__doc__,
+    openapi_tags=[
+        service.openapi_tag,
+        upload.openapi_tag,
+        publish.openapi_tag,
+    ],
+)
 app.include_router(service.router)
 app.include_router(upload.router)
 app.include_router(publish.router)
