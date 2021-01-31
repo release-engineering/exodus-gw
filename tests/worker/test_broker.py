@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import threading
 
 import dramatiq
 import pytest
@@ -143,6 +144,31 @@ def test_broker_cannot_enqueue_missing_session():
         "BUG: attempted to use session-aware broker while no session is active"
         in str(exc_info.value)
     )
+
+
+def test_broker_sessionless_pool_shared_between_threads():
+    """When no session is set, the broker's pool is allowed to be shared between threads."""
+
+    # Create a broker with some arbitrary pool.
+    pool = object()
+    broker = ExodusGwBroker(url=None, pool=pool)
+
+    # Create a helper to check current value of pool and store it somewhere
+    # we can see.
+    spied_pool = []
+
+    def spy_pool():
+        spied_pool.append(broker.pool)
+
+    # Let's check which pool object we get from a new thread.
+    thread = threading.Thread(target=spy_pool, name="spy-pool")
+    thread.start()
+    thread.join(timeout=1.0)
+    assert not thread.is_alive()
+
+    # The thread should have seen exactly the same object; i.e. because we haven't
+    # set a session on the broker, the pool is not context-aware.
+    assert spied_pool[0] is pool
 
 
 @pytest.mark.asyncio

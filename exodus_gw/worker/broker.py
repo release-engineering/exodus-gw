@@ -72,22 +72,30 @@ class ExodusGwBroker(
     """
 
     def __init__(self, url=SQLALCHEMY_DATABASE_URL, pool=None):
-        # Since we only have one globally shared broker, but
-        # we want to connect with an sqlalchemy session which is
-        # specific to one coro, we'll make a context-aware wrapper
-        # for pool.
-        self.__pool = ContextVar("pool")
+        # Placeholder for pool context var.
+        #
+        # If the app sets a session on the broker, we'll start using this
+        # to maintain a separate pool per context.
+        self.__pool_cvar = None
+
+        # Raw pool object in the case where context-aware pool is not used.
+        self.__pool_raw = None
 
         # Uses the same DB as used for sqlalchemy by default.
         super().__init__(url=url, pool=pool)
 
     @property
     def pool(self):
-        return self.__pool.get()
+        if self.__pool_cvar is not None:
+            return self.__pool_cvar.get()
+        return self.__pool_raw
 
     @pool.setter
     def pool(self, value):
-        self.__pool.set(value)
+        if self.__pool_cvar is not None:
+            self.__pool_cvar.set(value)
+        else:
+            self.__pool_raw = value
 
     def set_session(self, session):
         """Set an sqlalchemy session for use with the broker.
@@ -104,6 +112,20 @@ class ExodusGwBroker(
           to use it that way permanently. This is enforced to avoid mixing session-aware
           and non-session-aware usage of the broker which would be a source of bugs.
         """
+
+        if self.__pool_cvar is None:
+            # We are switching from raw mode into session-aware mode, and we'll start
+            # maintaining our pool in a contextvar. This effectively replaces the single
+            # default pool from dramatiq-pg (which is designed to be shared by multiple
+            # threads) with our session-aware pool (which must NOT be shared by any other
+            # thread or coro).
+            #
+            # Note: although we no longer hold a reference to our pool here, it's still
+            # used from the result backend. We can't point the backend towards our new
+            # session-aware pool since it makes use of postgres-specific NOTIFY.
+            self.__pool_raw = None
+            self.__pool_cvar = ContextVar("pool")
+
         if session:
             self.pool = SessionPoolAdapter(session)
         else:
