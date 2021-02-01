@@ -63,6 +63,23 @@ internal documentation for information on this component. In other contexts, any
 proxy may be used as long as it produces headers according to the scheme documented above.
 
 
+Database Migrations
+-------------------
+
+The exodus-gw service uses a postgres database.
+
+On startup, the service will run database migrations to ensure the DB implements the
+required schema.
+
+It is a goal that migrations can be performed online with minimal disruption to the
+service, even with old and new versions of the service running simultaneously
+(for example, during an OpenShift rolling deployment).
+
+Downgrading to an earlier version of the schema is not directly supported by the
+service. However, as exodus-gw is designed not to store any permanent state, dropping
+and recreating the exodus-gw database is a viable option if needed.
+
+
 Settings
 --------
 

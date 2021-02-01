@@ -9,6 +9,11 @@ extension-pkg-whitelist=pydantic
 [TYPECHECK]
 ignored-classes=Session
 
+# Alembic uses some module proxy stuff which prevents pylint from figuring
+# out which members exist on the modules.
+ignored-modules=alembic.context,
+                alembic.op,
+
 disable=print-statement,
         parameter-unpacking,
         unpacking-in-except,

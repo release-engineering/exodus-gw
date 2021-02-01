@@ -3,19 +3,33 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+from exodus_gw import models
+
+# This file is used in:
+# - offline mode when you run alembic CLI during development
+# - online mode while exodus-gw service runs
+# Branches which are only executed in offline mode are marked
+# as 'pragma: no cover' since they aren't reached from within
+# exodus-gw code.
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-fileConfig(config.config_file_name)
+#
+# This is used when we run alembic CLI during development,
+# but not used from within the exodus-gw service which configures
+# loggers elsewhere.
+if config.config_file_name:
+    fileConfig(config.config_file_name)  # pragma: no cover
 
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = None
+target_metadata = models.Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -23,7 +37,7 @@ target_metadata = None
 # ... etc.
 
 
-def run_migrations_offline():
+def run_migrations_offline():  # pragma: no cover
     """Run migrations in 'offline' mode.
 
     This configures the context with just a URL
@@ -70,6 +84,6 @@ def run_migrations_online():
 
 
 if context.is_offline_mode():
-    run_migrations_offline()
+    run_migrations_offline()  # pragma: no cover
 else:
     run_migrations_online()

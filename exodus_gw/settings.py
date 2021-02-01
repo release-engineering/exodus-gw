@@ -1,5 +1,6 @@
 import configparser
 import os
+from enum import Enum
 from typing import List
 
 from fastapi import HTTPException
@@ -12,6 +13,12 @@ class Environment(object):
         self.aws_profile = aws_profile
         self.bucket = bucket
         self.table = table
+
+
+class MigrationMode(str, Enum):
+    upgrade = "upgrade"
+    model = "model"
+    none = "none"
 
 
 class Settings(BaseSettings):
@@ -46,6 +53,40 @@ class Settings(BaseSettings):
 
     db_url: str = None
     """Connection string for database. If set, overrides the ``db_service_*`` settings."""
+
+    db_reset: bool = False
+    """If set to True, drop all DB tables during startup.
+
+    This setting is intended for use during development.
+    """
+
+    db_migration_mode: MigrationMode = MigrationMode.upgrade
+    """Adjusts the DB migration behavior when the exodus-gw service starts.
+
+    Valid values are:
+
+        upgrade (default)
+            Migrate the DB to ``db_migration_revision`` (default latest) when
+            the service starts up.
+
+            This is the default setting and should be left enabled for typical
+            production use.
+
+        model
+            Don't use migrations. Instead, attempt to initialize the database
+            from the current version of the internal sqlalchemy model.
+
+            This is intended for use during development while prototyping
+            schema changes.
+
+        none
+            Don't perform any DB initialization at all.
+    """
+
+    db_migration_revision: str = "head"
+    """If ``db_migration_mode`` is ``upgrade``, this setting can be used to override
+    the target revision when migrating the DB.
+    """
 
     batch_size: int = 25
     """Maximum number of items to write at one time"""
