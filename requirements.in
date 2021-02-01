@@ -7,6 +7,7 @@ uvicorn[standard]
 gunicorn
 psycopg2
 sqlalchemy
+alembic
 async-exit-stack
 async-generator
 backoff
