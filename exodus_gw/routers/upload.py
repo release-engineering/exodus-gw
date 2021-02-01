@@ -300,7 +300,6 @@ async def abort_multipart_upload(
 
 @router.head(
     "/upload/{env}/{key}",
-    tags=["upload"],
     summary="Request head object",
     response_class=Response,
 )
