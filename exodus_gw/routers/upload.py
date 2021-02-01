@@ -67,6 +67,7 @@ from typing import Optional
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, HTTPException, Path, Query, Request, Response
 
+from .. import schemas
 from ..aws.client import S3ClientWrapper as s3_client
 from ..aws.util import (
     RequestReader,
@@ -97,7 +98,7 @@ router = APIRouter(tags=[openapi_tag["name"]])
 )
 async def multipart_upload(
     request: Request,
-    env: str = Path(..., description="Target CDN environment"),
+    env: str = schemas.PathEnv,
     key: str = Path(..., description="S3 object key"),
     uploadId: Optional[str] = Query(
         None,
@@ -157,7 +158,7 @@ async def multipart_upload(
 )
 async def upload(
     request: Request,
-    env: str = Path(..., description="Target CDN environment"),
+    env: str = schemas.PathEnv,
     key: str = Path(..., description="S3 object key"),
     uploadId: Optional[str] = Query(
         None, description="ID of an existing multi-part upload."
@@ -275,7 +276,7 @@ async def multipart_put(
     response_class=Response,
 )
 async def abort_multipart_upload(
-    env: str = Path(..., description="Target CDN environment"),
+    env: str = schemas.PathEnv,
     key: str = Path(..., description="S3 object key"),
     uploadId: str = Query(..., description="ID of a multipart upload"),
 ):
@@ -305,7 +306,7 @@ async def abort_multipart_upload(
     response_class=Response,
 )
 async def head(
-    env: str = Path(..., description="Target CDN environment"),
+    env: str = schemas.PathEnv,
     key: str = Path(..., description="S3 object key"),
 ):
     """Retrieve metadata from an S3 object."""
