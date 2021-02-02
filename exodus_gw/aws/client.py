@@ -1,6 +1,7 @@
 import os
 
 import aioboto3
+import boto3.session
 from botocore.config import Config
 
 
@@ -88,12 +89,12 @@ class DynamoDBClientWrapper:
 
     def __init__(self, profile: str):
         """Prepare a client for the given profile. This object must be used
-        via 'async with' in order to obtain access to the client.
+        via 'with' in order to obtain access to the client.
 
         Note: Session creation will fail if provided profile cannot be found.
         """
 
-        session = aioboto3.Session(profile_name=profile)
+        session = boto3.session.Session(profile_name=profile)
 
         self._client_context = session.client(
             "dynamodb",
@@ -101,8 +102,8 @@ class DynamoDBClientWrapper:
             or None,
         )
 
-    async def __aenter__(self):
-        return await self._client_context.__aenter__()
+    def __enter__(self):
+        return self._client_context
 
-    async def __aexit__(self, exc_type, exc, tb):
-        await self._client_context.__aexit__(exc_type, exc, tb)
+    def __exit__(self, exc_type, exc, tb):
+        return

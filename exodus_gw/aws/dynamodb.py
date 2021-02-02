@@ -21,7 +21,7 @@ LOG = logging.getLogger("exodus-gw")
     predicate=lambda response: response["UnprocessedItems"],
     max_tries=Settings().max_tries,
 )
-async def batch_write(env: str, request: dict):
+def batch_write(env: str, request: dict):
     """Wrapper for batch_write_item with retries and item count validation.
 
     Item limit of 25 is, at this time, imposed by AWS's boto3 library.
@@ -34,8 +34,8 @@ async def batch_write(env: str, request: dict):
         LOG.error("Cannot process more than 25 items per request")
         raise ValueError("Request contains too many items (%s)" % item_count)
 
-    async with ddb_client(profile=environment.aws_profile) as ddb:
-        response = await ddb.batch_write_item(RequestItems=request)
+    with ddb_client(profile=environment.aws_profile) as ddb:
+        response = ddb.batch_write_item(RequestItems=request)
 
     return response
 
@@ -55,9 +55,7 @@ def create_request(env: str, items: List[models.Item], delete: bool = False):
     return {table: [{req_type: {item_type: item.aws_fmt}} for item in items]}
 
 
-async def write_batches(
-    env: str, items: List[models.Item], delete: bool = False
-):
+def write_batches(env: str, items: List[models.Item], delete: bool = False):
     """Submit batches of given items for writing via batch_write."""
 
     environment = get_environment(env)
@@ -71,7 +69,7 @@ async def write_batches(
         request = create_request(env, list(batch), delete)
 
         try:
-            response = await batch_write(env, request)
+            response = batch_write(env, request)
         except Exception:
             LOG.exception(
                 "Exception while %s %s items on table '%s'",

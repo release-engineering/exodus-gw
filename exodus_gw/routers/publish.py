@@ -59,16 +59,14 @@ Publish objects should be treated as ephemeral; they are not persisted indefinit
 """
 
 import logging
-from os.path import basename
 from typing import List, Union
 from uuid import UUID
 
 from fastapi import APIRouter, Body
 from sqlalchemy.orm import Session
 
-from .. import deps, models, schemas
-from ..aws.dynamodb import write_batches
-from ..crud import create_publish, get_publish_by_id, update_publish
+from .. import deps, models, schemas, worker
+from ..crud import create_publish, update_publish
 from ..settings import Environment, Settings
 
 LOG = logging.getLogger("exodus-gw")
@@ -154,7 +152,7 @@ async def update_publish_items(
     status_code=200,
     response_model=schemas.EmptyResponse,
 )
-async def commit_publish(
+def commit_publish(
     publish_id: UUID = schemas.PathPublishId,
     env: Environment = deps.env,
     db: Session = deps.db,
@@ -169,7 +167,7 @@ async def commit_publish(
       - This occurs with all-or-nothing semantics; see [Atomicity](#section/Atomicity).
     - The publish object becomes frozen - no further items can be added.
 
-    Commit occurs asynchronously.  This API returns a Task object which may be used
+    Commit occurs asynchronously.  This API returns a message ID which may be used
     to monitor the progress of the commit.
 
     Note that exodus-gw does not resolve conflicts or ensure that any given path is
@@ -178,29 +176,7 @@ async def commit_publish(
     objects from any of those publishes.
     """
 
-    items = []
-    items_written = False
-    last_items = []
-    last_items_written = False
+    msg = worker.commit.send(publish_id=str(publish_id), env=env.name)
+    LOG.info("Enqueued commit for '%s'", msg.kwargs["publish_id"])
 
-    for item in get_publish_by_id(db, publish_id).items:
-        if basename(item.web_uri) in settings.entry_point_files:
-            last_items.append(item)
-        else:
-            items.append(item)
-
-    if items:
-        items_written = await write_batches(env, items)
-
-    if not items_written:
-        # Delete all items if failed to write any items.
-        await write_batches(env, items, delete=True)
-    elif last_items:
-        # Write any last_items if successfully wrote all items.
-        last_items_written = await write_batches(env, last_items)
-
-        if not last_items_written:
-            # Delete everything if failed to write last_items.
-            await write_batches(env, items + last_items, delete=True)
-
-    return {}
+    return {"commit_message_id": msg.message_id}

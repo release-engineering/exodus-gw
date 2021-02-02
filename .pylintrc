@@ -115,3 +115,6 @@ disable=print-statement,
         # both pytest fixtures and fastapi Depends will result in unused
         # arguments as part of normal usage
         unused-argument,
+        # we need to import dramatiq actors to the worker after broker
+        # is set
+        wrong-import-position,

@@ -1,6 +1,5 @@
 import mock
 import pytest
-from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from exodus_gw import routers, schemas
@@ -86,109 +85,23 @@ async def test_update_publish_items_env_exists(
     )
 
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "env",
-    [
-        "test",
-        "test2",
-        "test3",
-    ],
-)
-@mock.patch("exodus_gw.routers.publish.write_batches")
-@mock.patch("exodus_gw.routers.publish.get_publish_by_id")
-async def test_commit_publish(
-    mock_get_publish,
-    mock_write_batches,
-    env,
-    mock_publish,
-    mock_db_session,
-):
-    mock_get_publish.return_value = mock_publish
-    mock_write_batches.return_value = True
+@mock.patch("exodus_gw.worker.commit")
+def test_commit_publish(mock_commit, mock_publish, mock_db_session):
+    """Ensure commit_publish delegates to worker correctly"""
 
-    assert (
-        await routers.publish.commit_publish(
-            env=env,
-            publish_id=mock_publish.id,
-            db=mock_db_session,
-            settings=Settings(),
-        )
-        == {}
-    )
-    # Should write repomd.xml file separately after other items.
-    mock_write_batches.assert_has_calls(
-        calls=[
-            mock.call(env, mock_publish.items[:2]),
-            mock.call(env, [mock_publish.items[2]]),
-        ],
-        any_order=False,
-    )
+    env = Environment("test", "some-profile", "some-bucket", "some-table")
 
-
-@pytest.mark.asyncio
-@mock.patch("exodus_gw.routers.publish.get_publish_by_id")
-async def test_commit_publish_env_doesnt_exist(mock_publish, mock_db_session):
-    env = "foo"
-
-    with pytest.raises(HTTPException) as exc_info:
-        await routers.publish.commit_publish(
-            env=env,
-            publish_id=mock_publish.id,
-            db=mock_db_session,
-            settings=Settings(),
-        )
-
-    assert exc_info.value.status_code == 404
-    assert exc_info.value.detail == "Invalid environment='foo'"
-
-
-@pytest.mark.asyncio
-@mock.patch("exodus_gw.routers.publish.write_batches")
-@mock.patch("exodus_gw.routers.publish.get_publish_by_id")
-async def test_commit_publish_write_failed(
-    mock_get_publish, mock_write_batches, mock_publish, mock_db_session
-):
-    mock_get_publish.return_value = mock_publish
-    mock_write_batches.side_effect = [False, True]
-
-    await routers.publish.commit_publish(
-        env="test",
+    routers.publish.commit_publish(
+        env=env,
         publish_id=mock_publish.id,
         db=mock_db_session,
         settings=Settings(),
     )
 
-    mock_write_batches.assert_has_calls(
+    mock_commit.assert_has_calls(
         calls=[
-            mock.call("test", mock_publish.items[:2]),
-            mock.call("test", mock_publish.items[:2], delete=True),
+            mock.call.send(
+                publish_id="123e4567-e89b-12d3-a456-426614174000", env="test"
+            )
         ],
-        any_order=False,
-    )
-
-
-@pytest.mark.asyncio
-@mock.patch("exodus_gw.routers.publish.write_batches")
-@mock.patch("exodus_gw.routers.publish.get_publish_by_id")
-async def test_commit_publish_entry_point_files_failed(
-    mock_get_publish, mock_write_batches, mock_publish, mock_db_session
-):
-    mock_get_publish.return_value = mock_publish
-    mock_write_batches.side_effect = [True, False, True]
-
-    await routers.publish.commit_publish(
-        env="test",
-        publish_id=mock_publish.id,
-        db=mock_db_session,
-        settings=Settings(),
-    )
-
-    mock_write_batches.assert_has_calls(
-        calls=[
-            mock.call("test", mock_publish.items[:2]),
-            mock.call("test", [mock_publish.items[2]]),
-            mock.call("test", mock_publish.items, delete=True),
-        ],
-        any_order=False,
     )
