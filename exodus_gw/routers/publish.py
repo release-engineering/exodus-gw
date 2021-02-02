@@ -85,7 +85,9 @@ router = APIRouter(tags=[openapi_tag["name"]])
     response_model=schemas.Publish,
     status_code=200,
 )
-async def publish(env: str, db: Session = Depends(get_db)) -> models.Publish:
+async def publish(
+    env: str = schemas.PathEnv, db: Session = Depends(get_db)
+) -> models.Publish:
     """Creates and returns a new publish object."""
 
     # Validate environment from caller.
@@ -99,9 +101,9 @@ async def publish(env: str, db: Session = Depends(get_db)) -> models.Publish:
     status_code=200,
 )
 async def update_publish_items(
-    env: str,
-    publish_id: UUID,
     items: Union[schemas.ItemBase or List[schemas.ItemBase]],
+    publish_id: UUID = schemas.PathPublishId,
+    env: str = schemas.PathEnv,
     db: Session = Depends(get_db),
 ) -> dict:
     """Add publish items to an existing publish object.
@@ -128,7 +130,9 @@ async def update_publish_items(
     status_code=200,
 )
 async def commit_publish(
-    env: str, publish_id: UUID, db: Session = Depends(get_db)
+    publish_id: UUID = schemas.PathPublishId,
+    env: str = schemas.PathEnv,
+    db: Session = Depends(get_db),
 ) -> dict:
     """Commit an existing publish object.
 

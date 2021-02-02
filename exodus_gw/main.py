@@ -38,6 +38,27 @@ for information on how to integrate an authentication mechanism.
 
 If you are a client looking to make use of exodus-gw, consult your organization's
 internal documentation for advice on how to authenticate with exodus-gw.
+
+
+## Environments
+
+Many APIs in exodus-gw use the concept of an "environment" to control the target system
+of an operation.
+
+The set of environments is configured when exodus-gw is deployed. For example, separate
+"production" and "staging" environments may be configured, making use of separate storage
+backends.
+
+Different environments will also require the user to hold different roles. For example,
+a client might be permitted only to write to one of the configured environments, or all
+of them, depending on the configuration of the server.
+
+If you are deploying an instance of exodus-gw, see
+[the deployment guide](https://release-engineering.github.io/exodus-gw/deployment.html)
+for information on how to configure environments.
+
+If you are a client looking to make use of exodus-gw, consult your organization's
+internal documentation for advice on which environment(s) you should be using.
 """
 
 import logging.config
