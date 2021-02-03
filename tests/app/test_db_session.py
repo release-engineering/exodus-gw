@@ -4,7 +4,8 @@ from fastapi import Depends, HTTPException
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from exodus_gw.database import SessionLocal, get_db
+from exodus_gw import deps
+from exodus_gw.database import SessionLocal
 from exodus_gw.main import app
 from exodus_gw.models import Publish
 
@@ -15,7 +16,7 @@ TEST_UUID = uuid.UUID("{12345678-1234-5678-1234-567812345678}")
 # A testing endpoint which will create an object and then commit,
 # rollback or raise based on params
 @app.post("/test_db_session/make_publish")
-def make_publish(mode: str = None, db: Session = Depends(get_db)):
+def make_publish(mode: str = None, db: Session = deps.db):
     p = Publish(id=TEST_UUID, env="test")
     db.add(p)
 

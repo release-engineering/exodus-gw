@@ -2,12 +2,11 @@
 
 import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from sqlalchemy.orm import Session
 
-from .. import worker
-from ..auth import CallContext, call_context
-from ..database import get_db
+from .. import deps, worker
+from ..auth import CallContext
 
 LOG = logging.getLogger("exodus-gw")
 
@@ -23,7 +22,7 @@ def healthcheck():
 
 
 @router.get("/healthcheck-worker")
-def healthcheck_worker(db: Session = Depends(get_db)):
+def healthcheck_worker(db: Session = deps.db):
     """Returns a successful response if background workers are running."""
 
     msg = worker.ping.send()
@@ -64,7 +63,7 @@ def healthcheck_worker(db: Session = Depends(get_db)):
         }
     },
 )
-def whoami(context: CallContext = Depends(call_context)):
+def whoami(context: CallContext = deps.call_context):
     """Return basic information on the caller's authentication & authorization context.
 
     This endpoint may be used to determine whether the caller is authenticated to
