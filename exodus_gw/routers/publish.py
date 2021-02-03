@@ -69,7 +69,7 @@ from sqlalchemy.orm import Session
 from .. import deps, models, schemas
 from ..aws.dynamodb import write_batches
 from ..crud import create_publish, get_publish_by_id, update_publish
-from ..settings import get_environment, get_settings
+from ..settings import Environment, get_settings
 
 LOG = logging.getLogger("exodus-gw")
 
@@ -85,12 +85,9 @@ router = APIRouter(tags=[openapi_tag["name"]])
     status_code=200,
 )
 async def publish(
-    env: str = schemas.PathEnv, db: Session = deps.db
+    env: Environment = deps.env, db: Session = deps.db
 ) -> models.Publish:
     """Creates and returns a new publish object."""
-
-    # Validate environment from caller.
-    get_environment(env)
 
     return create_publish(env, db)
 
@@ -102,7 +99,7 @@ async def publish(
 async def update_publish_items(
     items: Union[schemas.ItemBase or List[schemas.ItemBase]],
     publish_id: UUID = schemas.PathPublishId,
-    env: str = schemas.PathEnv,
+    env: Environment = deps.env,
     db: Session = deps.db,
 ) -> dict:
     """Add publish items to an existing publish object.
@@ -116,9 +113,6 @@ async def update_publish_items(
     Items cannot be added to a publish once it has been committed.
     """
 
-    # Validate environment from caller.
-    get_environment(env)
-
     update_publish(db, items, publish_id)
 
     return {}
@@ -130,7 +124,7 @@ async def update_publish_items(
 )
 async def commit_publish(
     publish_id: UUID = schemas.PathPublishId,
-    env: str = schemas.PathEnv,
+    env: Environment = deps.env,
     db: Session = deps.db,
 ) -> dict:
     """Commit an existing publish object.
@@ -150,9 +144,6 @@ async def commit_publish(
     path are being committed concurrently, URIs on the CDN may end up pointing to
     objects from any of those publishes.
     """
-
-    # Validate environment from caller.
-    get_environment(env)
 
     settings = get_settings()
 
