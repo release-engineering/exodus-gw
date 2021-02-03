@@ -72,7 +72,7 @@ from . import models
 from .aws.util import xml_response
 from .database import SessionLocal
 from .routers import publish, service, upload
-from .settings import get_settings
+from .settings import load_settings
 
 app = FastAPI(
     title="exodus-gw",
@@ -103,9 +103,8 @@ async def custom_http_exception_handler(request, exc):
     return await http_exception_handler(request, exc)
 
 
-@app.on_event("startup")
-def configure_loggers():
-    settings = get_settings()
+def loggers_init(settings=None):
+    settings = settings or app.state.settings
     logging.config.dictConfig(settings.log_config)
 
     root = logging.getLogger()
@@ -119,9 +118,19 @@ def configure_loggers():
         root.addHandler(hdlr)
 
 
-@app.on_event("startup")
 def db_init() -> None:
     models.Base.metadata.create_all(bind=SessionLocal().get_bind())
+
+
+def settings_init() -> None:
+    app.state.settings = load_settings()
+
+
+@app.on_event("startup")
+def on_startup() -> None:
+    settings_init()
+    loggers_init()
+    db_init()
 
 
 @app.middleware("http")

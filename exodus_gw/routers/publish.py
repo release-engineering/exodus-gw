@@ -69,7 +69,7 @@ from sqlalchemy.orm import Session
 from .. import deps, models, schemas
 from ..aws.dynamodb import write_batches
 from ..crud import create_publish, get_publish_by_id, update_publish
-from ..settings import Environment, get_settings
+from ..settings import Environment, Settings
 
 LOG = logging.getLogger("exodus-gw")
 
@@ -126,6 +126,7 @@ async def commit_publish(
     publish_id: UUID = schemas.PathPublishId,
     env: Environment = deps.env,
     db: Session = deps.db,
+    settings: Settings = deps.settings,
 ) -> dict:
     """Commit an existing publish object.
 
@@ -144,8 +145,6 @@ async def commit_publish(
     path are being committed concurrently, URIs on the CDN may end up pointing to
     objects from any of those publishes.
     """
-
-    settings = get_settings()
 
     items = []
     items_written = False

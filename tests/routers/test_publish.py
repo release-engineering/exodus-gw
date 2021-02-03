@@ -7,7 +7,7 @@ from exodus_gw import models, routers, schemas
 from exodus_gw.database import SessionLocal
 from exodus_gw.main import app
 from exodus_gw.models import Publish
-from exodus_gw.settings import Environment
+from exodus_gw.settings import Environment, Settings
 
 
 @pytest.mark.parametrize(
@@ -111,7 +111,10 @@ async def test_commit_publish(
 
     assert (
         await routers.publish.commit_publish(
-            env=env, publish_id=mock_publish.id, db=mock_db_session
+            env=env,
+            publish_id=mock_publish.id,
+            db=mock_db_session,
+            settings=Settings(),
         )
         == {}
     )
@@ -132,7 +135,10 @@ async def test_commit_publish_env_doesnt_exist(mock_publish, mock_db_session):
 
     with pytest.raises(HTTPException) as exc_info:
         await routers.publish.commit_publish(
-            env=env, publish_id=mock_publish.id, db=mock_db_session
+            env=env,
+            publish_id=mock_publish.id,
+            db=mock_db_session,
+            settings=Settings(),
         )
 
     assert exc_info.value.status_code == 404
@@ -149,7 +155,10 @@ async def test_commit_publish_write_failed(
     mock_write_batches.side_effect = [False, True]
 
     await routers.publish.commit_publish(
-        env="test", publish_id=mock_publish.id, db=mock_db_session
+        env="test",
+        publish_id=mock_publish.id,
+        db=mock_db_session,
+        settings=Settings(),
     )
 
     mock_write_batches.assert_has_calls(
@@ -171,7 +180,10 @@ async def test_commit_publish_entry_point_files_failed(
     mock_write_batches.side_effect = [True, False, True]
 
     await routers.publish.commit_publish(
-        env="test", publish_id=mock_publish.id, db=mock_db_session
+        env="test",
+        publish_id=mock_publish.id,
+        db=mock_db_session,
+        settings=Settings(),
     )
 
     mock_write_batches.assert_has_calls(
