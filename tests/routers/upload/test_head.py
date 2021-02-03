@@ -1,6 +1,5 @@
 import pytest
 from botocore.exceptions import ClientError
-from fastapi import HTTPException
 
 from exodus_gw.routers.upload import head
 from exodus_gw.settings import get_environment

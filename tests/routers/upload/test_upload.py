@@ -1,6 +1,5 @@
 import mock
 import pytest
-from fastapi import HTTPException
 
 from exodus_gw.routers.upload import upload
 from exodus_gw.settings import get_environment

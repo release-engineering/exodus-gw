@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     db_service_port: str = "5432"
     """db service port"""
 
+    db_url: str = None
+    """Connection string for database. If set, overrides the ``db_service_*`` settings."""
+
     batch_size: int = 25
     """Maximum number of items to write at one time"""
     max_tries: int = 20

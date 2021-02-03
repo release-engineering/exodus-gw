@@ -3,8 +3,7 @@ import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
-from exodus_gw import models, routers, schemas
-from exodus_gw.database import SessionLocal
+from exodus_gw import routers, schemas
 from exodus_gw.main import app
 from exodus_gw.models import Publish
 from exodus_gw.settings import Environment, Settings
@@ -18,7 +17,7 @@ from exodus_gw.settings import Environment, Settings
         "test3",
     ],
 )
-def test_publish_env_exists(env):
+def test_publish_env_exists(env, db):
     with TestClient(app) as client:
         r = client.post("/%s/publish" % env)
 
@@ -28,7 +27,6 @@ def test_publish_env_exists(env):
     # Should have returned a publish object
     publish_id = r.json()["id"]
 
-    db = SessionLocal()
     publishes = db.query(Publish).filter(Publish.id == publish_id)
     assert publishes.count() == 1
 
