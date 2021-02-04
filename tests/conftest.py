@@ -10,7 +10,7 @@ from sqlalchemy.orm.session import Session
 # anything from the exodus_gw.worker module.
 os.environ["EXODUS_GW_STUB_BROKER"] = "1"
 
-from exodus_gw import database, models, schemas  # noqa
+from exodus_gw import database, models, schemas, settings  # noqa
 
 
 @pytest.fixture(autouse=True)
@@ -63,7 +63,7 @@ def mock_item_list():
 
 
 @pytest.fixture(autouse=True)
-def sqlite_in_tests():
+def sqlite_in_tests(monkeypatch):
     """Any 'real' usage of sqlalchemy during this test suite makes use of
     a fresh sqlite DB for each test run. Tests may either make use of this to
     exercise all the ORM code, or may inject mock DB sessions into endpoints.
@@ -78,13 +78,19 @@ def sqlite_in_tests():
         # no problem
         pass
 
+    monkeypatch.setenv("EXODUS_GW_DB_URL", "sqlite:///%s" % filename)
+    yield
+
+
+@pytest.fixture()
+def db():
+    """Yields a real DB session configured using current settings."""
+
+    session = Session(bind=database.db_engine(settings.Settings()))
     try:
-        database.SessionLocal.configure(
-            bind=database.create_engine("sqlite:///%s" % filename)
-        )
-        yield
+        yield session
     finally:
-        database.SessionLocal.configure(bind=database.engine)
+        session.close()
 
 
 @pytest.fixture()

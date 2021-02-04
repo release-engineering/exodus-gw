@@ -6,15 +6,20 @@ import backoff
 
 from .. import models
 from ..aws.client import DynamoDBClientWrapper as ddb_client
-from ..settings import get_environment, get_settings
+from ..settings import Settings, get_environment
 
 LOG = logging.getLogger("exodus-gw")
+
+# TODO: this module is using some settings evaluated at import time.
+# This means changing settings (e.g. during tests) won't have the desired
+# effect. As this code should be executed from the dramatiq workers, is
+# there a way to tie Settings lifecycle to the lifecycle of the worker?
 
 
 @backoff.on_predicate(
     wait_gen=backoff.expo,
     predicate=lambda response: response["UnprocessedItems"],
-    max_tries=get_settings().max_tries,
+    max_tries=Settings().max_tries,
 )
 async def batch_write(env: str, request: dict):
     """Wrapper for batch_write_item with retries and item count validation.
@@ -56,7 +61,7 @@ async def write_batches(
     """Submit batches of given items for writing via batch_write."""
 
     environment = get_environment(env)
-    settings = get_settings()
+    settings = Settings()
 
     it = iter(items)
     batches = list(iter(lambda: tuple(islice(it, settings.batch_size)), ()))

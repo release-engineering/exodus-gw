@@ -9,7 +9,8 @@ from dramatiq.results.backends import StubBackend
 from dramatiq_pg.utils import transaction
 from psycopg2.errors import DuplicateSchema  # pylint: disable=E0611
 
-from exodus_gw.database import SQLALCHEMY_DATABASE_URL
+from exodus_gw.database import db_url
+from exodus_gw.settings import Settings
 
 LOG = logging.getLogger("exodus-gw")
 
@@ -71,7 +72,7 @@ class ExodusGwBroker(
     - can join the broker to an existing sqlalchemy session
     """
 
-    def __init__(self, url=SQLALCHEMY_DATABASE_URL, pool=None):
+    def __init__(self, url=None, pool=None):
         # Placeholder for pool context var.
         #
         # If the app sets a session on the broker, we'll start using this
@@ -82,6 +83,9 @@ class ExodusGwBroker(
         self.__pool_raw = None
 
         # Uses the same DB as used for sqlalchemy by default.
+        if not url and not pool:
+            url = db_url(Settings())
+
         super().__init__(url=url, pool=pool)
 
     @property

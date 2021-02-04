@@ -66,13 +66,14 @@ import logging.config
 import dramatiq
 from fastapi import FastAPI, Request
 from fastapi.exception_handlers import http_exception_handler
+from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import models
 from .aws.util import xml_response
-from .database import SessionLocal
+from .database import db_engine
 from .routers import publish, service, upload
-from .settings import get_settings
+from .settings import load_settings
 
 app = FastAPI(
     title="exodus-gw",
@@ -103,9 +104,8 @@ async def custom_http_exception_handler(request, exc):
     return await http_exception_handler(request, exc)
 
 
-@app.on_event("startup")
-def configure_loggers():
-    settings = get_settings()
+def loggers_init(settings=None):
+    settings = settings or app.state.settings
     logging.config.dictConfig(settings.log_config)
 
     root = logging.getLogger()
@@ -119,9 +119,26 @@ def configure_loggers():
         root.addHandler(hdlr)
 
 
-@app.on_event("startup")
 def db_init() -> None:
-    models.Base.metadata.create_all(bind=SessionLocal().get_bind())
+    app.state.db_engine = db_engine(app.state.settings)
+    models.Base.metadata.create_all(bind=app.state.db_engine)
+
+
+def settings_init() -> None:
+    app.state.settings = load_settings()
+
+
+@app.on_event("startup")
+def on_startup() -> None:
+    settings_init()
+    loggers_init()
+    db_init()
+
+
+@app.on_event("shutdown")
+def db_shutdown() -> None:
+    app.state.db_engine.dispose()
+    del app.state.db_engine
 
 
 @app.middleware("http")
@@ -132,7 +149,9 @@ async def db_session(request: Request, call_next):
     An implicit commit occurs if and only if the request succeeds.
     """
 
-    request.state.db = SessionLocal()
+    request.state.db = Session(
+        bind=app.state.db_engine, autoflush=False, autocommit=False
+    )
 
     # Any dramatiq operations should also make use of this session.
     broker = dramatiq.get_broker()

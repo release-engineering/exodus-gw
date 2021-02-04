@@ -5,12 +5,6 @@ from uuid import UUID
 from fastapi import Path
 from pydantic import BaseModel, Field, root_validator
 
-PathEnv = Path(
-    ...,
-    title="environment",
-    description="[Environment](#section/Environments) on which to operate.",
-)
-
 PathPublishId = Path(
     ...,
     title="publish ID",

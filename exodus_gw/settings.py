@@ -1,6 +1,5 @@
 import configparser
 import os
-from functools import lru_cache
 from typing import List
 
 from fastapi import HTTPException
@@ -45,6 +44,9 @@ class Settings(BaseSettings):
     db_service_port: str = "5432"
     """db service port"""
 
+    db_url: str = None
+    """Connection string for database. If set, overrides the ``db_service_*`` settings."""
+
     batch_size: int = 25
     """Maximum number of items to write at one time"""
     max_tries: int = 20
@@ -61,14 +63,13 @@ class Settings(BaseSettings):
         env_prefix = "exodus_gw_"
 
 
-@lru_cache()
-def get_settings() -> Settings:
+def load_settings() -> Settings:
     """Return the currently active settings for the server.
 
-    This function is intended for use with fastapi.Depends.
+    This function will load settings from config files and environment
+    variables. It is intended to be called once at application startup.
 
-    Settings are loaded the first time this function is called, and cached
-    afterward.
+    Request handler functions should access settings via ``app.state.settings``.
     """
 
     settings = Settings()
@@ -105,12 +106,12 @@ def get_settings() -> Settings:
     return settings
 
 
-def get_environment(env: str):
+def get_environment(env: str, settings: Settings = None):
     """Return the corresponding environment object for the given environment
     name.
     """
 
-    settings = get_settings()
+    settings = settings or load_settings()
 
     for env_obj in settings.environments:
         if env_obj.name == env:

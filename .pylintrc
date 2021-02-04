@@ -107,4 +107,6 @@ disable=print-statement,
         bad-continuation,
         line-too-long,
         invalid-name,
-
+        # both pytest fixtures and fastapi Depends will result in unused
+        # arguments as part of normal usage
+        unused-argument,

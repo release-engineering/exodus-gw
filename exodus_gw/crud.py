@@ -5,10 +5,11 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Query, Session, lazyload
 
 from . import models, schemas
+from .settings import Environment
 
 
-def create_publish(env: str, db: Session) -> models.Publish:
-    db_publish = models.Publish(id=uuid4(), env=env)
+def create_publish(env: Environment, db: Session) -> models.Publish:
+    db_publish = models.Publish(id=uuid4(), env=env.name)
     db.add(db_publish)
     db.commit()
     db.refresh(db_publish)

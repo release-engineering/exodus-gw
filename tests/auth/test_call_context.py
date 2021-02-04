@@ -13,7 +13,8 @@ def test_no_context():
     """Unauthenticated requests return a default context."""
 
     request = mock.Mock(headers={})
-    ctx = call_context(request, Settings())
+    request.app.state.settings = Settings()
+    ctx = call_context(request)
 
     # It should return a truthy object.
     assert ctx
@@ -46,8 +47,9 @@ def test_decode_context():
 
     settings = Settings(call_context_header="my-auth-header")
     request = mock.Mock(headers={"my-auth-header": b64})
+    request.app.state.settings = settings
 
-    ctx = call_context(request=request, settings=settings)
+    ctx = call_context(request=request)
 
     # The details should match exactly the encoded data from the header.
     assert ctx.client.roles == ["someRole", "anotherRole"]
@@ -75,9 +77,10 @@ def test_bad_header(header_value):
 
     settings = Settings(call_context_header="my-auth-header")
     request = mock.Mock(headers={"my-auth-header": header_value})
+    request.app.state.settings = settings
 
     with pytest.raises(HTTPException) as exc_info:
-        call_context(request=request, settings=settings)
+        call_context(request=request)
 
     # It should give a 400 error (client error)
     assert exc_info.value.status_code == 400

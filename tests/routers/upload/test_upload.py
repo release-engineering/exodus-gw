@@ -1,8 +1,8 @@
 import mock
 import pytest
-from fastapi import HTTPException
 
 from exodus_gw.routers.upload import upload
+from exodus_gw.settings import get_environment
 
 TEST_KEY = "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"
 
@@ -25,7 +25,7 @@ async def test_full_upload(mock_aws_client, mock_request_reader):
 
     response = await upload(
         request=request,
-        env="test",
+        env=get_environment("test"),
         key=TEST_KEY,
         uploadId=None,
         partNumber=None,
@@ -68,7 +68,7 @@ async def test_part_upload(mock_aws_client, mock_request_reader):
 
     response = await upload(
         request=request,
-        env="test",
+        env=get_environment("test"),
         key=TEST_KEY,
         uploadId="my-best-upload",
         partNumber=88,
@@ -93,35 +93,3 @@ async def test_part_upload(mock_aws_client, mock_request_reader):
 
     # It should have an empty body
     assert response.body == b""
-
-
-@pytest.mark.asyncio
-async def test_upload_invalid_env(mock_aws_client, mock_request_reader):
-    """Uploading to an invalid environment does not delegate to s3."""
-
-    mock_aws_client.put_object.return_value = {
-        "ETag": "a1b2c3",
-    }
-
-    request = mock.Mock(
-        headers={
-            "Content-MD5": "9d0568469d206c1aedf1b71f12f474bc",
-            "Content-Length": "10",
-        }
-    )
-    mock_request_reader.return_value = b"some bytes"
-
-    with pytest.raises(HTTPException) as exc_info:
-        await upload(
-            request=request,
-            env="foo",
-            key=TEST_KEY,
-            uploadId=None,
-            partNumber=None,
-        )
-
-    # It should not delegate request to real S3
-    assert not mock_aws_client.put_object.called
-
-    # It should produce an error message
-    assert exc_info.value.detail == "Invalid environment='foo'"

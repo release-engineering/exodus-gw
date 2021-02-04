@@ -1,11 +1,14 @@
 import mock
 import pytest
 from fastapi import HTTPException
+from fastapi.testclient import TestClient
 
-from exodus_gw import models, routers, schemas
+from exodus_gw import routers, schemas
+from exodus_gw.main import app
+from exodus_gw.models import Publish
+from exodus_gw.settings import Environment, Settings
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "env",
     [
@@ -14,23 +17,37 @@ from exodus_gw import models, routers, schemas
         "test3",
     ],
 )
-async def test_publish_env_exists(env, mock_db_session):
-    publish = await routers.publish.publish(env=env, db=mock_db_session)
-    assert isinstance(publish, models.Publish)
+def test_publish_env_exists(env, db):
+    with TestClient(app) as client:
+        r = client.post("/%s/publish" % env)
+
+    # Should succeed
+    assert r.ok
+
+    # Should have returned a publish object
+    publish_id = r.json()["id"]
+
+    publishes = db.query(Publish).filter(Publish.id == publish_id)
+    assert publishes.count() == 1
 
 
-@pytest.mark.asyncio
-async def test_publish_env_doesnt_exist(mock_db_session):
-    env = "foo"
-    with pytest.raises(HTTPException) as exc_info:
-        await routers.publish.publish(env=env, db=mock_db_session)
-    assert exc_info.value.status_code == 404
-    assert exc_info.value.detail == "Invalid environment='foo'"
+def test_publish_env_doesnt_exist():
+    with TestClient(app) as client:
+        r = client.post("/foo/publish")
+
+    # It should fail
+    assert r.status_code == 404
+
+    # It should mention that it was a bad environment
+    assert r.json() == {"detail": "Invalid environment='foo'"}
 
 
 @pytest.mark.asyncio
 async def test_publish_links(mock_db_session):
-    publish = await routers.publish.publish(env="test", db=mock_db_session)
+    publish = await routers.publish.publish(
+        env=Environment("test", "some-profile", "some-bucket", "some-table"),
+        db=mock_db_session,
+    )
 
     # The schema (realistic result) resulting from the publish
     # should contain accurate links.
@@ -56,6 +73,8 @@ async def test_update_publish_items_env_exists(
     # Simulate single item to "test3" environment to test list coercion.
     items = mock_item_list[0] if env == "test3" else mock_item_list
 
+    env = Environment(env, "test-profile", "test-bucket", "test-table")
+
     assert (
         await routers.publish.update_publish_items(
             env=env,
@@ -65,25 +84,6 @@ async def test_update_publish_items_env_exists(
         )
         == {}
     )
-
-
-@pytest.mark.asyncio
-async def test_update_publish_items_env_doesnt_exist(
-    mock_db_session, mock_item_list
-):
-    env = "foo"
-    publish_id = "123e4567-e89b-12d3-a456-426614174000"
-
-    with pytest.raises(HTTPException) as exc_info:
-        await routers.publish.update_publish_items(
-            env=env,
-            publish_id=publish_id,
-            items=mock_item_list,
-            db=mock_db_session,
-        )
-
-    assert exc_info.value.status_code == 404
-    assert exc_info.value.detail == "Invalid environment='foo'"
 
 
 @pytest.mark.asyncio
@@ -109,7 +109,10 @@ async def test_commit_publish(
 
     assert (
         await routers.publish.commit_publish(
-            env=env, publish_id=mock_publish.id, db=mock_db_session
+            env=env,
+            publish_id=mock_publish.id,
+            db=mock_db_session,
+            settings=Settings(),
         )
         == {}
     )
@@ -130,7 +133,10 @@ async def test_commit_publish_env_doesnt_exist(mock_publish, mock_db_session):
 
     with pytest.raises(HTTPException) as exc_info:
         await routers.publish.commit_publish(
-            env=env, publish_id=mock_publish.id, db=mock_db_session
+            env=env,
+            publish_id=mock_publish.id,
+            db=mock_db_session,
+            settings=Settings(),
         )
 
     assert exc_info.value.status_code == 404
@@ -147,7 +153,10 @@ async def test_commit_publish_write_failed(
     mock_write_batches.side_effect = [False, True]
 
     await routers.publish.commit_publish(
-        env="test", publish_id=mock_publish.id, db=mock_db_session
+        env="test",
+        publish_id=mock_publish.id,
+        db=mock_db_session,
+        settings=Settings(),
     )
 
     mock_write_batches.assert_has_calls(
@@ -169,7 +178,10 @@ async def test_commit_publish_entry_point_files_failed(
     mock_write_batches.side_effect = [True, False, True]
 
     await routers.publish.commit_publish(
-        env="test", publish_id=mock_publish.id, db=mock_db_session
+        env="test",
+        publish_id=mock_publish.id,
+        db=mock_db_session,
+        settings=Settings(),
     )
 
     mock_write_batches.assert_has_calls(

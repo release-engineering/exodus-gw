@@ -1,6 +1,7 @@
 import logging
 
-from exodus_gw.main import configure_loggers
+from exodus_gw.main import loggers_init
+from exodus_gw.settings import load_settings
 
 
 def test_log_levels():
@@ -8,7 +9,7 @@ def test_log_levels():
 
     logging.getLogger("old-logger").setLevel("DEBUG")
 
-    configure_loggers()
+    loggers_init(load_settings())
 
     # Should not alter existing loggers.
     assert logging.getLogger("old-logger").level == logging.DEBUG
@@ -29,7 +30,7 @@ def test_log_handler():
     root_handlers.clear()
     assert not root_handlers
 
-    configure_loggers()
+    loggers_init(load_settings())
 
     # Should now have one (1) StreamHandler.
     assert len(root_handlers) == 1

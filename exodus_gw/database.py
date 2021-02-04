@@ -1,22 +1,20 @@
-from fastapi import Request
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 
-from .settings import get_settings
-
-# The database name is identical to the user name
-SQLALCHEMY_DATABASE_URL = (
-    "postgresql://{s.db_service_user}:{s.db_service_pass}@"
-    "{s.db_service_host}:{s.db_service_port}/{s.db_service_user}"
-).format(s=get_settings())
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+from .settings import Settings
 
 Base = declarative_base()
 
 
-def get_db(request: Request):
-    """DB session accessor for use with FastAPI's dependency injection system."""
-    return request.state.db
+def db_url(settings: Settings):
+    if settings.db_url:
+        return settings.db_url
+
+    return (
+        "postgresql://{s.db_service_user}:{s.db_service_pass}@"
+        "{s.db_service_host}:{s.db_service_port}/{s.db_service_user}"
+    ).format(s=settings)
+
+
+def db_engine(settings: Settings):
+    return create_engine(db_url(settings))

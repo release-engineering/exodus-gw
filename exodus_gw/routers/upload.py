@@ -67,7 +67,7 @@ from typing import Optional
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, HTTPException, Path, Query, Request, Response
 
-from .. import schemas
+from .. import deps
 from ..aws.client import S3ClientWrapper as s3_client
 from ..aws.util import (
     RequestReader,
@@ -75,7 +75,7 @@ from ..aws.util import (
     extract_mpu_parts,
     xml_response,
 )
-from ..settings import get_environment
+from ..settings import Environment
 
 LOG = logging.getLogger("s3")
 
@@ -98,7 +98,7 @@ router = APIRouter(tags=[openapi_tag["name"]])
 )
 async def multipart_upload(
     request: Request,
-    env: str = schemas.PathEnv,
+    env: Environment = deps.env,
     key: str = Path(..., description="S3 object key"),
     uploadId: Optional[str] = Query(
         None,
@@ -158,7 +158,7 @@ async def multipart_upload(
 )
 async def upload(
     request: Request,
-    env: str = schemas.PathEnv,
+    env: Environment = deps.env,
     key: str = Path(..., description="S3 object key"),
     uploadId: Optional[str] = Query(
         None, description="ID of an existing multi-part upload."
@@ -189,14 +189,13 @@ async def upload(
     return await multipart_put(env, key, uploadId, partNumber, request)
 
 
-async def object_put(env: str, key: str, request: Request):
+async def object_put(env: Environment, key: str, request: Request):
     # Single-part upload handler: entire object is written via one PUT.
     reader = RequestReader.get_reader(request)
-    env_obj = get_environment(env)
 
-    async with s3_client(profile=env_obj.aws_profile) as s3:
+    async with s3_client(profile=env.aws_profile) as s3:
         response = await s3.put_object(
-            Bucket=env_obj.bucket,
+            Bucket=env.bucket,
             Key=key,
             Body=reader,
             ContentMD5=content_md5(request),
@@ -207,17 +206,16 @@ async def object_put(env: str, key: str, request: Request):
 
 
 async def complete_multipart_upload(
-    env: str, key: str, uploadId: str, request: Request
+    env: Environment, key: str, uploadId: str, request: Request
 ):
-    env_obj = get_environment(env)
     body = await request.body()
     parts = extract_mpu_parts(body)
 
     LOG.debug("completing mpu for parts %s", parts)
 
-    async with s3_client(profile=env_obj.aws_profile) as s3:
+    async with s3_client(profile=env.aws_profile) as s3:
         response = await s3.complete_multipart_upload(
-            Bucket=env_obj.bucket,
+            Bucket=env.bucket,
             Key=key,
             UploadId=uploadId,
             MultipartUpload={"Parts": parts},
@@ -233,13 +231,9 @@ async def complete_multipart_upload(
     )
 
 
-async def create_multipart_upload(env: str, key: str):
-    env_obj = get_environment(env)
-
-    async with s3_client(profile=env_obj.aws_profile) as s3:
-        response = await s3.create_multipart_upload(
-            Bucket=env_obj.bucket, Key=key
-        )
+async def create_multipart_upload(env: Environment, key: str):
+    async with s3_client(profile=env.aws_profile) as s3:
+        response = await s3.create_multipart_upload(Bucket=env.bucket, Key=key)
 
     return xml_response(
         "CreateMultipartUploadOutput",
@@ -250,15 +244,18 @@ async def create_multipart_upload(env: str, key: str):
 
 
 async def multipart_put(
-    env: str, key: str, uploadId: str, partNumber: int, request: Request
+    env: Environment,
+    key: str,
+    uploadId: str,
+    partNumber: int,
+    request: Request,
 ):
     reader = RequestReader.get_reader(request)
-    env_obj = get_environment(env)
 
-    async with s3_client(profile=env_obj.aws_profile) as s3:
+    async with s3_client(profile=env.aws_profile) as s3:
         response = await s3.upload_part(
             Body=reader,
-            Bucket=env_obj.bucket,
+            Bucket=env.bucket,
             Key=key,
             PartNumber=partNumber,
             UploadId=uploadId,
@@ -276,7 +273,7 @@ async def multipart_put(
     response_class=Response,
 )
 async def abort_multipart_upload(
-    env: str = schemas.PathEnv,
+    env: Environment = deps.env,
     key: str = Path(..., description="S3 object key"),
     uploadId: str = Query(..., description="ID of a multipart upload"),
 ):
@@ -289,11 +286,9 @@ async def abort_multipart_upload(
     """
     LOG.debug("Abort %s", uploadId)
 
-    env_obj = get_environment(env)
-
-    async with s3_client(profile=env_obj.aws_profile) as s3:
+    async with s3_client(profile=env.aws_profile) as s3:
         await s3.abort_multipart_upload(
-            Bucket=env_obj.bucket, Key=key, UploadId=uploadId
+            Bucket=env.bucket, Key=key, UploadId=uploadId
         )
 
     return Response()
@@ -305,16 +300,14 @@ async def abort_multipart_upload(
     response_class=Response,
 )
 async def head(
-    env: str = schemas.PathEnv,
+    env: Environment = deps.env,
     key: str = Path(..., description="S3 object key"),
 ):
     """Retrieve metadata from an S3 object."""
 
-    env_obj = get_environment(env)
-
     try:
-        async with s3_client(profile=env_obj.aws_profile) as s3:
-            response = await s3.head_object(Bucket=env_obj.bucket, Key=key)
+        async with s3_client(profile=env.aws_profile) as s3:
+            response = await s3.head_object(Bucket=env.bucket, Key=key)
     except ClientError as exc_info:
         # According to botocore documentation, it is safe to rely on
         # the API to throw exceptions for any non-2xx response.

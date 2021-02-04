@@ -5,8 +5,6 @@ from typing import List, Optional, Set
 from fastapi import Depends, HTTPException, Request
 from pydantic import BaseModel
 
-from .settings import Settings, get_settings
-
 LOG = logging.getLogger("exodus-gw")
 
 
@@ -38,11 +36,10 @@ class CallContext(BaseModel):
     user: UserContext = UserContext()
 
 
-def call_context(
-    request: Request, settings: Settings = Depends(get_settings)
-) -> CallContext:
+def call_context(request: Request) -> CallContext:
     """Returns the CallContext for the current request."""
 
+    settings = request.app.state.settings
     header = settings.call_context_header
     header_value = request.headers.get(header)
     if not header_value:

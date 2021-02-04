@@ -1,18 +1,13 @@
 import pytest
 from fastapi import HTTPException
 
-from exodus_gw.settings import get_environment, get_settings
-
-# Note: get_settings is wrapped in lru_cache.
-# During tests, we want to test the real original function
-# without caching, so we grab a reference to it here.
-get_settings = get_settings.__wrapped__
+from exodus_gw.settings import get_environment, load_settings
 
 
-def test_get_settings_default():
-    """get_settings returns an object with default settings present."""
+def test_load_settings_default():
+    """load_settings returns an object with default settings present."""
 
-    settings = get_settings()
+    settings = load_settings()
 
     assert settings.call_context_header == "X-RhApiPlatform-CallContext"
     assert [env.name for env in settings.environments] == [
@@ -24,8 +19,8 @@ def test_get_settings_default():
     assert settings.db_service_pass == "exodus-gw"
 
 
-def test_get_settings_override(monkeypatch):
-    """get_settings values can be overridden by environment variables.
+def test_load_settings_override(monkeypatch):
+    """load_settings values can be overridden by environment variables.
 
     This test shows/proves that the pydantic BaseSettings environment variable
     parsing feature is generally working. It is not necessary to add similar
@@ -34,7 +29,7 @@ def test_get_settings_override(monkeypatch):
 
     monkeypatch.setenv("EXODUS_GW_CALL_CONTEXT_HEADER", "my-awesome-header")
 
-    settings = get_settings()
+    settings = load_settings()
 
     # It should have used the value from environment.
     assert settings.call_context_header == "my-awesome-header"

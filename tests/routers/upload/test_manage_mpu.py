@@ -6,6 +6,7 @@ from fastapi import HTTPException
 
 from exodus_gw.aws.util import xml_response
 from exodus_gw.routers.upload import abort_multipart_upload, multipart_upload
+from exodus_gw.settings import get_environment
 
 TEST_KEY = "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"
 
@@ -22,7 +23,7 @@ async def test_create_mpu(mock_aws_client):
 
     response = await multipart_upload(
         None,
-        env="test",
+        env=get_environment("test"),
         key=TEST_KEY,
         uploads="",
     )
@@ -80,7 +81,7 @@ async def test_complete_mpu(mock_aws_client):
 
     response = await multipart_upload(
         request=request,
-        env="test",
+        env=get_environment("test"),
         key=TEST_KEY,
         uploadId="my-better-upload",
         uploads=None,
@@ -123,7 +124,7 @@ async def test_bad_mpu_call():
     with pytest.raises(HTTPException) as exc_info:
         await multipart_upload(
             request=None,
-            env="test",
+            env=get_environment("test"),
             key=TEST_KEY,
             uploadId="oops",
             uploads="not valid to mix these args",
@@ -137,7 +138,7 @@ async def test_abort_mpu(mock_aws_client):
     """Aborting a multipart upload is correctly delegated to S3."""
 
     response = await abort_multipart_upload(
-        env="test",
+        env=get_environment("test"),
         key=TEST_KEY,
         uploadId="my-lame-upload",
     )
