@@ -110,15 +110,6 @@ def publish_items(args, items):
 
     print("Created publish {}".format(publish))
 
-    # TODO: we shouldn't have to assemble these URLs themselves, the object
-    # should have come with 'links' already - RHELDST-4706.
-    publish["links"] = {
-        "self": "/{env}/publish/{id}".format(env=args.env, id=publish["id"]),
-        "commit": "/{env}/publish/{id}/commit".format(
-            env=args.env, id=publish["id"]
-        ),
-    }
-
     put_url = urljoin(args.exodus_gw_url, publish["links"]["self"])
     for item in items:
         r = session.put(

@@ -19,6 +19,7 @@ class Publish(Base):
         unique=True,
         nullable=False,
     )
+    env = Column(String, nullable=False)
     items = relationship("Item", back_populates="publish")
 
 

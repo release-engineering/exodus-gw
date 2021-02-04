@@ -2,7 +2,7 @@ import mock
 import pytest
 from fastapi import HTTPException
 
-from exodus_gw import models, routers
+from exodus_gw import models, routers, schemas
 
 
 @pytest.mark.asyncio
@@ -29,6 +29,18 @@ async def test_publish_env_doesnt_exist(mock_db_session):
 
 
 @pytest.mark.asyncio
+async def test_publish_links(mock_db_session):
+    publish = await routers.publish.publish(env="test", db=mock_db_session)
+
+    # The schema (realistic result) resulting from the publish
+    # should contain accurate links.
+    assert schemas.Publish(**publish.__dict__).links == {
+        "self": "/test/publish/%s" % publish.id,
+        "commit": "/test/publish/%s/commit" % publish.id,
+    }
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "env",
     [
@@ -41,7 +53,7 @@ async def test_update_publish_items_env_exists(
     env, mock_db_session, mock_item_list
 ):
     publish_id = "123e4567-e89b-12d3-a456-426614174000"
-    # Simulate single item to "test3" environment to test list coersion.
+    # Simulate single item to "test3" environment to test list coercion.
     items = mock_item_list[0] if env == "test3" else mock_item_list
 
     assert (

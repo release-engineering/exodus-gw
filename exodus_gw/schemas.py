@@ -1,8 +1,9 @@
+from os.path import join
 from typing import List
 from uuid import UUID
 
 from fastapi import Path
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, root_validator
 
 PathEnv = Path(
     ...,
@@ -47,10 +48,23 @@ class PublishBase(BaseModel):
 
 
 class Publish(PublishBase):
+    env: str = Field(
+        ..., description="""Environment to which this publish belongs."""
+    )
+    links: dict = Field(
+        {}, description="""URL links related to this publish."""
+    )
     items: List[Item] = Field(
         [],
         description="""All items (pieces of content) included in this publish.""",
     )
+
+    @root_validator
+    @classmethod
+    def make_links(cls, values):
+        _self = join("/", values["env"], "publish", str(values["id"]))
+        values["links"] = {"self": _self, "commit": join(_self, "commit")}
+        return values
 
     class Config:
         orm_mode = True

@@ -93,7 +93,7 @@ async def publish(
     # Validate environment from caller.
     get_environment(env)
 
-    return create_publish(db)
+    return create_publish(env, db)
 
 
 @router.put(
