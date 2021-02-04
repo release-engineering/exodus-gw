@@ -69,9 +69,9 @@ from fastapi.exception_handlers import http_exception_handler
 from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import models
 from .aws.util import xml_response
 from .database import db_engine
+from .migrate import db_migrate
 from .routers import publish, service, upload
 from .settings import load_settings
 
@@ -121,7 +121,7 @@ def loggers_init(settings=None):
 
 def db_init() -> None:
     app.state.db_engine = db_engine(app.state.settings)
-    models.Base.metadata.create_all(bind=app.state.db_engine)
+    db_migrate(app.state.db_engine, app.state.settings)
 
 
 def settings_init() -> None:

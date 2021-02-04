@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+#
+# A wrapper for "alembic revision --autogenerate" which will first drop and recreate the
+# DB to the latest revision. This ensures a clean state when generating a migration.
+#
+# NOTE: this command is destructive, all data in the DB referenced from alembic.ini
+# will be deleted.
+#
+import argparse
+import logging
+import sys
+
+from alembic.command import revision, upgrade
+from alembic.config import CommandLine, Config
+from sqlalchemy import MetaData
+from sqlalchemy.engine import Engine
+
+from exodus_gw.database import db_engine, db_url
+from exodus_gw.migrate import db_migrate
+from exodus_gw.settings import MigrationMode, Settings
+
+LOG = logging.getLogger("exodus-gw")
+
+
+def main(raw_args):
+    # Borrow the argparser from "alembic revision" so we support same arguments.
+    cl = CommandLine("alembic-autogen")
+    raw_args.insert(0, "revision")
+    args = cl.parser.parse_args(raw_args)
+
+    config = Config(args.config)
+    db_url = config.get_main_option("sqlalchemy.url")
+
+    settings = Settings(
+        db_url=db_url,
+        # Drop everything
+        db_reset=True,
+        # And then migrate to latest alembic revision
+        db_migration_mode=MigrationMode.upgrade,
+        db_migration_revision="head",
+    )
+
+    engine = db_engine(settings)
+
+    db_migrate(engine, settings)
+
+    # We now have the DB up-to-date with latest alembic migrations,
+    # but there could be some changes in model which don't yet belong
+    # to a migration. Now ask alembic to autogenerate a migration
+    # covering those.
+    revision(
+        config=config,
+        autogenerate=True,
+        message=args.message,
+        sql=args.sql,
+        head=args.head,
+        splice=args.splice,
+        branch_label=args.branch_label,
+        version_path=args.version_path,
+        rev_id=args.rev_id,
+        depends_on=args.depends_on,
+    )
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
