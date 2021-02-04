@@ -95,6 +95,7 @@ async def publish(
 @router.put(
     "/{env}/publish/{publish_id}",
     status_code=200,
+    response_model=schemas.EmptyResponse,
 )
 async def update_publish_items(
     items: Union[schemas.ItemBase or List[schemas.ItemBase]],
@@ -121,6 +122,7 @@ async def update_publish_items(
 @router.post(
     "/{env}/publish/{publish_id}/commit",
     status_code=200,
+    response_model=schemas.EmptyResponse,
 )
 async def commit_publish(
     publish_id: UUID = schemas.PathPublishId,

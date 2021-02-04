@@ -62,3 +62,13 @@ class Publish(PublishBase):
 
     class Config:
         orm_mode = True
+
+
+class MessageResponse(BaseModel):
+    detail: str = Field(
+        ..., description="A human-readable message with additional info."
+    )
+
+
+class EmptyResponse(BaseModel):
+    """An empty object."""
