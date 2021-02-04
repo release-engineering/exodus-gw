@@ -5,7 +5,7 @@ import logging
 from fastapi import APIRouter
 from sqlalchemy.orm import Session
 
-from .. import deps, worker
+from .. import deps, schemas, worker
 from ..auth import CallContext
 
 LOG = logging.getLogger("exodus-gw")
@@ -15,13 +15,21 @@ openapi_tag = {"name": "service", "description": __doc__}
 router = APIRouter(tags=[openapi_tag["name"]])
 
 
-@router.get("/healthcheck")
+@router.get(
+    "/healthcheck",
+    response_model=schemas.MessageResponse,
+    responses={200: {"description": "Service is up"}},
+)
 def healthcheck():
     """Returns a successful response if the service is running."""
     return {"detail": "exodus-gw is running"}
 
 
-@router.get("/healthcheck-worker")
+@router.get(
+    "/healthcheck-worker",
+    response_model=schemas.MessageResponse,
+    responses={200: {"description": "Worker(s) are responding"}},
+)
 def healthcheck_worker(db: Session = deps.db):
     """Returns a successful response if background workers are running."""
 
@@ -43,7 +51,7 @@ def healthcheck_worker(db: Session = deps.db):
     response_model=CallContext,
     responses={
         200: {
-            "description": "returns caller's auth context",
+            "description": "Caller's auth context retrieved",
             "content": {
                 "application/json": {
                     "example": {
