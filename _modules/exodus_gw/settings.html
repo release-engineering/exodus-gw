@@ -51,8 +51,9 @@
 <div class="viewcode-block" id="Settings"><a class="viewcode-back" href="../../deployment.html#exodus_gw.settings.Settings">[docs]</a><span class="k">class</span> <span class="nc">Settings</span><span class="p">(</span><span class="n">BaseSettings</span><span class="p">):</span>
     <span class="c1"># Settings for the server.</span>
     <span class="c1">#</span>
-    <span class="c1"># Each setting defined here can be overridden by an environment variable</span>
-    <span class="c1"># of the same name, prefixed with &quot;EXODUS_GW_&quot;.</span>
+    <span class="c1"># Most settings defined here can be overridden by an environment variable</span>
+    <span class="c1"># of the same name, prefixed with &quot;EXODUS_GW_&quot;. Please add doc strings only</span>
+    <span class="c1"># for those (and not for other computed fields, like &#39;environments&#39;.)</span>
 
     <span class="n">call_context_header</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;X-RhApiPlatform-CallContext&quot;</span>
     <span class="sd">&quot;&quot;&quot;Name of the header from which to extract call context (for authentication</span>
@@ -67,7 +68,7 @@
     <span class="sd">&quot;&quot;&quot;Logging configuration in dictConfig schema.&quot;&quot;&quot;</span>
 
     <span class="n">environments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Environment</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="sd">&quot;&quot;&quot;List of environment objects derived from exodus-gw.ini.&quot;&quot;&quot;</span>
+    <span class="c1"># List of environment objects derived from exodus-gw.ini.</span>
 
     <span class="n">db_service_user</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;exodus-gw&quot;</span>
     <span class="sd">&quot;&quot;&quot;db service user name&quot;&quot;&quot;</span>

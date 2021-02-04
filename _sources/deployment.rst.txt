@@ -67,7 +67,7 @@ Settings
 --------
 
 .. autoclass:: exodus_gw.settings.Settings()
-    :members: call_context_header
+    :members:
 
     exodus-gw may be configured by the following settings.
 
