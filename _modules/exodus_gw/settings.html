@@ -34,7 +34,6 @@
   <h1>Source code for exodus_gw.settings</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">configparser</span>
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">lru_cache</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
 
 <span class="kn">from</span> <span class="nn">fastapi</span> <span class="kn">import</span> <span class="n">HTTPException</span>
@@ -79,6 +78,9 @@
     <span class="n">db_service_port</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;5432&quot;</span>
     <span class="sd">&quot;&quot;&quot;db service port&quot;&quot;&quot;</span>
 
+    <span class="n">db_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;Connection string for database. If set, overrides the ``db_service_*`` settings.&quot;&quot;&quot;</span>
+
     <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">25</span>
     <span class="sd">&quot;&quot;&quot;Maximum number of items to write at one time&quot;&quot;&quot;</span>
     <span class="n">max_tries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span>
@@ -95,14 +97,13 @@
         <span class="n">env_prefix</span> <span class="o">=</span> <span class="s2">&quot;exodus_gw_&quot;</span></div>
 
 
-<span class="nd">@lru_cache</span><span class="p">()</span>
-<span class="k">def</span> <span class="nf">get_settings</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Settings</span><span class="p">:</span>
+<span class="k">def</span> <span class="nf">load_settings</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Settings</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Return the currently active settings for the server.</span>
 
-<span class="sd">    This function is intended for use with fastapi.Depends.</span>
+<span class="sd">    This function will load settings from config files and environment</span>
+<span class="sd">    variables. It is intended to be called once at application startup.</span>
 
-<span class="sd">    Settings are loaded the first time this function is called, and cached</span>
-<span class="sd">    afterward.</span>
+<span class="sd">    Request handler functions should access settings via ``app.state.settings``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">settings</span> <span class="o">=</span> <span class="n">Settings</span><span class="p">()</span>
@@ -139,12 +140,12 @@
     <span class="k">return</span> <span class="n">settings</span>
 
 
-<span class="k">def</span> <span class="nf">get_environment</span><span class="p">(</span><span class="n">env</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">get_environment</span><span class="p">(</span><span class="n">env</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">settings</span><span class="p">:</span> <span class="n">Settings</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Return the corresponding environment object for the given environment</span>
 <span class="sd">    name.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">settings</span> <span class="o">=</span> <span class="n">get_settings</span><span class="p">()</span>
+    <span class="n">settings</span> <span class="o">=</span> <span class="n">settings</span> <span class="ow">or</span> <span class="n">load_settings</span><span class="p">()</span>
 
     <span class="k">for</span> <span class="n">env_obj</span> <span class="ow">in</span> <span class="n">settings</span><span class="o">.</span><span class="n">environments</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">env_obj</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">env</span><span class="p">:</span>
