@@ -63,7 +63,7 @@ from os.path import basename
 from typing import List, Union
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Body
 from sqlalchemy.orm import Session
 
 from .. import deps, models, schemas
@@ -83,6 +83,24 @@ router = APIRouter(tags=[openapi_tag["name"]])
     summary="Create new publish",
     response_model=schemas.Publish,
     status_code=200,
+    responses={
+        200: {
+            "description": "Publish created",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "id": "497f6eca-6276-4993-bfeb-53cbbbba6f08",
+                        "env": "prod",
+                        "links": {
+                            "self": "/prod/publish/497f6eca-6276-4993-bfeb-53cbbbba6f08",
+                            "commit": "/prod/publish/497f6eca-6276-4993-bfeb-53cbbbba6f08/commit",
+                        },
+                        "items": [],
+                    }
+                }
+            },
+        }
+    },
 )
 async def publish(
     env: Environment = deps.env, db: Session = deps.db
@@ -95,9 +113,22 @@ async def publish(
 @router.put(
     "/{env}/publish/{publish_id}",
     status_code=200,
+    response_model=schemas.EmptyResponse,
 )
 async def update_publish_items(
-    items: Union[schemas.ItemBase or List[schemas.ItemBase]],
+    items: Union[schemas.ItemBase, List[schemas.ItemBase]] = Body(
+        ...,
+        example=[
+            {
+                "web_uri": "/my/awesome/file.iso",
+                "object_key": "aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f",
+            },
+            {
+                "web_uri": "/my/slightly-less-awesome/other-file.iso",
+                "object_key": "c06545d4e1a1c8e221d47e7d568c035fb32c6b6124881fd0bc17983bd9088ae0",
+            },
+        ],
+    ),
     publish_id: UUID = schemas.PathPublishId,
     env: Environment = deps.env,
     db: Session = deps.db,
@@ -121,6 +152,7 @@ async def update_publish_items(
 @router.post(
     "/{env}/publish/{publish_id}/commit",
     status_code=200,
+    response_model=schemas.EmptyResponse,
 )
 async def commit_publish(
     publish_id: UUID = schemas.PathPublishId,
