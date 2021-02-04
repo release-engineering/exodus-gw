@@ -17,8 +17,9 @@ class Environment(object):
 class Settings(BaseSettings):
     # Settings for the server.
     #
-    # Each setting defined here can be overridden by an environment variable
-    # of the same name, prefixed with "EXODUS_GW_".
+    # Most settings defined here can be overridden by an environment variable
+    # of the same name, prefixed with "EXODUS_GW_". Please add doc strings only
+    # for those (and not for other computed fields, like 'environments'.)
 
     call_context_header: str = "X-RhApiPlatform-CallContext"
     """Name of the header from which to extract call context (for authentication
@@ -33,7 +34,7 @@ class Settings(BaseSettings):
     """Logging configuration in dictConfig schema."""
 
     environments: List[Environment] = []
-    """List of environment objects derived from exodus-gw.ini."""
+    # List of environment objects derived from exodus-gw.ini.
 
     db_service_user: str = "exodus-gw"
     """db service user name"""
