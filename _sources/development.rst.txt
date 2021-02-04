@@ -278,3 +278,39 @@ This approach is only necessary if you are accessing the service via http
 (for example, if you don't access to the sidecar container).
 If you are accessing the service using https, the same certificates and keys as
 used for production may be used in your local environment.
+
+
+Disabling migrations during development
+---------------------------------------
+
+The exodus-gw schema in production is managed via alembic migrations.
+
+When prototyping schema changes during development, it can be unreasonably
+time-consuming to exclusively use migrations for schema changes. Therefore
+it is possible to use a setting to disable migrations and instead use the
+sqlalchemy model to populate your development DB.
+
+Here is a recommended workflow which allows disabling migrations during
+development of schema changes and only producing migrations once the schema
+has been stabilized:
+
+- Use the systemd-based dev env.
+- Set ``EXODUS_GW_DB_MIGRATION_MODE=model`` in your dev env (for example, add
+  this to ``~/.config/exodus-gw-dev/.env``).
+
+  This disables migrations; it will cause your DB schema to be refreshed
+  from the latest sqlalchemy model every time the service starts.
+- If your model changes can't be applied automatically (e.g. changing column types),
+  consider also setting ``EXODUS_GW_DB_RESET=true`` to completely drop and recreate
+  tables when the service starts.
+- Develop your changes until the schema is stable.
+- Run ``tox -e alembic-autogen`` or ``scripts/alembic-autogen`` to generate a migration.
+- Unset ``EXODUS_GW_DB_MIGRATION_MODE`` (and ``EXODUS_GW_DB_RESET`` if you set it).
+   - This re-enables migrations.
+- Restart the service to verify that your migration applies successfully.
+
+The resulting migration should be included in the same pull request as your
+sqlalchemy model changes.
+
+Note that the migration system does not cover the schema used by dramatiq workers, which
+is handled separately.

@@ -276,6 +276,42 @@ using those roles.</p>
 If you are accessing the service using https, the same certificates and keys as
 used for production may be used in your local environment.</p>
 </div>
+<div class="section" id="disabling-migrations-during-development">
+<h2>Disabling migrations during development<a class="headerlink" href="#disabling-migrations-during-development" title="Permalink to this headline">¶</a></h2>
+<p>The exodus-gw schema in production is managed via alembic migrations.</p>
+<p>When prototyping schema changes during development, it can be unreasonably
+time-consuming to exclusively use migrations for schema changes. Therefore
+it is possible to use a setting to disable migrations and instead use the
+sqlalchemy model to populate your development DB.</p>
+<p>Here is a recommended workflow which allows disabling migrations during
+development of schema changes and only producing migrations once the schema
+has been stabilized:</p>
+<ul>
+<li><p>Use the systemd-based dev env.</p></li>
+<li><p>Set <code class="docutils literal notranslate"><span class="pre">EXODUS_GW_DB_MIGRATION_MODE=model</span></code> in your dev env (for example, add
+this to <code class="docutils literal notranslate"><span class="pre">~/.config/exodus-gw-dev/.env</span></code>).</p>
+<p>This disables migrations; it will cause your DB schema to be refreshed
+from the latest sqlalchemy model every time the service starts.</p>
+</li>
+<li><p>If your model changes can’t be applied automatically (e.g. changing column types),
+consider also setting <code class="docutils literal notranslate"><span class="pre">EXODUS_GW_DB_RESET=true</span></code> to completely drop and recreate
+tables when the service starts.</p></li>
+<li><p>Develop your changes until the schema is stable.</p></li>
+<li><p>Run <code class="docutils literal notranslate"><span class="pre">tox</span> <span class="pre">-e</span> <span class="pre">alembic-autogen</span></code> or <code class="docutils literal notranslate"><span class="pre">scripts/alembic-autogen</span></code> to generate a migration.</p></li>
+<li><dl class="simple">
+<dt>Unset <code class="docutils literal notranslate"><span class="pre">EXODUS_GW_DB_MIGRATION_MODE</span></code> (and <code class="docutils literal notranslate"><span class="pre">EXODUS_GW_DB_RESET</span></code> if you set it).</dt><dd><ul class="simple">
+<li><p>This re-enables migrations.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p>Restart the service to verify that your migration applies successfully.</p></li>
+</ul>
+<p>The resulting migration should be included in the same pull request as your
+sqlalchemy model changes.</p>
+<p>Note that the migration system does not cover the schema used by dramatiq workers, which
+is handled separately.</p>
+</div>
 </div>
 
 
@@ -307,6 +343,7 @@ used for production may be used in your local environment.</p>
 <li class="toctree-l2"><a class="reference internal" href="#running-exodus-gw-services-with-tox">Running exodus-gw services with tox</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#systemd-based-development-environment">Systemd-based development environment</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#spoofing-authentication">Spoofing authentication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#disabling-migrations-during-development">Disabling migrations during development</a></li>
 </ul>
 </li>
 </ul>

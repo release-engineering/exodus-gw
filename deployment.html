@@ -85,6 +85,18 @@ Other fields are unused or used only for logging.</p>
 internal documentation for information on this component. In other contexts, any reverse
 proxy may be used as long as it produces headers according to the scheme documented above.</p>
 </div>
+<div class="section" id="database-migrations">
+<h2>Database Migrations<a class="headerlink" href="#database-migrations" title="Permalink to this headline">¶</a></h2>
+<p>The exodus-gw service uses a postgres database.</p>
+<p>On startup, the service will run database migrations to ensure the DB implements the
+required schema.</p>
+<p>It is a goal that migrations can be performed online with minimal disruption to the
+service, even with old and new versions of the service running simultaneously
+(for example, during an OpenShift rolling deployment).</p>
+<p>Downgrading to an earlier version of the schema is not directly supported by the
+service. However, as exodus-gw is designed not to store any permanent state, dropping
+and recreating the exodus-gw database is a viable option if needed.</p>
+</div>
 <div class="section" id="settings">
 <h2>Settings<a class="headerlink" href="#settings" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
@@ -134,6 +146,43 @@ and authorization).</p>
 <dt id="exodus_gw.settings.Settings.db_url">
 <code class="sig-name descname">db_url</code><em class="property">: <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)">str</a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_url" title="Permalink to this definition">¶</a></dt>
 <dd><p>Connection string for database. If set, overrides the <code class="docutils literal notranslate"><span class="pre">db_service_*</span></code> settings.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="exodus_gw.settings.Settings.db_reset">
+<code class="sig-name descname">db_reset</code><em class="property">: <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>If set to True, drop all DB tables during startup.</p>
+<p>This setting is intended for use during development.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="exodus_gw.settings.Settings.db_migration_mode">
+<code class="sig-name descname">db_migration_mode</code><em class="property">: exodus_gw.settings.MigrationMode</em><a class="headerlink" href="#exodus_gw.settings.Settings.db_migration_mode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adjusts the DB migration behavior when the exodus-gw service starts.</p>
+<p>Valid values are:</p>
+<blockquote>
+<div><dl>
+<dt>upgrade (default)</dt><dd><p>Migrate the DB to <code class="docutils literal notranslate"><span class="pre">db_migration_revision</span></code> (default latest) when
+the service starts up.</p>
+<p>This is the default setting and should be left enabled for typical
+production use.</p>
+</dd>
+<dt>model</dt><dd><p>Don’t use migrations. Instead, attempt to initialize the database
+from the current version of the internal sqlalchemy model.</p>
+<p>This is intended for use during development while prototyping
+schema changes.</p>
+</dd>
+<dt>none</dt><dd><p>Don’t perform any DB initialization at all.</p>
+</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="exodus_gw.settings.Settings.db_migration_revision">
+<code class="sig-name descname">db_migration_revision</code><em class="property">: <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)">str</a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_migration_revision" title="Permalink to this definition">¶</a></dt>
+<dd><p>If <code class="docutils literal notranslate"><span class="pre">db_migration_mode</span></code> is <code class="docutils literal notranslate"><span class="pre">upgrade</span></code>, this setting can be used to override
+the target revision when migrating the DB.</p>
 </dd></dl>
 
 <dl class="py attribute">
@@ -204,6 +253,7 @@ users may specify a logger name and the level at which to set said logger.</p>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Deployment Guide</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#target-platform">Target platform</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#authentication-authorization">Authentication &amp; Authorization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#database-migrations">Database Migrations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#settings">Settings</a></li>
 </ul>
 </li>

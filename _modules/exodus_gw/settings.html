@@ -34,6 +34,7 @@
   <h1>Source code for exodus_gw.settings</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">configparser</span>
 <span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
 
 <span class="kn">from</span> <span class="nn">fastapi</span> <span class="kn">import</span> <span class="n">HTTPException</span>
@@ -46,6 +47,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">aws_profile</span> <span class="o">=</span> <span class="n">aws_profile</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">bucket</span> <span class="o">=</span> <span class="n">bucket</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">table</span> <span class="o">=</span> <span class="n">table</span>
+
+
+<span class="k">class</span> <span class="nc">MigrationMode</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
+    <span class="n">upgrade</span> <span class="o">=</span> <span class="s2">&quot;upgrade&quot;</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="s2">&quot;model&quot;</span>
+    <span class="n">none</span> <span class="o">=</span> <span class="s2">&quot;none&quot;</span>
 
 
 <div class="viewcode-block" id="Settings"><a class="viewcode-back" href="../../deployment.html#exodus_gw.settings.Settings">[docs]</a><span class="k">class</span> <span class="nc">Settings</span><span class="p">(</span><span class="n">BaseSettings</span><span class="p">):</span>
@@ -81,6 +88,40 @@
 
     <span class="n">db_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="sd">&quot;&quot;&quot;Connection string for database. If set, overrides the ``db_service_*`` settings.&quot;&quot;&quot;</span>
+
+    <span class="n">db_reset</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="sd">&quot;&quot;&quot;If set to True, drop all DB tables during startup.</span>
+
+<span class="sd">    This setting is intended for use during development.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">db_migration_mode</span><span class="p">:</span> <span class="n">MigrationMode</span> <span class="o">=</span> <span class="n">MigrationMode</span><span class="o">.</span><span class="n">upgrade</span>
+    <span class="sd">&quot;&quot;&quot;Adjusts the DB migration behavior when the exodus-gw service starts.</span>
+
+<span class="sd">    Valid values are:</span>
+
+<span class="sd">        upgrade (default)</span>
+<span class="sd">            Migrate the DB to ``db_migration_revision`` (default latest) when</span>
+<span class="sd">            the service starts up.</span>
+
+<span class="sd">            This is the default setting and should be left enabled for typical</span>
+<span class="sd">            production use.</span>
+
+<span class="sd">        model</span>
+<span class="sd">            Don&#39;t use migrations. Instead, attempt to initialize the database</span>
+<span class="sd">            from the current version of the internal sqlalchemy model.</span>
+
+<span class="sd">            This is intended for use during development while prototyping</span>
+<span class="sd">            schema changes.</span>
+
+<span class="sd">        none</span>
+<span class="sd">            Don&#39;t perform any DB initialization at all.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">db_migration_revision</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;head&quot;</span>
+    <span class="sd">&quot;&quot;&quot;If ``db_migration_mode`` is ``upgrade``, this setting can be used to override</span>
+<span class="sd">    the target revision when migrating the DB.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">25</span>
     <span class="sd">&quot;&quot;&quot;Maximum number of items to write at one time&quot;&quot;&quot;</span>
