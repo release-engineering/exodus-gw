@@ -16,8 +16,6 @@ class Publish(Base):
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
-        unique=True,
-        nullable=False,
     )
     env = Column(String, nullable=False)
     items = relationship("Item", back_populates="publish")
@@ -31,8 +29,6 @@ class Item(Base):
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
-        unique=True,
-        nullable=False,
     )
     web_uri = Column(String, nullable=False)
     object_key = Column(String, nullable=False)
