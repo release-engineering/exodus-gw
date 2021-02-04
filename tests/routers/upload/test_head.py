@@ -32,7 +32,7 @@ async def test_head(mock_aws_client):
 
 
 @pytest.mark.asyncio
-async def test_head_invalid_key(mock_aws_client):
+async def test_head_invalid_key(mock_aws_client, caplog):
     """Head handles non-2xx responses correctly."""
 
     mock_aws_client.head_object.side_effect = ClientError(
@@ -53,3 +53,4 @@ async def test_head_invalid_key(mock_aws_client):
 
     # It should fail
     assert response.status_code == 404
+    assert "HEAD to S3 failed" in caplog.text

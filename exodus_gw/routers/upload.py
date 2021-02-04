@@ -311,6 +311,7 @@ async def head(
     except ClientError as exc_info:
         # According to botocore documentation, it is safe to rely on
         # the API to throw exceptions for any non-2xx response.
+        LOG.exception("HEAD to S3 failed")
         return Response(status_code=int(exc_info.response["Error"]["Code"]))
 
     return Response(headers={"ETag": response["ETag"]})
