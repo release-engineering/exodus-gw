@@ -32,8 +32,8 @@ async def test_head(mock_aws_client):
 
 
 @pytest.mark.asyncio
-async def test_head_invalid_key(mock_aws_client, caplog):
-    """Head handles non-2xx responses correctly."""
+async def test_head_nonexistent_key(mock_aws_client):
+    """Head handles 404 responses correctly."""
 
     mock_aws_client.head_object.side_effect = ClientError(
         {"Error": {"Code": "404"}},
@@ -53,4 +53,30 @@ async def test_head_invalid_key(mock_aws_client, caplog):
 
     # It should fail
     assert response.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_head_logs_error(mock_aws_client, caplog):
+    """Head logs unexpected errors correctly."""
+
+    mock_aws_client.head_object.side_effect = ClientError(
+        {"Error": {"Code": "501"}},
+        "HeadObject",
+    )
+
+    response = await head(
+        env=get_environment("test"),
+        key=TEST_KEY,
+    )
+
+    # It should delegate request to real S3 without raising exception
+    mock_aws_client.head_object.assert_called_once_with(
+        Bucket="my-bucket",
+        Key=TEST_KEY,
+    )
+
+    # It should pass back the status code
+    assert response.status_code == 501
+
+    # It should log a message
     assert "HEAD to S3 failed" in caplog.text
