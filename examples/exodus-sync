@@ -20,15 +20,25 @@ import argparse
 import hashlib
 import logging
 import os
+import threading
 from collections import namedtuple
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from urllib.parse import urljoin
 
 import boto3
+import boto3.session
 import requests
 from botocore.exceptions import ClientError
 
+# How many items we'll add to a publish per request.
+ITEM_BATCH_SIZE = 5000
+
 # Represents a single item to be uploaded & published.
 Item = namedtuple("Item", ["src_path", "dest_path", "object_key"])
+
+# Holder for thread-local clients.
+tls = threading.local()
 
 
 def get_object_key(filename):
@@ -61,6 +71,38 @@ def get_items(args):
     return items
 
 
+def new_s3_resource(args):
+    s3_endpoint = urljoin(args.exodus_gw_url, "upload")
+    session = boto3.session.Session()
+    return session.resource("s3", endpoint_url=s3_endpoint)
+
+
+def upload_in_thread(args, item):
+    s3 = getattr(tls, "s3", None)
+
+    if not s3:
+        s3 = new_s3_resource(args)
+        tls.s3 = s3
+
+    bucket = s3.Bucket(args.env)
+    object = bucket.Object(item.object_key)
+
+    # Check if object is present in the bucket using object.load(),
+    # catching ClientErrors raised for non-2xx codes.
+    # Upload the file object only when it isn't already present.
+    try:
+        object.load()
+        print("Won't upload {}: already present".format(item.object_key))
+        return False
+    except ClientError as exc_info:
+        if exc_info.response["Error"]["Code"] == "404":
+            object.upload_file(item.src_path)
+            print("Uploaded {} <= {}".format(item.object_key, item.src_path))
+            return True
+
+        raise
+
+
 def upload_items(args, items):
     # Upload all of the items.
     #
@@ -68,28 +110,25 @@ def upload_items(args, items):
     # already), but won't yet publish them, so they won't be exposed to clients
     # of the CDN.
 
-    s3_endpoint = urljoin(args.exodus_gw_url, "upload")
-    s3 = boto3.resource("s3", endpoint_url=s3_endpoint)
-    bucket = s3.Bucket(args.env)
+    print("Uploading {} item(s) via {}".format(len(items), args.exodus_gw_url))
 
-    print("Uploading {} item(s) via {}".format(len(items), s3_endpoint))
+    upload_one = partial(upload_in_thread, args)
 
-    for item in items:
-        object = bucket.Object(item.object_key)
+    upload_count = 0
+    skip_count = 0
 
-        # Check if object is present in the bucket using object.load(),
-        # catching ClientErrors raised for non-2xx codes.
-        # Upload the file object only when it isn't already present.
-        try:
-            object.load()
-        except ClientError as exc_info:
-            if exc_info.response["Error"]["Code"] == "404":
-                object.upload_file(item.src_path)
-                print("Uploaded {} <= {}".format(item.object_key, item.src_path))
-                continue
-            raise
+    with ThreadPoolExecutor() as executor:
+        for result in executor.map(upload_one, items):
+            if result:
+                upload_count += 1
+            else:
+                skip_count += 1
 
-        print("Won't upload {}: already present".format(item.object_key))
+    print(
+        "Upload summary: {} uploaded, {} skipped".format(
+            upload_count, skip_count
+        )
+    )
 
 
 def publish_items(args, items):
@@ -111,17 +150,28 @@ def publish_items(args, items):
     print("Created publish {}".format(publish))
 
     put_url = urljoin(args.exodus_gw_url, publish["links"]["self"])
-    for item in items:
+    total = 0
+    while items:
+        batch = items[0:ITEM_BATCH_SIZE]
+        items = items[ITEM_BATCH_SIZE:]
+
         r = session.put(
             put_url,
-            json={
-                "web_uri": item.dest_path,
-                "object_key": item.object_key,
-                "from_date": "abc123",
-            },
+            json=[
+                {
+                    "web_uri": item.dest_path,
+                    "object_key": item.object_key,
+                    "from_date": "abc123",
+                }
+                for item in batch
+            ],
         )
         r.raise_for_status()
-        print("Added to publish: {}".format(item))
+
+        total += len(batch)
+        print(
+            "Publish item count:", total, "(...in progress)" if items else ""
+        )
 
     commit_url = urljoin(args.exodus_gw_url, publish["links"]["commit"])
 
