@@ -3,7 +3,6 @@ import os
 import dramatiq
 import mock
 import pytest
-from mock import MagicMock
 from sqlalchemy.orm.session import Session
 
 # This must happen early during tests, prior to import of
@@ -24,6 +23,15 @@ def mock_aws_client():
         yield aws_client
 
 
+@pytest.fixture(autouse=True)
+def mock_boto3_client():
+    with mock.patch("boto3.session.Session") as mock_session:
+        client = mock.MagicMock()
+        client.__enter__.return_value = client
+        mock_session().client.return_value = client
+        yield client
+
+
 @pytest.fixture()
 def mock_request_reader():
     # We don't use the real request reader for these tests as it becomes
@@ -36,8 +44,8 @@ def mock_request_reader():
 @pytest.fixture()
 def mock_db_session():
     db_session = Session()
-    db_session.add = MagicMock()
-    db_session.refresh = MagicMock()
+    db_session.add = mock.MagicMock()
+    db_session.refresh = mock.MagicMock()
     yield db_session
 
 
