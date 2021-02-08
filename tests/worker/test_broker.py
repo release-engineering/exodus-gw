@@ -4,7 +4,6 @@ import threading
 
 import dramatiq
 import pytest
-from psycopg2.errors import DuplicateSchema
 
 from exodus_gw.worker.broker import ExodusGwBroker, new_broker
 
@@ -20,6 +19,10 @@ class FakeCursor:
     def __exit__(self, type, value, tb):
         pass
 
+    def fetchone(self):
+        if self._pool.fetches:
+            return self._pool.fetches.pop(0)
+
     def execute(self, sql, parameters=None):
         self._pool._record_execute(sql, parameters)
         if self._pool.raises:
@@ -31,6 +34,7 @@ class FakeConnectionPool:
         self.executes = []
         self.raises = []
         self.in_transaction = 0
+        self.fetches = []
 
     def __enter__(self):
         self.in_transaction += 1
@@ -63,43 +67,54 @@ def test_broker_class(monkeypatch):
     assert isinstance(broker, ExodusGwBroker)
 
 
-def test_broker_initialize_on_consume():
-    """Broker will initialize schema on attempt to consume"""
+def test_broker_initialize_on_boot():
+    """Broker will initialize schema on process boot"""
 
     pool = FakeConnectionPool()
+
+    # set up expected result of 0 tables in dramatiq schema
+    pool.fetches.append((0,))
+
     broker = ExodusGwBroker(url=None, pool=pool)
-    broker.consume("some-queue")
+    broker.emit_after("process_boot")
 
-    # A side-effect of creating the consumer should be that we've
-    # instantiated our schema
-    assert len(pool.executes) == 1
+    # It should execute this many statements
+    assert len(pool.executes) == 3
 
-    (in_transaction, sql, parameters) = pool.executes[0]
-
-    # it should have been done in a transaction
+    # Firstly grabbing a lock
+    (in_transaction, sql, _) = pool.executes.pop(0)
     assert in_transaction
+    assert "select pg_advisory_lock" in sql
 
-    # it should have been our schema initialization SQL
-    # (just sampling it here, not hardcoding the entire thing)
+    # Then checking if we've already got the schema
+    (in_transaction, sql, params) = pool.executes.pop(0)
+    assert in_transaction
+    assert "where table_schema=%s" in sql
+    assert params == ("dramatiq",)
+
+    # And finally creating the schema
+    (in_transaction, sql, _) = pool.executes.pop(0)
+    assert in_transaction
     assert "CREATE SCHEMA dramatiq;" in sql
 
 
 def test_broker_already_initialized(caplog):
     """Broker will tolerate & log if schema is already initialized"""
 
-    logging.getLogger("exodus-gw").setLevel(logging.INFO)
+    logging.getLogger("exodus-gw").setLevel(logging.DEBUG)
 
     pool = FakeConnectionPool()
+
+    # set up expected result of 1 table in dramatiq schema
+    pool.fetches.append((1,))
+
     broker = ExodusGwBroker(url=None, pool=pool)
 
-    # Simulate that the schema already exists
-    pool.raises.append(DuplicateSchema())
-
     # It should not crash...
-    broker.consume("some-queue")
+    broker.emit_after("process_boot")
 
     # ...and it should also note that the schema was already in place
-    assert "dramatiq schema was already in place" in caplog.messages
+    assert "dramatiq schema is already in place" in caplog.messages
 
 
 def test_broker_enqueues_via_session():
