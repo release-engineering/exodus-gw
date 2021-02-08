@@ -112,6 +112,23 @@ class Settings(BaseSettings):
     worker_keepalive_interval: int = 60
     """How often, in seconds, should background workers update their status."""
 
+    cron_cleanup: str = "0 */12 * * *"
+    """cron-style schedule for cleanup task.
+
+    exodus-gw will run a cleanup task approximately according to this schedule, removing old
+    data from the system."""
+
+    scheduler_interval: int = 15
+    """How often, in minutes, exodus-gw should check if a scheduled task is ready to run.
+
+    Note that the cron rules applied to each scheduled task are only as accurate as this
+    interval allows, i.e. each rule may be triggered up to ``scheduler_interval`` minutes late.
+    """
+
+    scheduler_delay: int = 5
+    """Delay, in minutes, after exodus-gw workers start up before any scheduled tasks
+    should run."""
+
     class Config:
         env_prefix = "exodus_gw_"
 

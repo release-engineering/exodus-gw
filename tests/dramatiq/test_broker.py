@@ -26,14 +26,14 @@ def test_enqueue(db):
     # It shouldn't be associated with any consumer yet.
     assert message.consumer_id is None
 
-    # It should have recorded the correct queue
+    # It should have recorded the correct actor and queue
+    assert message.actor == "some_fn"
     assert message.queue == "some-queue"
 
     # Message body should have all the expected elements
     # (won't test specific timestamp value)
     assert message.body.pop("message_timestamp")
     assert message.body == {
-        "actor_name": "some_fn",
         "args": [1],
         "kwargs": {"y": "hello"},
         "options": {},

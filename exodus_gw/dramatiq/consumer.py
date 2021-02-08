@@ -157,7 +157,10 @@ class Consumer(dramatiq.Consumer):
 
             body = db_message.body
             out = Message(
-                queue_name=db_message.queue, message_id=db_message.id, **body
+                queue_name=db_message.queue,
+                actor_name=db_message.actor,
+                message_id=db_message.id,
+                **body,
             )
 
             # Mark it as ours.
@@ -175,7 +178,6 @@ class Consumer(dramatiq.Consumer):
             < self.__settings.worker_keepalive_interval
             and not self.__queue_event.is_set()
         ):
-            LOG.debug("%s: too early for next consume", self.__consumer_id)
             return
 
         self.__last_consume = now
