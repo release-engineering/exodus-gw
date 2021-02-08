@@ -26,6 +26,7 @@ from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from urllib.parse import urljoin
 
+import backoff
 import boto3
 import boto3.session
 import requests
@@ -131,6 +132,25 @@ def upload_items(args, items):
     )
 
 
+@backoff.on_predicate(
+    wait_gen=backoff.expo,
+    predicate=lambda task: task["state"] != "COMPLETE",
+    max_time=120,
+)
+def poll_commit_completion(gw_url, commit):
+    session = requests.Session()
+
+    task_url = urljoin(gw_url, commit["links"]["self"])
+
+    r = session.get(task_url)
+    r.raise_for_status()
+    task = r.json()
+
+    print("Task state: {}".format(task["state"]))
+
+    return task
+
+
 def publish_items(args, items):
     # Publish all the items which have previously been uploaded. This
     # will make the items downloadable from the CDN via exodus-lambda,
@@ -141,11 +161,11 @@ def publish_items(args, items):
     # support certificate-based auth.
     session = requests.Session()
 
-    response = session.post(
+    r = session.post(
         os.path.join(args.exodus_gw_url, args.env, "publish")
     )
-    response.raise_for_status()
-    publish = response.json()
+    r.raise_for_status()
+    publish = r.json()
 
     print("Created publish {}".format(publish))
 
@@ -177,12 +197,14 @@ def publish_items(args, items):
 
     r = session.post(commit_url)
     r.raise_for_status()
+    commit = r.json()
 
-    # TODO: committing is expected to be moved into a background task, at which
-    # point we expect to be given some kind of task object here, which we should
-    # poll to completion.
+    print("Started commit of publish: {}".format(commit))
 
-    print("Started commit of publish: {}".format(r.json()))
+    print("Polling for commit completion. . .")
+    task = poll_commit_completion(args.exodus_gw_url, commit)
+
+    print("Publish complete: {}".format(task))
 
 
 def main():

@@ -150,14 +150,14 @@ async def update_publish_items(
 @router.post(
     "/{env}/publish/{publish_id}/commit",
     status_code=200,
-    response_model=schemas.EmptyResponse,
+    response_model=schemas.Task,
 )
 def commit_publish(
     publish_id: UUID = schemas.PathPublishId,
     env: Environment = deps.env,
     db: Session = deps.db,
     settings: Settings = deps.settings,
-) -> Dict[str, str]:
+) -> models.Task:
     """Commit an existing publish object.
 
     Committing a publish has the following effects:
@@ -167,7 +167,7 @@ def commit_publish(
       - This occurs with all-or-nothing semantics; see [Atomicity](#section/Atomicity).
     - The publish object becomes frozen - no further items can be added.
 
-    Commit occurs asynchronously.  This API returns a message ID which may be used
+    Commit occurs asynchronously.  This API returns a Task object which may be used
     to monitor the progress of the commit.
 
     Note that exodus-gw does not resolve conflicts or ensure that any given path is
@@ -179,4 +179,11 @@ def commit_publish(
     msg = worker.commit.send(publish_id=str(publish_id), env=env.name)
     LOG.info("Enqueued commit for '%s'", msg.kwargs["publish_id"])
 
-    return {"commit_message_id": msg.message_id}
+    task = models.Task(
+        id=msg.message_id,
+        publish_id=msg.kwargs["publish_id"],
+        state="NOT_STARTED",
+    )
+    db.add(task)
+
+    return task

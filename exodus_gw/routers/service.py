@@ -1,11 +1,12 @@
 """APIs for inspecting the state of the exodus-gw service."""
 
 import logging
+from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from sqlalchemy.orm import Session
 
-from .. import deps, schemas, worker
+from .. import deps, models, schemas, worker
 from ..auth import CallContext
 
 LOG = logging.getLogger("exodus-gw")
@@ -80,3 +81,20 @@ def whoami(context: CallContext = deps.call_context):
     It is a read-only endpoint intended for diagnosing authentication issues.
     """
     return context
+
+
+@router.get(
+    "/task/{task_id}",
+    response_model=schemas.Task,
+    responses={200: {"description": "Sucessfully retrieved task"}},
+)
+def get_task(
+    task_id: UUID = schemas.PathTaskId, db: Session = deps.db
+) -> schemas.Task:
+    """Return existing task object from database using given task ID."""
+    task = db.query(models.Task).filter(models.Task.id == task_id).first()
+
+    if not task:
+        raise HTTPException(404, detail="No task found for ID '%s'" % task_id)
+
+    return task
