@@ -1,5 +1,5 @@
 from os.path import join
-from typing import List
+from typing import Dict, List
 from uuid import UUID
 
 from fastapi import Path
@@ -45,7 +45,7 @@ class Publish(PublishBase):
     env: str = Field(
         ..., description="""Environment to which this publish belongs."""
     )
-    links: dict = Field(
+    links: Dict[str, str] = Field(
         {}, description="""URL links related to this publish."""
     )
     items: List[Item] = Field(

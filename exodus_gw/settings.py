@@ -1,7 +1,7 @@
 import configparser
 import os
 from enum import Enum
-from typing import List
+from typing import Any, Dict, List, Optional
 
 from fastapi import HTTPException
 from pydantic import BaseSettings
@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     and authorization).
     """
 
-    log_config: dict = {
+    log_config: Dict[str, Any] = {
         "version": 1,
         "incremental": True,
         "disable_existing_loggers": False,
@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     db_service_port: str = "5432"
     """db service port"""
 
-    db_url: str = None
+    db_url: Optional[str] = None
     """Connection string for database. If set, overrides the ``db_service_*`` settings."""
 
     db_reset: bool = False

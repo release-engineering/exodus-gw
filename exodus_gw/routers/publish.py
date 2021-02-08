@@ -59,7 +59,7 @@ Publish objects should be treated as ephemeral; they are not persisted indefinit
 """
 
 import logging
-from typing import List, Union
+from typing import Dict, List, Union
 from uuid import UUID
 
 from fastapi import APIRouter, Body
@@ -130,7 +130,7 @@ async def update_publish_items(
     publish_id: UUID = schemas.PathPublishId,
     env: Environment = deps.env,
     db: Session = deps.db,
-) -> dict:
+) -> Dict[None, None]:
     """Add publish items to an existing publish object.
 
     Publish items primarily are a mapping between a URI relative to the root of the CDN,
@@ -157,7 +157,7 @@ def commit_publish(
     env: Environment = deps.env,
     db: Session = deps.db,
     settings: Settings = deps.settings,
-) -> dict:
+) -> Dict[str, str]:
     """Commit an existing publish object.
 
     Committing a publish has the following effects:

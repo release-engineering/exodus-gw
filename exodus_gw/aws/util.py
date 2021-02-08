@@ -1,4 +1,5 @@
 import io
+from typing import AnyStr
 from xml.etree.ElementTree import Element, ElementTree, SubElement
 
 from defusedxml.ElementTree import fromstring
@@ -20,7 +21,7 @@ def content_md5(request):
 
 
 def extract_mpu_parts(
-    body: str, xmlns: str = "http://s3.amazonaws.com/doc/2006-03-01/"
+    body: AnyStr, xmlns: str = "http://s3.amazonaws.com/doc/2006-03-01/"
 ):
     """Extract part data from an XML-formatted CompleteMultipartUpload request.
 

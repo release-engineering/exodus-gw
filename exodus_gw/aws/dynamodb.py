@@ -1,6 +1,6 @@
 import logging
 from itertools import islice
-from typing import List
+from typing import Any, Dict, List
 
 import backoff
 
@@ -21,7 +21,7 @@ LOG = logging.getLogger("exodus-gw")
     predicate=lambda response: response["UnprocessedItems"],
     max_tries=Settings().max_tries,
 )
-def batch_write(env: str, request: dict):
+def batch_write(env: str, request: Dict[str, Any]):
     """Wrapper for batch_write_item with retries and item count validation.
 
     Item limit of 25 is, at this time, imposed by AWS's boto3 library.
