@@ -2,7 +2,7 @@
 
 from fastapi import Depends, Path, Request
 
-from .auth import call_context
+from .auth import call_context as get_call_context
 from .settings import Settings, get_environment
 
 
@@ -32,6 +32,6 @@ def get_environment_from_path(
 #   db: Session = deps.db
 #
 db = Depends(get_db)
-call_context = Depends(call_context)
+call_context = Depends(get_call_context)
 env = Depends(get_environment_from_path)
 settings = Depends(get_settings)

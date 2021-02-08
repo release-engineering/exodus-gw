@@ -185,6 +185,9 @@ async def upload(
         # Single-part upload
         return await object_put(env, key, request)
 
+    # If either is set, both must be set.
+    assert uploadId and partNumber
+
     # Multipart upload
     return await multipart_put(env, key, uploadId, partNumber, request)
 
@@ -316,7 +319,7 @@ async def head(
 
         if code == 404:
             # This is normal if asked about a nonexistent object
-            LOG.debug("404 when querying %s %s", env.name, key, exc_info=1)
+            LOG.debug("404 when querying %s %s", env.name, key, exc_info=True)
         else:
             # This is cause for concern
             LOG.exception("HEAD to S3 failed")
