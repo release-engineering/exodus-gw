@@ -55,8 +55,8 @@ aioitertools==0.7.1 \
     --hash=sha256:54a56c7cf3b5290d1cb5e8974353c9f52c677612b5d69a859369a020c53414a3 \
     --hash=sha256:8972308474c41ed5e0636819f948ebff32f2318e70f7e7d23cd208c4357cc773
     # via aiobotocore
-alembic==1.5.3 \
-    --hash=sha256:04608b6904a6e6bd1af83e1a48f73f50ba214aeddef44b92d498df33818654a8
+alembic==1.5.4 \
+    --hash=sha256:e871118b6174681f7e9a9ea67cfcae954c6d18e05b49c6b17f662d2530c76bf5
     # via -r requirements.in
 argh==0.26.2 \
     --hash=sha256:a9b3aaa1904eeb78e32394cd46c6f37ac0fb4af6dc488daa58971bdc7d7fcaf3 \
