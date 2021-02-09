@@ -6,15 +6,13 @@ import dramatiq_pg
 from dramatiq.brokers.stub import StubBroker
 from dramatiq.results import Results
 from dramatiq.results.backends import StubBackend
-from dramatiq_pg.utils import transaction
-from psycopg2.errors import DuplicateSchema  # pylint: disable=E0611
 
 from exodus_gw.database import db_url
 from exodus_gw.settings import Settings
 
-LOG = logging.getLogger("exodus-gw")
+from .middleware import SchemaInitMiddleware
 
-SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "schema.sql")
+LOG = logging.getLogger("exodus-gw")
 
 
 class SessionPoolAdapter:
@@ -88,6 +86,8 @@ class ExodusGwBroker(
 
         super().__init__(url=url, pool=pool)
 
+        self.add_middleware(SchemaInitMiddleware())
+
     @property
     def pool(self):
         if self.__pool_cvar is not None:
@@ -134,27 +134,6 @@ class ExodusGwBroker(
             self.pool = SessionPoolAdapter(session)
         else:
             self.pool = NoSessionAvailable()
-
-    def __ensure_init(self):
-        with open(SCHEMA_PATH, "rt") as f:
-            schema = f.read()
-
-        LOG.info("Ensuring dramatiq schema at %s is applied", SCHEMA_PATH)
-
-        try:
-            with transaction(self.pool) as cursor:
-                cursor.execute(schema)
-            LOG.info("dramatiq schema applied")
-        except DuplicateSchema:
-            LOG.info("dramatiq schema was already in place")
-
-    def consume(self, *args, **kwargs):  # pylint: disable=signature-differs
-        # compared to the default broker, we'll automatically
-        # initialize our schema on worker startup rather than
-        # requiring a separate command for this.
-        self.__ensure_init()
-
-        return super().consume(*args, **kwargs)
 
 
 class ExodusGwStubBroker(StubBroker):
