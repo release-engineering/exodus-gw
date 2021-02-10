@@ -1,3 +1,5 @@
+import uuid
+
 import mock
 import pytest
 from fastapi.testclient import TestClient
@@ -54,6 +56,55 @@ async def test_publish_links(mock_db_session):
         "self": "/test/publish/%s" % publish.id,
         "commit": "/test/publish/%s/commit" % publish.id,
     }
+
+
+def test_update_publish_items_typical(db):
+    """PUTting some items on a publish creates expected objects in DB."""
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(id=uuid.UUID("{%s}" % publish_id), env="test")
+
+    with TestClient(app) as client:
+        # ensure a publish object exists
+        db.add(publish)
+        db.commit()
+
+        # Try to add some items to it
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json=[
+                {
+                    "web_uri": "/uri1",
+                    "object_key": "1" * 64,
+                    "from_date": "date1",
+                },
+                {
+                    "web_uri": "/uri2",
+                    "object_key": "2" * 64,
+                    "from_date": "date2",
+                },
+            ],
+        )
+
+    # It should have succeeded
+    assert r.ok
+
+    # publish object should now have matching items
+    db.refresh(publish)
+
+    # (note: ignoring from_date because it's planned for removal from the request format)
+    items = sorted(publish.items, key=lambda item: item.web_uri)
+    item_dicts = [
+        {"web_uri": item.web_uri, "object_key": item.object_key}
+        for item in items
+    ]
+
+    # Should have stored exactly what we asked for
+    assert item_dicts == [
+        {"web_uri": "/uri1", "object_key": "1" * 64},
+        {"web_uri": "/uri2", "object_key": "2" * 64},
+    ]
 
 
 @pytest.mark.asyncio
