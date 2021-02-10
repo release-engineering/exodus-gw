@@ -1,9 +1,17 @@
 import io
+import re
 from typing import AnyStr
 from xml.etree.ElementTree import Element, ElementTree, SubElement
 
 from defusedxml.ElementTree import fromstring
-from fastapi import Response
+from fastapi import HTTPException, Response
+
+
+def validate_object_key(key: str):
+    pattern = re.compile(r"[0-9a-f]{64}")
+
+    if not re.match(pattern, key):
+        raise HTTPException(400, detail="Invalid object key: '%s'" % key)
 
 
 def content_md5(request):

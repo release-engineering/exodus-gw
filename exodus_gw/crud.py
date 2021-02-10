@@ -5,6 +5,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Query, Session, lazyload
 
 from . import models, schemas
+from .aws.util import validate_object_key
 from .settings import Environment
 
 
@@ -27,6 +28,8 @@ def update_publish(
         items = [items]
 
     for item in items:
+        validate_object_key(item.object_key)
+
         db.add(models.Item(**item.dict(), publish_id=publish_id))
 
     db.commit()

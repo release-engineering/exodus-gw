@@ -73,6 +73,7 @@ from ..aws.util import (
     RequestReader,
     content_md5,
     extract_mpu_parts,
+    validate_object_key,
     xml_response,
 )
 from ..settings import Environment
@@ -196,6 +197,8 @@ async def object_put(env: Environment, key: str, request: Request):
     # Single-part upload handler: entire object is written via one PUT.
     reader = RequestReader.get_reader(request)
 
+    validate_object_key(key)
+
     async with s3_client(profile=env.aws_profile) as s3:
         response = await s3.put_object(
             Bucket=env.bucket,
@@ -216,6 +219,8 @@ async def complete_multipart_upload(
 
     LOG.debug("completing mpu for parts %s", parts)
 
+    validate_object_key(key)
+
     async with s3_client(profile=env.aws_profile) as s3:
         response = await s3.complete_multipart_upload(
             Bucket=env.bucket,
@@ -235,6 +240,8 @@ async def complete_multipart_upload(
 
 
 async def create_multipart_upload(env: Environment, key: str):
+    validate_object_key(key)
+
     async with s3_client(profile=env.aws_profile) as s3:
         response = await s3.create_multipart_upload(Bucket=env.bucket, Key=key)
 
@@ -254,6 +261,8 @@ async def multipart_put(
     request: Request,
 ):
     reader = RequestReader.get_reader(request)
+
+    validate_object_key(key)
 
     async with s3_client(profile=env.aws_profile) as s3:
         response = await s3.upload_part(
@@ -289,6 +298,8 @@ async def abort_multipart_upload(
     """
     LOG.debug("Abort %s", uploadId)
 
+    validate_object_key(key)
+
     async with s3_client(profile=env.aws_profile) as s3:
         await s3.abort_multipart_upload(
             Bucket=env.bucket, Key=key, UploadId=uploadId
@@ -307,6 +318,8 @@ async def head(
     key: str = Path(..., description="S3 object key"),
 ):
     """Retrieve metadata from an S3 object."""
+
+    validate_object_key(key)
 
     try:
         async with s3_client(profile=env.aws_profile) as s3:
