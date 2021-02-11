@@ -110,16 +110,10 @@ docutils==0.15.2 \
     --hash=sha256:9e4d7ecfc600058e07ba661411a2b7de2fd0fafa17d1a7f7361cd47b1175c827 \
     --hash=sha256:a2aeea129088da402665e92e0b25b04b073c04b2dce4ab65caaa38b7ce2e1a99
     # via botocore
-dramatiq-pg==0.9.0 \
-    --hash=sha256:462fb2230bcd73c0f58eb0fff10cf360f34dd4d0837f8e370a5c9f6faea2e3aa \
-    --hash=sha256:6ec05eeffcaf7b6ae81fecbd2edbedc9f22a72523bce3fbcdee871f1029cdaf6
-    # via -r requirements.in
 dramatiq[watch]==1.10.0 \
     --hash=sha256:ce23c4520b50785414aca088c25c6a2274512f67ec468042aee0c379ee1d700e \
     --hash=sha256:d3f629ff01e1da67f46579cba549e115fbe0b32a31fa52c53f6c322a4456566a
-    # via
-    #   -r requirements.in
-    #   dramatiq-pg
+    # via -r requirements.in
 fastapi==0.63.0 \
     --hash=sha256:63c4592f5ef3edf30afa9a44fa7c6b7ccb20e0d3f68cd9eba07b44d552058dcb \
     --hash=sha256:98d8ea9591d8512fdadf255d2a8fa56515cdd8624dca4af369da73727409508e

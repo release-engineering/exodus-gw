@@ -101,6 +101,17 @@ class Settings(BaseSettings):
     ]
     """List of file names that should be saved for last when publishing."""
 
+    worker_keepalive_timeout: int = 60 * 5
+    """Background worker keepalive timeout, in seconds. If a worker fails to update its
+    status within this time period, it is assumed dead.
+
+    This setting affects how quickly the system can recover from issues such as a worker
+    process being killed unexpectedly.
+    """
+
+    worker_keepalive_interval: int = 60
+    """How often, in seconds, should background workers update their status."""
+
     class Config:
         env_prefix = "exodus_gw_"
 

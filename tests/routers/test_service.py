@@ -1,8 +1,10 @@
-import mock
+from datetime import datetime
+
 from fastapi.testclient import TestClient
 
 from exodus_gw import models
 from exodus_gw.main import app
+from exodus_gw.models import DramatiqConsumer
 from exodus_gw.routers import service
 
 
@@ -10,13 +12,40 @@ def test_healthcheck():
     assert service.healthcheck() == {"detail": "exodus-gw is running"}
 
 
-def test_healthcheck_worker(stub_worker):
-    # This test exercises "real" dramatiq message handling via stub
-    # broker & worker, demonstrating that messages can be used from
-    # within tests.
-    assert service.healthcheck_worker(db=mock.Mock()) == {
-        "detail": "background worker is running: ping => pong"
-    }
+def test_healthcheck_worker_healthy(db):
+    with TestClient(app) as client:
+        # Ensure there's some live consumer.
+        db.add(
+            DramatiqConsumer(id="some-consumer", last_alive=datetime.utcnow())
+        )
+        db.commit()
+
+        r = client.get("/healthcheck-worker")
+
+        # It should succeed
+        assert r.ok
+
+        # Should give a generic message
+        assert r.json() == {"detail": "background worker is running"}
+
+
+def test_healthcheck_worker_unhealthy(db):
+    with TestClient(app) as client:
+        # The only consumer we have is stale.
+        db.add(
+            DramatiqConsumer(
+                id="some-consumer", last_alive=datetime(1999, 1, 1)
+            )
+        )
+        db.commit()
+
+        r = client.get("/healthcheck-worker")
+
+        # It should fail
+        assert r.status_code == 500
+
+        # Should give a generic message
+        assert r.json() == {"detail": "background workers unavailable"}
 
 
 def test_whoami():
