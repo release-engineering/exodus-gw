@@ -86,7 +86,9 @@ def sqlite_in_tests(monkeypatch):
         # no problem
         pass
 
-    monkeypatch.setenv("EXODUS_GW_DB_URL", "sqlite:///%s" % filename)
+    monkeypatch.setenv(
+        "EXODUS_GW_DB_URL", "sqlite:///%s?check_same_thread=false" % filename
+    )
     yield
 
 
