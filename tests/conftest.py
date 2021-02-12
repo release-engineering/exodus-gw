@@ -1,4 +1,5 @@
 import os
+import uuid
 
 import dramatiq
 import mock
@@ -105,8 +106,8 @@ def db():
 
 @pytest.fixture()
 def mock_publish(mock_item_list):
-    publish = models.Publish()
-    publish.id = "123e4567-e89b-12d3-a456-426614174000"
+    publish = models.Publish(env="test")
+    publish.id = uuid.UUID("123e4567-e89b-12d3-a456-426614174000")
     publish.items = [
         models.Item(**item.dict(), publish_id=publish.id)
         for item in mock_item_list

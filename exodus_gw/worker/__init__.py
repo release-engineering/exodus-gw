@@ -1,8 +1,11 @@
 import dramatiq
+from dramatiq.middleware import CurrentMessage
 
 from .broker import new_broker
 
-dramatiq.set_broker(new_broker())
+broker = new_broker()
+broker.add_middleware(CurrentMessage())
+dramatiq.set_broker(broker)
 
 from .publish import commit  # noqa
 

@@ -118,3 +118,5 @@ disable=print-statement,
         # we need to import dramatiq actors to the worker after broker
         # is set
         wrong-import-position,
+        # pylint catches similar nested closing brackets from multiple files
+        duplicate-code,

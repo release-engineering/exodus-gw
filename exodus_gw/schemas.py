@@ -1,3 +1,4 @@
+from enum import Enum
 from os.path import join
 from typing import Dict, List
 from uuid import UUID
@@ -9,6 +10,10 @@ PathPublishId = Path(
     ...,
     title="publish ID",
     description="UUID of an existing publish object.",
+)
+
+PathTaskId = Path(
+    ..., title="task ID", description="UUID of an existing task object."
 )
 
 
@@ -58,6 +63,32 @@ class Publish(PublishBase):
     def make_links(cls, values):
         _self = join("/", values["env"], "publish", str(values["id"]))
         values["links"] = {"self": _self, "commit": join(_self, "commit")}
+        return values
+
+    class Config:
+        orm_mode = True
+
+
+class TaskStates(str, Enum):
+    not_started = "NOT_STARTED"
+    in_progress = "IN_PROGRESS"
+    complete = "COMPLETE"
+
+
+class Task(BaseModel):
+    id: UUID = Field(..., description="Unique ID of task object.")
+    publish_id: UUID = Field(
+        ..., description="Unique ID of publish object handled by this task."
+    )
+    state: TaskStates = Field(..., description="Current state of this task.")
+    links: Dict[str, str] = Field(
+        {}, description="""URL links related to this task."""
+    )
+
+    @root_validator
+    @classmethod
+    def make_links(cls, values):
+        values["links"] = {"self": join("/task", str(values["id"]))}
         return values
 
     class Config:
