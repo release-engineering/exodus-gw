@@ -14,7 +14,7 @@ from exodus_gw.settings import Settings
 LOG = logging.getLogger("exodus-gw")
 
 
-@dramatiq.actor
+@dramatiq.actor(time_limit=Settings().actor_time_limit)
 def commit(publish_id: str, env: str):
     settings = Settings()
     db = Session(bind=db_engine(settings))

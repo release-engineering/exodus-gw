@@ -93,7 +93,7 @@ def upload_in_thread(args, item):
     # Upload the file object only when it isn't already present.
     try:
         object.load()
-        print("Won't upload {}: already present".format(item.object_key))
+        print("Skipped {} <= {}".format(item.object_key, item.src_path))
         return False
     except ClientError as exc_info:
         if exc_info.response["Error"]["Code"] == "404":
@@ -135,7 +135,7 @@ def upload_items(args, items):
 @backoff.on_predicate(
     wait_gen=backoff.expo,
     predicate=lambda task: task["state"] != "COMPLETE",
-    max_time=120,
+    max_time=1800,
 )
 def poll_commit_completion(gw_url, commit):
     session = requests.Session()

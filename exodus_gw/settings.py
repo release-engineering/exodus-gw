@@ -94,6 +94,9 @@ class Settings(BaseSettings):
     max_tries: int = 20
     """Maximum attempts to write to DynamoDB table."""
 
+    actor_time_limit: int = 30 * 60000
+    """Maximum amount of time (in milliseconds) actors may run."""
+
     entry_point_files: List[str] = [
         "repomd.xml",
         "repomd.xml.asc",
