@@ -101,63 +101,63 @@ and recreating the exodus-gw database is a viable option if needed.</p>
 <h2>Settings<a class="headerlink" href="#settings" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="exodus_gw.settings.Settings">
-<em class="property">class </em><code class="sig-prename descclassname">exodus_gw.settings.</code><code class="sig-name descname">Settings</code><a class="reference internal" href="_modules/exodus_gw/settings.html#Settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#exodus_gw.settings.Settings" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">exodus_gw.settings.</span></code><code class="sig-name descname"><span class="pre">Settings</span></code><a class="reference internal" href="_modules/exodus_gw/settings.html#Settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#exodus_gw.settings.Settings" title="Permalink to this definition">¶</a></dt>
 <dd><p>exodus-gw may be configured by the following settings.</p>
 <p>Each settings value may be overridden using an environment variable of the
 same name, prefixed with <code class="docutils literal notranslate"><span class="pre">EXODUS_GW_</span></code> (example: <code class="docutils literal notranslate"><span class="pre">EXODUS_GW_CALL_CONTEXT_HEADER</span></code>).</p>
 <dl class="py attribute">
 <dt id="exodus_gw.settings.Settings.call_context_header">
-<code class="sig-name descname">call_context_header</code><em class="property">: <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)">str</a></em><a class="headerlink" href="#exodus_gw.settings.Settings.call_context_header" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">call_context_header</span></code><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.call_context_header" title="Permalink to this definition">¶</a></dt>
 <dd><p>Name of the header from which to extract call context (for authentication
 and authorization).</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt id="exodus_gw.settings.Settings.log_config">
-<code class="sig-name descname">log_config</code><em class="property">: Dict<span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)">str</a><span class="p">, </span>Any<span class="p">]</span></em><a class="headerlink" href="#exodus_gw.settings.Settings.log_config" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">log_config</span></code><em class="property"><span class="pre">:</span> <span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#exodus_gw.settings.Settings.log_config" title="Permalink to this definition">¶</a></dt>
 <dd><p>Logging configuration in dictConfig schema.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt id="exodus_gw.settings.Settings.db_service_user">
-<code class="sig-name descname">db_service_user</code><em class="property">: <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)">str</a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_service_user" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">db_service_user</span></code><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_service_user" title="Permalink to this definition">¶</a></dt>
 <dd><p>db service user name</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt id="exodus_gw.settings.Settings.db_service_pass">
-<code class="sig-name descname">db_service_pass</code><em class="property">: <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)">str</a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_service_pass" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">db_service_pass</span></code><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_service_pass" title="Permalink to this definition">¶</a></dt>
 <dd><p>db service user password</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt id="exodus_gw.settings.Settings.db_service_host">
-<code class="sig-name descname">db_service_host</code><em class="property">: <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)">str</a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_service_host" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">db_service_host</span></code><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_service_host" title="Permalink to this definition">¶</a></dt>
 <dd><p>db service host</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt id="exodus_gw.settings.Settings.db_service_port">
-<code class="sig-name descname">db_service_port</code><em class="property">: <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)">str</a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_service_port" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">db_service_port</span></code><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_service_port" title="Permalink to this definition">¶</a></dt>
 <dd><p>db service port</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt id="exodus_gw.settings.Settings.db_url">
-<code class="sig-name descname">db_url</code><em class="property">: Optional<span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)">str</a><span class="p">]</span></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_url" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">db_url</span></code><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_url" title="Permalink to this definition">¶</a></dt>
 <dd><p>Connection string for database. If set, overrides the <code class="docutils literal notranslate"><span class="pre">db_service_*</span></code> settings.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt id="exodus_gw.settings.Settings.db_reset">
-<code class="sig-name descname">db_reset</code><em class="property">: <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)">bool</a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_reset" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">db_reset</span></code><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><span class="pre">bool</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_reset" title="Permalink to this definition">¶</a></dt>
 <dd><p>If set to True, drop all DB tables during startup.</p>
 <p>This setting is intended for use during development.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt id="exodus_gw.settings.Settings.db_migration_mode">
-<code class="sig-name descname">db_migration_mode</code><em class="property">: exodus_gw.settings.MigrationMode</em><a class="headerlink" href="#exodus_gw.settings.Settings.db_migration_mode" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">db_migration_mode</span></code><em class="property"><span class="pre">:</span> <span class="pre">exodus_gw.settings.MigrationMode</span></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_migration_mode" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adjusts the DB migration behavior when the exodus-gw service starts.</p>
 <p>Valid values are:</p>
 <blockquote>
@@ -180,26 +180,26 @@ schema changes.</p>
 
 <dl class="py attribute">
 <dt id="exodus_gw.settings.Settings.db_migration_revision">
-<code class="sig-name descname">db_migration_revision</code><em class="property">: <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)">str</a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_migration_revision" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">db_migration_revision</span></code><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_migration_revision" title="Permalink to this definition">¶</a></dt>
 <dd><p>If <code class="docutils literal notranslate"><span class="pre">db_migration_mode</span></code> is <code class="docutils literal notranslate"><span class="pre">upgrade</span></code>, this setting can be used to override
 the target revision when migrating the DB.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt id="exodus_gw.settings.Settings.batch_size">
-<code class="sig-name descname">batch_size</code><em class="property">: <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)">int</a></em><a class="headerlink" href="#exodus_gw.settings.Settings.batch_size" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">batch_size</span></code><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.batch_size" title="Permalink to this definition">¶</a></dt>
 <dd><p>Maximum number of items to write at one time</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt id="exodus_gw.settings.Settings.max_tries">
-<code class="sig-name descname">max_tries</code><em class="property">: <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)">int</a></em><a class="headerlink" href="#exodus_gw.settings.Settings.max_tries" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">max_tries</span></code><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.max_tries" title="Permalink to this definition">¶</a></dt>
 <dd><p>Maximum attempts to write to DynamoDB table.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt id="exodus_gw.settings.Settings.entry_point_files">
-<code class="sig-name descname">entry_point_files</code><em class="property">: List<span class="p">[</span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)">str</a><span class="p">]</span></em><a class="headerlink" href="#exodus_gw.settings.Settings.entry_point_files" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">entry_point_files</span></code><em class="property"><span class="pre">:</span> <span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#exodus_gw.settings.Settings.entry_point_files" title="Permalink to this definition">¶</a></dt>
 <dd><p>List of file names that should be saved for last when publishing.</p>
 </dd></dl>
 
@@ -304,7 +304,7 @@ users may specify a logger name and the level at which to set said logger.</p>
       &copy;2020, Red Hat.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.4.3</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
