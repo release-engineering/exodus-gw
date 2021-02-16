@@ -116,12 +116,27 @@ def test_update_publish_items_typical(db):
         "test3",
     ],
 )
-async def test_update_publish_items_env_exists(
-    env, mock_db_session, mock_item_list
-):
+async def test_update_publish_items_env_exists(env, mock_db_session):
+    test_items = [
+        schemas.ItemBase(
+            web_uri="/some/path",
+            object_key="0bacfc5268f9994065dd858ece3359fd7a99d82af5be84202b8e84c2a5b07ffa",
+            from_date="2021-01-01T00:00:00.0",
+        ),
+        schemas.ItemBase(
+            web_uri="/other/path",
+            object_key="e448a4330ff79a1b20069d436fae94806a0e2e3a6b309cd31421ef088c6439fb",
+            from_date="2021-01-01T00:00:00.0",
+        ),
+        schemas.ItemBase(
+            web_uri="/to/repomd.xml",
+            object_key="3f449eb3b942af58e9aca4c1cffdef89c3f1552c20787ae8c966767a1fedd3a5",
+            from_date="2021-01-01T00:00:00.0",
+        ),
+    ]
     publish_id = "123e4567-e89b-12d3-a456-426614174000"
     # Simulate single item to "test3" environment to test list coercion.
-    items = mock_item_list[0] if env == "test3" else mock_item_list
+    items = test_items[0] if env == "test3" else test_items
 
     env = Environment(env, "test-profile", "test-bucket", "test-table")
 
@@ -137,14 +152,14 @@ async def test_update_publish_items_env_exists(
 
 
 @mock.patch("exodus_gw.worker.commit")
-def test_commit_publish(mock_commit, mock_publish, mock_db_session):
+def test_commit_publish(mock_commit, fake_publish, mock_db_session):
     """Ensure commit_publish delegates to worker correctly"""
 
     env = Environment("test", "some-profile", "some-bucket", "some-table")
 
     routers.publish.commit_publish(
         env=env,
-        publish_id=mock_publish.id,
+        publish_id=fake_publish.id,
         db=mock_db_session,
         settings=Settings(),
     )
