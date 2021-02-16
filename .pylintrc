@@ -120,3 +120,8 @@ disable=print-statement,
         wrong-import-position,
         # pylint catches similar nested closing brackets from multiple files
         duplicate-code,
+        # This complains on checking 'expr == None' but this is the proper
+        # way to search for NULL / NOT NULL with sqlalchemy
+        singleton-comparison,
+        # Issues with subscript of typing.Union, typing.List
+        unsubscriptable-object,

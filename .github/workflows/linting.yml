@@ -21,7 +21,7 @@ jobs:
           use-isort: true
           extra-pylint-options: ""
           extra-pycodestyle-options: ""
-          extra-flake8-options: "--max-line-length=100"
+          extra-flake8-options: ""
           extra-black-options: ""
           extra-mypy-options: ""
           extra-isort-options: ""

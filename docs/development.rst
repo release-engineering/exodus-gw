@@ -226,12 +226,6 @@ the development environment.
 
        The database will be empty until exodus-gw has started successfully at least once.
 
-   * - ``env PGHOST=localhost PGPORT=3355 PGUSER=exodus-gw dramatiq-pg stats``
-     - Show stats on background tasks/messages
-
-   * - ``env PGHOST=localhost PGPORT=3355 PGUSER=exodus-gw dramatiq-pg flush``
-     - Force all dramatiq queues to be emptied (i.e. drop all messages)
-
    * - ``systemctl --user stop exodus-gw-db``
 
        ``rm -rf ~/.config/exodus-gw-dev/postgresql/``
@@ -311,6 +305,3 @@ has been stabilized:
 
 The resulting migration should be included in the same pull request as your
 sqlalchemy model changes.
-
-Note that the migration system does not cover the schema used by dramatiq workers, which
-is handled separately.

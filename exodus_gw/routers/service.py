@@ -1,13 +1,16 @@
 """APIs for inspecting the state of the exodus-gw service."""
 
 import logging
+from datetime import datetime, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
 from sqlalchemy.orm import Session
 
-from .. import deps, models, schemas, worker
+from .. import deps, models, schemas
 from ..auth import CallContext
+from ..models import DramatiqConsumer
+from ..settings import Settings
 
 LOG = logging.getLogger("exodus-gw")
 
@@ -31,20 +34,26 @@ def healthcheck():
     response_model=schemas.MessageResponse,
     responses={200: {"description": "Worker(s) are responding"}},
 )
-def healthcheck_worker(db: Session = deps.db):
+def healthcheck_worker(
+    db: Session = deps.db, settings: Settings = deps.settings
+):
     """Returns a successful response if background workers are running."""
 
-    msg = worker.ping.send()
+    # consumer is alive if it was last seen at least this recently.
+    threshold = datetime.utcnow() - timedelta(
+        seconds=settings.worker_keepalive_timeout
+    )
 
-    # Message would not normally be sent until commit after the request succeeds.
-    # Since we want to get the result, we'll commit early.
-    db.commit()
+    alive_consumers = (
+        db.query(DramatiqConsumer)
+        .filter(DramatiqConsumer.last_alive >= threshold)
+        .count()
+    )
 
-    # If we don't get a response in time, this will raise an exception and we'll
-    # respond with a 500 error, which seems reasonable.
-    result = msg.get_result(block=True, timeout=5000)
+    if not alive_consumers:
+        raise HTTPException(500, detail="background workers unavailable")
 
-    return {"detail": "background worker is running: ping => %s" % result}
+    return {"detail": "background worker is running"}
 
 
 @router.get(

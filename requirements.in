@@ -12,4 +12,3 @@ async-exit-stack
 async-generator
 backoff
 dramatiq[watch]
-dramatiq-pg

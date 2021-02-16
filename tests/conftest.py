@@ -1,14 +1,9 @@
 import os
 import uuid
 
-import dramatiq
 import mock
 import pytest
 from sqlalchemy.orm.session import Session
-
-# This must happen early during tests, prior to import of
-# anything from the exodus_gw.worker module.
-os.environ["EXODUS_GW_STUB_BROKER"] = "1"
 
 from exodus_gw import database, models, schemas, settings  # noqa
 
@@ -113,23 +108,3 @@ def mock_publish(mock_item_list):
         for item in mock_item_list
     ]
     yield publish
-
-
-@pytest.fixture()
-def stub_broker():
-    broker = dramatiq.get_broker()
-
-    # discards any messages in progress at start of next test.
-    broker.flush_all()
-
-    return broker
-
-
-@pytest.fixture()
-def stub_worker(stub_broker):
-    # runs a worker connected to the stub broker, so messages
-    # can be handled in-process during test execution
-    worker = dramatiq.Worker(stub_broker, worker_timeout=100)
-    worker.start()
-    yield worker
-    worker.stop(timeout=5000)
