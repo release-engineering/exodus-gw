@@ -218,6 +218,29 @@ process being killed unexpectedly.</p>
 <dd><p>How often, in seconds, should background workers update their status.</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt id="exodus_gw.settings.Settings.cron_cleanup">
+<code class="sig-name descname"><span class="pre">cron_cleanup</span></code><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.cron_cleanup" title="Permalink to this definition">¶</a></dt>
+<dd><p>cron-style schedule for cleanup task.</p>
+<p>exodus-gw will run a cleanup task approximately according to this schedule, removing old
+data from the system.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="exodus_gw.settings.Settings.scheduler_interval">
+<code class="sig-name descname"><span class="pre">scheduler_interval</span></code><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.scheduler_interval" title="Permalink to this definition">¶</a></dt>
+<dd><p>How often, in minutes, exodus-gw should check if a scheduled task is ready to run.</p>
+<p>Note that the cron rules applied to each scheduled task are only as accurate as this
+interval allows, i.e. each rule may be triggered up to <code class="docutils literal notranslate"><span class="pre">scheduler_interval</span></code> minutes late.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="exodus_gw.settings.Settings.scheduler_delay">
+<code class="sig-name descname"><span class="pre">scheduler_delay</span></code><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.scheduler_delay" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delay, in minutes, after exodus-gw workers start up before any scheduled tasks
+should run.</p>
+</dd></dl>
+
 </dd></dl>
 
 <p>To enable per-environment configuration of exodus-gw, exodus-gw.ini is available to point the
