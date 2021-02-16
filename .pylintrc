@@ -125,3 +125,5 @@ disable=print-statement,
         singleton-comparison,
         # Issues with subscript of typing.Union, typing.List
         unsubscriptable-object,
+        # It's sometimes reasonable to handle any Exception without checking it
+        broad-except

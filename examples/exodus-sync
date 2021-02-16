@@ -134,7 +134,7 @@ def upload_items(args, items):
 
 @backoff.on_predicate(
     wait_gen=backoff.expo,
-    predicate=lambda task: task["state"] != "COMPLETE",
+    predicate=lambda task: task["state"] not in ("FAILED", "COMPLETE"),
     max_time=1800,
 )
 def poll_commit_completion(gw_url, commit):

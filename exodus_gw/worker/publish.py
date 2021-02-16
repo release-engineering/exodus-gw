@@ -25,11 +25,8 @@ def commit(publish_id: str, env: str):
         .first()
     )
 
-    if task.state == "COMPLETE":
-        LOG.warning(
-            "Task %s already in completed state\nAborting commit",
-            task.id,
-        )
+    if task.state not in ("NOT_STARTED", "IN_PROGRESS"):
+        LOG.warning("Task %s in unexpected state, '%s'", task.id, task.state)
         return
 
     items = []
@@ -48,19 +45,26 @@ def commit(publish_id: str, env: str):
     task.state = schemas.TaskStates.in_progress
     db.commit()
 
-    if items:
-        items_written = write_batches(env, items)
+    try:
+        if items:
+            items_written = write_batches(env, items)
 
-    if not items_written:
-        # Delete all items if failed to write any items.
-        write_batches(env, items, delete=True)
-    elif last_items:
-        # Write any last_items if successfully wrote all items.
-        last_items_written = write_batches(env, last_items)
+        if items_written and last_items:
+            last_items_written = write_batches(env, last_items)
 
-        if not last_items_written:
-            # Delete everything if failed to write last_items.
-            write_batches(env, items + last_items, delete=True)
+        if not items_written or (last_items and not last_items_written):
+            items = items + last_items if last_items else items
+            write_batches(env, items, delete=True)
+            # Change task state to FAILED.
+            task.state = schemas.TaskStates.failed
+            db.commit()
+            return
+    except Exception:
+        LOG.exception("Task %s encountered an error", task.id)
+        # Change task state to FAILED.
+        task.state = schemas.TaskStates.failed
+        db.commit()
+        return
 
     # Change task state to COMPLETE.
     task.state = schemas.TaskStates.complete
