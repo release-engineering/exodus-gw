@@ -14,6 +14,7 @@ from exodus_gw.dramatiq.consumer import Consumer
 from exodus_gw.dramatiq.middleware import (
     LocalNotifyMiddleware,
     PostgresNotifyMiddleware,
+    SchedulerMiddleware,
 )
 from exodus_gw.models import DramatiqMessage
 from exodus_gw.settings import Settings
@@ -35,6 +36,11 @@ class Broker(dramatiq.Broker):  # pylint: disable=abstract-method
 
         # We have some actors using this, so it's always enabled.
         self.add_middleware(CurrentMessage())
+
+        # Enable special handling of actors with 'scheduled=True' in options.
+        self.add_middleware(
+            SchedulerMiddleware(self.__settings, self.__db_engine)
+        )
 
         self.add_middleware(LocalNotifyMiddleware())
 
@@ -110,13 +116,16 @@ class Broker(dramatiq.Broker):  # pylint: disable=abstract-method
             queue_name = dq_name(queue_name)
             message.options["eta"] = current_millis() + delay
 
-        db_message = DramatiqMessage(id=message.message_id, queue=queue_name)
+        db_message = DramatiqMessage(
+            id=message.message_id, actor=message.actor_name, queue=queue_name
+        )
 
         message_dict = message.asdict()
 
         # Drop these so we're not storing them in two places.
         del message_dict["message_id"]
         del message_dict["queue_name"]
+        del message_dict["actor_name"]
 
         db_message.body = message_dict
 

@@ -32,6 +32,9 @@ class DramatiqMessage(Base):
     # Name of queue (e.g. "default" for most messages)
     queue = Column(String, nullable=False)
 
+    # Name of actor
+    actor = Column(String, nullable=False)
+
     # Full message body.
     body = Column(JSONB, nullable=False)
 

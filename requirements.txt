@@ -347,6 +347,9 @@ psycopg2==2.8.6 \
     --hash=sha256:f974c96fca34ae9e4f49839ba6b78addf0346777b46c4da27a7bf54f48d3057d \
     --hash=sha256:fb23f6c71107c37fd667cb4ea363ddeb936b348bbd6449278eb92c189699f543
     # via -r requirements.in
+pycron==3.0.0 \
+    --hash=sha256:b916044e3e8253d5409c68df3ac64a3472c4e608dab92f40e8f595e5d3acb3de
+    # via -r requirements.in
 pydantic==1.7.3 \
     --hash=sha256:025bf13ce27990acc059d0c5be46f416fc9b293f45363b3d19855165fee1874f \
     --hash=sha256:185e18134bec5ef43351149fe34fda4758e53d05bb8ea4d5928f0720997b79ef \
