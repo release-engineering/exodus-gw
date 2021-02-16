@@ -203,6 +203,21 @@ the target revision when migrating the DB.</p>
 <dd><p>List of file names that should be saved for last when publishing.</p>
 </dd></dl>
 
+<dl class="py attribute">
+<dt id="exodus_gw.settings.Settings.worker_keepalive_timeout">
+<code class="sig-name descname"><span class="pre">worker_keepalive_timeout</span></code><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.worker_keepalive_timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Background worker keepalive timeout, in seconds. If a worker fails to update its
+status within this time period, it is assumed dead.</p>
+<p>This setting affects how quickly the system can recover from issues such as a worker
+process being killed unexpectedly.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="exodus_gw.settings.Settings.worker_keepalive_interval">
+<code class="sig-name descname"><span class="pre">worker_keepalive_interval</span></code><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.worker_keepalive_interval" title="Permalink to this definition">¶</a></dt>
+<dd><p>How often, in seconds, should background workers update their status.</p>
+</dd></dl>
+
 </dd></dl>
 
 <p>To enable per-environment configuration of exodus-gw, exodus-gw.ini is available to point the

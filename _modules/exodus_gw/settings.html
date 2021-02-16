@@ -135,6 +135,17 @@
     <span class="p">]</span>
     <span class="sd">&quot;&quot;&quot;List of file names that should be saved for last when publishing.&quot;&quot;&quot;</span>
 
+    <span class="n">worker_keepalive_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">5</span>
+    <span class="sd">&quot;&quot;&quot;Background worker keepalive timeout, in seconds. If a worker fails to update its</span>
+<span class="sd">    status within this time period, it is assumed dead.</span>
+
+<span class="sd">    This setting affects how quickly the system can recover from issues such as a worker</span>
+<span class="sd">    process being killed unexpectedly.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">worker_keepalive_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span>
+    <span class="sd">&quot;&quot;&quot;How often, in seconds, should background workers update their status.&quot;&quot;&quot;</span>
+
     <span class="k">class</span> <span class="nc">Config</span><span class="p">:</span>
         <span class="n">env_prefix</span> <span class="o">=</span> <span class="s2">&quot;exodus_gw_&quot;</span></div>
 

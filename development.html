@@ -228,12 +228,6 @@ exodus-gw-localstack.service or use the <code class="docutils literal notranslat
 <p>The database will be empty until exodus-gw has started successfully at least once.</p>
 </td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">env</span> <span class="pre">PGHOST=localhost</span> <span class="pre">PGPORT=3355</span> <span class="pre">PGUSER=exodus-gw</span> <span class="pre">dramatiq-pg</span> <span class="pre">stats</span></code></p></td>
-<td><p>Show stats on background tasks/messages</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">env</span> <span class="pre">PGHOST=localhost</span> <span class="pre">PGPORT=3355</span> <span class="pre">PGUSER=exodus-gw</span> <span class="pre">dramatiq-pg</span> <span class="pre">flush</span></code></p></td>
-<td><p>Force all dramatiq queues to be emptied (i.e. drop all messages)</p></td>
-</tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">systemctl</span> <span class="pre">--user</span> <span class="pre">stop</span> <span class="pre">exodus-gw-db</span></code></p>
 <p><code class="docutils literal notranslate"><span class="pre">rm</span> <span class="pre">-rf</span> <span class="pre">~/.config/exodus-gw-dev/postgresql/</span></code></p>
 <p><code class="docutils literal notranslate"><span class="pre">systemctl</span> <span class="pre">--user</span> <span class="pre">start</span> <span class="pre">exodus-gw.target</span></code></p>
@@ -309,8 +303,6 @@ tables when the service starts.</p></li>
 </ul>
 <p>The resulting migration should be included in the same pull request as your
 sqlalchemy model changes.</p>
-<p>Note that the migration system does not cover the schema used by dramatiq workers, which
-is handled separately.</p>
 </div>
 </div>
 
