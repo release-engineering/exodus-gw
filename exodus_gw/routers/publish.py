@@ -62,7 +62,7 @@ import logging
 from typing import Dict, List, Union
 from uuid import UUID
 
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, HTTPException
 from sqlalchemy.orm import Session
 
 from .. import deps, models, schemas, worker
@@ -142,7 +142,21 @@ def update_publish_items(
     Items cannot be added to a publish once it has been committed.
     """
 
-    update_publish(db, items, publish_id)
+    db_publish = (
+        db.query(models.Publish)
+        .with_for_update()
+        .filter(models.Publish.id == publish_id)
+        .first()
+    )
+
+    if db_publish.state != "PENDING":
+        raise HTTPException(
+            status_code=409,
+            detail="Publish %s in unexpected state, '%s'"
+            % (db_publish.id, db_publish.state),
+        )
+
+    update_publish(db, items, db_publish.id)
 
     return {}
 
@@ -176,8 +190,23 @@ def commit_publish(
     objects from any of those publishes.
     """
 
-    msg = worker.commit.send(publish_id=str(publish_id), env=env.name)
+    db_publish = (
+        db.query(models.Publish)
+        .with_for_update()
+        .filter(models.Publish.id == publish_id)
+        .first()
+    )
+
+    if db_publish.state != "PENDING":
+        raise HTTPException(
+            status_code=409,
+            detail="Publish %s in unexpected state, '%s'"
+            % (db_publish.id, db_publish.state),
+        )
+
+    msg = worker.commit.send(publish_id=str(db_publish.id), env=env.name)
     LOG.info("Enqueued commit for '%s'", msg.kwargs["publish_id"])
+    db_publish.state = schemas.PublishStates.committing
 
     task = models.Task(
         id=msg.message_id,

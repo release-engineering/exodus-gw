@@ -2,12 +2,13 @@ import uuid
 
 import mock
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from exodus_gw import routers, schemas
 from exodus_gw.main import app
-from exodus_gw.models import Publish
-from exodus_gw.settings import Environment, Settings
+from exodus_gw.models import Publish, Task
+from exodus_gw.settings import Environment, Settings, get_environment
 
 
 @pytest.mark.parametrize(
@@ -62,7 +63,9 @@ def test_update_publish_items_typical(db):
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
 
-    publish = Publish(id=uuid.UUID("{%s}" % publish_id), env="test")
+    publish = Publish(
+        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
+    )
 
     with TestClient(app) as client:
         # ensure a publish object exists
@@ -106,61 +109,100 @@ def test_update_publish_items_typical(db):
     ]
 
 
-@pytest.mark.parametrize(
-    "env",
-    [
-        "test",
-        "test2",
-        "test3",
-    ],
-)
-def test_update_publish_items_env_exists(env, mock_db_session):
-    test_items = [
-        schemas.ItemBase(
-            web_uri="/some/path",
-            object_key="0bacfc5268f9994065dd858ece3359fd7a99d82af5be84202b8e84c2a5b07ffa",
-            from_date="2021-01-01T00:00:00.0",
-        ),
-        schemas.ItemBase(
-            web_uri="/other/path",
-            object_key="e448a4330ff79a1b20069d436fae94806a0e2e3a6b309cd31421ef088c6439fb",
-            from_date="2021-01-01T00:00:00.0",
-        ),
-        schemas.ItemBase(
-            web_uri="/to/repomd.xml",
-            object_key="3f449eb3b942af58e9aca4c1cffdef89c3f1552c20787ae8c966767a1fedd3a5",
-            from_date="2021-01-01T00:00:00.0",
-        ),
-    ]
-    publish_id = "123e4567-e89b-12d3-a456-426614174000"
-    # Simulate single item to "test3" environment to test list coercion.
-    items = test_items[0] if env == "test3" else test_items
+def test_update_publish_items_single_item(db):
+    """PUTting a single item on a publish creates expected object in DB."""
 
-    env = Environment(env, "test-profile", "test-bucket", "test-table")
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
 
-    assert (
-        routers.publish.update_publish_items(
-            env=env,
-            publish_id=publish_id,
-            items=items,
-            db=mock_db_session,
-        )
-        == {}
+    publish = Publish(
+        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
     )
+
+    with TestClient(app) as client:
+        # ensure a publish object exists
+        db.add(publish)
+        db.commit()
+
+        # Try to add an item to it
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json={
+                "web_uri": "/uri1",
+                "object_key": "1" * 64,
+                "from_date": "date1",
+            },
+        )
+
+    # It should have succeeded
+    assert r.ok
+
+    # publish object should now have a matching item
+    db.refresh(publish)
+
+    # (note: ignoring from_date because it's planned for removal from the request format)
+    item_dicts = [
+        {"web_uri": item.web_uri, "object_key": item.object_key}
+        for item in publish.items
+    ]
+
+    # Should have stored exactly what we asked for
+    assert item_dicts == [{"web_uri": "/uri1", "object_key": "1" * 64}]
+
+
+def test_update_pubish_items_invalid_publish(db):
+    """PUTting items on a completed publish fails with code 409."""
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(
+        id=uuid.UUID("{%s}" % publish_id), env="test", state="COMPLETE"
+    )
+
+    with TestClient(app) as client:
+        # ensure a publish object exists
+        db.add(publish)
+        db.commit()
+
+        # Try to add some items to it
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json=[
+                {
+                    "web_uri": "/uri1",
+                    "object_key": "1" * 64,
+                    "from_date": "date1",
+                },
+                {
+                    "web_uri": "/uri2",
+                    "object_key": "2" * 64,
+                    "from_date": "date2",
+                },
+            ],
+        )
+
+    # It should have failed with 409
+    assert r.status_code == 409
+    assert r.json() == {
+        "detail": "Publish %s in unexpected state, 'COMPLETE'" % publish_id
+    }
 
 
 @mock.patch("exodus_gw.worker.commit")
-def test_commit_publish(mock_commit, fake_publish, mock_db_session):
-    """Ensure commit_publish delegates to worker correctly"""
+def test_commit_publish(mock_commit, fake_publish, db):
+    """Ensure commit_publish delegates to worker correctly and creates task."""
 
-    env = Environment("test", "some-profile", "some-bucket", "some-table")
+    with TestClient(app):
+        db.add(fake_publish)
+        db.commit()
 
-    routers.publish.commit_publish(
-        env=env,
+    publish_task = routers.publish.commit_publish(
+        env=get_environment("test"),
         publish_id=fake_publish.id,
-        db=mock_db_session,
+        db=db,
         settings=Settings(),
     )
+
+    assert isinstance(publish_task, Task)
 
     mock_commit.assert_has_calls(
         calls=[
@@ -169,3 +211,30 @@ def test_commit_publish(mock_commit, fake_publish, mock_db_session):
             )
         ],
     )
+
+
+@mock.patch("exodus_gw.worker.commit")
+def test_commit_publish_prev_completed(mock_commit, fake_publish, db):
+    """Ensure commit_publish fails for publishes in invalid state."""
+
+    with TestClient(app):
+        db.add(fake_publish)
+        # Simulate that this publish was published.
+        fake_publish.state = schemas.PublishStates.committed
+        db.commit()
+
+    with pytest.raises(HTTPException) as exc_info:
+        routers.publish.commit_publish(
+            env=get_environment("test"),
+            publish_id=fake_publish.id,
+            db=db,
+            settings=Settings(),
+        )
+
+    assert exc_info.value.status_code == 409
+    assert (
+        exc_info.value.detail
+        == "Publish %s in unexpected state, 'COMMITTED'" % fake_publish.id
+    )
+
+    mock_commit.assert_not_called()

@@ -42,6 +42,13 @@ class Item(ItemBase):
         orm_mode = True
 
 
+class PublishStates(str, Enum):
+    pending = "PENDING"
+    committing = "COMMITTING"
+    committed = "COMMITTED"
+    failed = "FAILED"
+
+
 class PublishBase(BaseModel):
     id: UUID = Field(..., description="Unique ID of publish object.")
 
@@ -49,6 +56,9 @@ class PublishBase(BaseModel):
 class Publish(PublishBase):
     env: str = Field(
         ..., description="""Environment to which this publish belongs."""
+    )
+    state: PublishStates = Field(
+        ..., description="Current state of this publish."
     )
     links: Dict[str, str] = Field(
         {}, description="""URL links related to this publish."""

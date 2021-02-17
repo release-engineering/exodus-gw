@@ -17,6 +17,7 @@ class Publish(Base):
         default=uuid.uuid4,
     )
     env = Column(String, nullable=False)
+    state = Column(String, nullable=False)
     items = relationship("Item", back_populates="publish")
 
 
@@ -38,10 +39,16 @@ class Item(Base):
 
     publish = relationship("Publish", back_populates="items")
 
-    @property
-    def aws_fmt(self):
-        return {
+    def aws_fmt(self, delete):
+        # Delete requests can only contain table keys, so leave others
+        # out for now.
+        result = {
             "web_uri": {"S": self.web_uri},
-            "object_key": {"S": self.object_key},
             "from_date": {"S": self.from_date},
         }
+
+        if delete:
+            return result
+
+        result["object_key"] = {"S": self.object_key}
+        return result
