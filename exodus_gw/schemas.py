@@ -73,6 +73,7 @@ class TaskStates(str, Enum):
     not_started = "NOT_STARTED"
     in_progress = "IN_PROGRESS"
     complete = "COMPLETE"
+    failed = "FAILED"
 
 
 class Task(BaseModel):
