@@ -36,7 +36,7 @@ class CallContext(BaseModel):
     user: UserContext = UserContext()
 
 
-def call_context(request: Request) -> CallContext:
+async def call_context(request: Request) -> CallContext:
     """Returns the CallContext for the current request."""
 
     settings = request.app.state.settings
@@ -54,7 +54,9 @@ def call_context(request: Request) -> CallContext:
         raise HTTPException(400, detail=summary) from None
 
 
-def caller_roles(context: CallContext = Depends(call_context)) -> Set[str]:
+async def caller_roles(
+    context: CallContext = Depends(call_context),
+) -> Set[str]:
     """Returns all roles held by the caller of the current request.
 
     This will be an empty set for unauthenticated requests.
@@ -76,7 +78,7 @@ def needs_role(rolename):
     >    "If caller does not have role xyz, they will never get here."
     """
 
-    def check_roles(roles: Set[str] = Depends(caller_roles)):
+    async def check_roles(roles: Set[str] = Depends(caller_roles)):
         if rolename not in roles:
             raise HTTPException(
                 403, "this operation requires role '%s'" % rolename

@@ -24,7 +24,7 @@ router = APIRouter(tags=[openapi_tag["name"]])
     response_model=schemas.MessageResponse,
     responses={200: {"description": "Service is up"}},
 )
-def healthcheck():
+async def healthcheck():
     """Returns a successful response if the service is running."""
     return {"detail": "exodus-gw is running"}
 
@@ -81,7 +81,7 @@ def healthcheck_worker(
         }
     },
 )
-def whoami(context: CallContext = deps.call_context):
+async def whoami(context: CallContext = deps.call_context):
     """Return basic information on the caller's authentication & authorization context.
 
     This endpoint may be used to determine whether the caller is authenticated to

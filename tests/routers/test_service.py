@@ -1,5 +1,6 @@
 from datetime import datetime
 
+import pytest
 from fastapi.testclient import TestClient
 
 from exodus_gw import models
@@ -8,8 +9,9 @@ from exodus_gw.models import DramatiqConsumer
 from exodus_gw.routers import service
 
 
-def test_healthcheck():
-    assert service.healthcheck() == {"detail": "exodus-gw is running"}
+@pytest.mark.asyncio
+async def test_healthcheck():
+    assert (await service.healthcheck()) == {"detail": "exodus-gw is running"}
 
 
 def test_healthcheck_worker_healthy(db):
@@ -48,11 +50,12 @@ def test_healthcheck_worker_unhealthy(db):
         assert r.json() == {"detail": "background workers unavailable"}
 
 
-def test_whoami():
+@pytest.mark.asyncio
+async def test_whoami():
     # All work is done by fastapi deserialization, so this doesn't actually
     # do anything except return the passed object.
     context = object()
-    assert service.whoami(context=context) is context
+    assert (await service.whoami(context=context)) is context
 
 
 def test_get_task(db):

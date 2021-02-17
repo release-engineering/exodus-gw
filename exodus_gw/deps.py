@@ -6,16 +6,16 @@ from .auth import call_context as get_call_context
 from .settings import Settings, get_environment
 
 
-def get_db(request: Request):
+async def get_db(request: Request):
     """DB session accessor for use with FastAPI's dependency injection system."""
     return request.state.db
 
 
-def get_settings(request: Request):
+async def get_settings(request: Request):
     return request.app.state.settings
 
 
-def get_environment_from_path(
+async def get_environment_from_path(
     env: str = Path(
         ...,
         title="environment",
