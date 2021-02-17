@@ -45,27 +45,6 @@ def mock_db_session():
     yield db_session
 
 
-@pytest.fixture()
-def mock_item_list():
-    return [
-        schemas.ItemBase(
-            web_uri="/some/path",
-            object_key="0bacfc5268f9994065dd858ece3359fd7a99d82af5be84202b8e84c2a5b07ffa",
-            from_date="2021-01-01T00:00:00.0",
-        ),
-        schemas.ItemBase(
-            web_uri="/other/path",
-            object_key="e448a4330ff79a1b20069d436fae94806a0e2e3a6b309cd31421ef088c6439fb",
-            from_date="2021-01-01T00:00:00.0",
-        ),
-        schemas.ItemBase(
-            web_uri="/to/repomd.xml",
-            object_key="3f449eb3b942af58e9aca4c1cffdef89c3f1552c20787ae8c966767a1fedd3a5",
-            from_date="2021-01-01T00:00:00.0",
-        ),
-    ]
-
-
 @pytest.fixture(autouse=True)
 def sqlite_in_tests(monkeypatch):
     """Any 'real' usage of sqlalchemy during this test suite makes use of
@@ -100,11 +79,27 @@ def db():
 
 
 @pytest.fixture()
-def mock_publish(mock_item_list):
+def fake_publish():
     publish = models.Publish(env="test")
     publish.id = uuid.UUID("123e4567-e89b-12d3-a456-426614174000")
     publish.items = [
-        models.Item(**item.dict(), publish_id=publish.id)
-        for item in mock_item_list
+        models.Item(
+            web_uri="/some/path",
+            object_key="0bacfc5268f9994065dd858ece3359fd7a99d82af5be84202b8e84c2a5b07ffa",
+            from_date="2021-01-01T00:00:00.0",
+            publish_id=publish.id,
+        ),
+        models.Item(
+            web_uri="/other/path",
+            object_key="e448a4330ff79a1b20069d436fae94806a0e2e3a6b309cd31421ef088c6439fb",
+            from_date="2021-01-01T00:00:00.0",
+            publish_id=publish.id,
+        ),
+        models.Item(
+            web_uri="/to/repomd.xml",
+            object_key="3f449eb3b942af58e9aca4c1cffdef89c3f1552c20787ae8c966767a1fedd3a5",
+            from_date="2021-01-01T00:00:00.0",
+            publish_id=publish.id,
+        ),
     ]
     yield publish

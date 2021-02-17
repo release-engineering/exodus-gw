@@ -99,9 +99,9 @@ from exodus_gw.aws import dynamodb
     ids=["Put", "Delete"],
 )
 def test_batch_write(
-    mock_boto3_client, mock_publish, delete, expected_request
+    mock_boto3_client, fake_publish, delete, expected_request
 ):
-    request = dynamodb.create_request("test", mock_publish.items, delete)
+    request = dynamodb.create_request("test", fake_publish.items, delete)
 
     # Represent successful write/delete of all items to the table.
     mock_boto3_client.batch_write_item.return_value = {"UnprocessedItems": {}}
@@ -113,8 +113,8 @@ def test_batch_write(
     )
 
 
-def test_batch_write_item_limit(mock_boto3_client, mock_publish, caplog):
-    items = mock_publish.items * 9
+def test_batch_write_item_limit(mock_boto3_client, fake_publish, caplog):
+    items = fake_publish.items * 9
     request = dynamodb.create_request("test", items)
 
     with pytest.raises(ValueError) as exc_info:
@@ -125,52 +125,52 @@ def test_batch_write_item_limit(mock_boto3_client, mock_publish, caplog):
 
 
 @pytest.mark.parametrize("delete", [False, True], ids=["Put", "Delete"])
-def test_write_batches(delete, mock_boto3_client, mock_publish, caplog):
+def test_write_batches(delete, mock_boto3_client, fake_publish, caplog):
     caplog.set_level(logging.INFO, logger="exodus-gw")
     mock_boto3_client.batch_write_item.return_value = {"UnprocessedItems": {}}
 
     expected_msg = "Items successfully %s" % "deleted" if delete else "written"
 
-    assert dynamodb.write_batches("test", mock_publish.items, delete) is True
+    assert dynamodb.write_batches("test", fake_publish.items, delete) is True
 
     assert expected_msg in caplog.text
 
 
 @mock.patch("exodus_gw.aws.dynamodb.batch_write")
-def test_write_batches_put_fail(mock_batch_write, mock_publish, caplog):
+def test_write_batches_put_fail(mock_batch_write, fake_publish, caplog):
     caplog.set_level(logging.INFO, logger="exodus-gw")
     mock_batch_write.return_value = {
         "UnprocessedItems": {
             "my-table": [
-                {"PutRequest": {"Item": mock_publish.items[1].aws_fmt}},
+                {"PutRequest": {"Item": fake_publish.items[1].aws_fmt}},
             ]
         }
     }
 
-    assert dynamodb.write_batches("test", mock_publish.items) is False
+    assert dynamodb.write_batches("test", fake_publish.items) is False
 
     assert "One or more writes were unsuccessful" in caplog.text
 
 
 @mock.patch("exodus_gw.aws.dynamodb.batch_write")
-def test_write_batches_delete_fail(mock_batch_write, mock_publish, caplog):
+def test_write_batches_delete_fail(mock_batch_write, fake_publish, caplog):
     mock_batch_write.return_value = {
         "UnprocessedItems": {
             "my-table": [
-                {"PutRequest": {"Key": mock_publish.items[1].aws_fmt}},
+                {"PutRequest": {"Key": fake_publish.items[1].aws_fmt}},
             ]
         }
     }
 
     with pytest.raises(RuntimeError) as exc_info:
-        dynamodb.write_batches("test", mock_publish.items, delete=True)
+        dynamodb.write_batches("test", fake_publish.items, delete=True)
 
     assert (
         "Unprocessed items:\n\t%s"
         % str(
             {
                 "my-table": [
-                    {"PutRequest": {"Key": mock_publish.items[1].aws_fmt}},
+                    {"PutRequest": {"Key": fake_publish.items[1].aws_fmt}},
                 ]
             }
         )
@@ -180,12 +180,12 @@ def test_write_batches_delete_fail(mock_batch_write, mock_publish, caplog):
 
 
 @pytest.mark.parametrize("delete", [False, True], ids=["Put", "Delete"])
-def test_write_batches_excs(mock_boto3_client, mock_publish, delete, caplog):
+def test_write_batches_excs(mock_boto3_client, fake_publish, delete, caplog):
     mock_boto3_client.batch_write_item.side_effect = ValueError()
 
     expected_msg = "Exception while %s" % "deleting" if delete else "writing"
 
     with pytest.raises(ValueError):
-        dynamodb.write_batches("test", mock_publish.items, delete)
+        dynamodb.write_batches("test", fake_publish.items, delete)
 
     assert expected_msg in caplog.text
