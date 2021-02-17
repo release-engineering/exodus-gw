@@ -9,12 +9,13 @@ from exodus_gw.auth import call_context
 from exodus_gw.settings import Settings
 
 
-def test_no_context():
+@pytest.mark.asyncio
+async def test_no_context():
     """Unauthenticated requests return a default context."""
 
     request = mock.Mock(headers={})
     request.app.state.settings = Settings()
-    ctx = call_context(request)
+    ctx = await call_context(request)
 
     # It should return a truthy object.
     assert ctx
@@ -28,7 +29,8 @@ def test_no_context():
     assert not ctx.user.authenticated
 
 
-def test_decode_context():
+@pytest.mark.asyncio
+async def test_decode_context():
     """A context can be decoded from a valid header."""
 
     raw_context = {
@@ -49,7 +51,7 @@ def test_decode_context():
     request = mock.Mock(headers={"my-auth-header": b64})
     request.app.state.settings = settings
 
-    ctx = call_context(request=request)
+    ctx = await call_context(request=request)
 
     # The details should match exactly the encoded data from the header.
     assert ctx.client.roles == ["someRole", "anotherRole"]
@@ -61,6 +63,7 @@ def test_decode_context():
     assert ctx.user.internalUsername == "greatUser"
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "header_value",
     [
@@ -72,7 +75,7 @@ def test_decode_context():
         base64.b64encode(b'["oops schema mismatch]'),
     ],
 )
-def test_bad_header(header_value):
+async def test_bad_header(header_value):
     """If header does not contain valid content, a meaningful error is raised."""
 
     settings = Settings(call_context_header="my-auth-header")
@@ -80,7 +83,7 @@ def test_bad_header(header_value):
     request.app.state.settings = settings
 
     with pytest.raises(HTTPException) as exc_info:
-        call_context(request=request)
+        await call_context(request=request)
 
     # It should give a 400 error (client error)
     assert exc_info.value.status_code == 400
