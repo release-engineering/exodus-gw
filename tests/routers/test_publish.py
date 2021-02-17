@@ -43,9 +43,8 @@ def test_publish_env_doesnt_exist():
     assert r.json() == {"detail": "Invalid environment='foo'"}
 
 
-@pytest.mark.asyncio
-async def test_publish_links(mock_db_session):
-    publish = await routers.publish.publish(
+def test_publish_links(mock_db_session):
+    publish = routers.publish.publish(
         env=Environment("test", "some-profile", "some-bucket", "some-table"),
         db=mock_db_session,
     )
@@ -107,7 +106,6 @@ def test_update_publish_items_typical(db):
     ]
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "env",
     [
@@ -116,7 +114,7 @@ def test_update_publish_items_typical(db):
         "test3",
     ],
 )
-async def test_update_publish_items_env_exists(env, mock_db_session):
+def test_update_publish_items_env_exists(env, mock_db_session):
     test_items = [
         schemas.ItemBase(
             web_uri="/some/path",
@@ -141,7 +139,7 @@ async def test_update_publish_items_env_exists(env, mock_db_session):
     env = Environment(env, "test-profile", "test-bucket", "test-table")
 
     assert (
-        await routers.publish.update_publish_items(
+        routers.publish.update_publish_items(
             env=env,
             publish_id=publish_id,
             items=items,

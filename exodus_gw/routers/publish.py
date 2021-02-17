@@ -100,7 +100,7 @@ router = APIRouter(tags=[openapi_tag["name"]])
         }
     },
 )
-async def publish(
+def publish(
     env: Environment = deps.env, db: Session = deps.db
 ) -> models.Publish:
     """Creates and returns a new publish object."""
@@ -113,7 +113,7 @@ async def publish(
     status_code=200,
     response_model=schemas.EmptyResponse,
 )
-async def update_publish_items(
+def update_publish_items(
     items: Union[schemas.ItemBase, List[schemas.ItemBase]] = Body(
         ...,
         example=[
