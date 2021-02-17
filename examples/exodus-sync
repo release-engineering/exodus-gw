@@ -30,6 +30,7 @@ import backoff
 import boto3
 import boto3.session
 import requests
+from botocore.config import Config
 from botocore.exceptions import ClientError
 
 # How many items we'll add to a publish per request.
@@ -75,7 +76,19 @@ def get_items(args):
 def new_s3_resource(args):
     s3_endpoint = urljoin(args.exodus_gw_url, "upload")
     session = boto3.session.Session()
-    return session.resource("s3", endpoint_url=s3_endpoint)
+
+    config = Config()
+    if args.cert:
+        config = config.merge(Config(client_cert=(args.cert, args.key)))
+
+    return session.resource("s3", endpoint_url=s3_endpoint, config=config)
+
+
+def new_requests_session(args):
+    session = requests.Session()
+    if args.cert:
+        session.cert = (args.cert, args.key)
+    return session
 
 
 def upload_in_thread(args, item):
@@ -137,10 +150,10 @@ def upload_items(args, items):
     predicate=lambda task: task["state"] != "COMPLETE",
     max_time=1800,
 )
-def poll_commit_completion(gw_url, commit):
-    session = requests.Session()
+def poll_commit_completion(args, commit):
+    session = new_requests_session(args)
 
-    task_url = urljoin(gw_url, commit["links"]["self"])
+    task_url = urljoin(args.exodus_gw_url, commit["links"]["self"])
 
     r = session.get(task_url)
     r.raise_for_status()
@@ -156,14 +169,9 @@ def publish_items(args, items):
     # will make the items downloadable from the CDN via exodus-lambda,
     # near-atomically.
 
-    # TODO: when exodus-gw-url is switched to https, and when exodus-gw
-    # starts enforcing that the caller has certain roles, this will need to
-    # support certificate-based auth.
-    session = requests.Session()
+    session = new_requests_session(args)
 
-    r = session.post(
-        os.path.join(args.exodus_gw_url, args.env, "publish")
-    )
+    r = session.post(os.path.join(args.exodus_gw_url, args.env, "publish"))
     r.raise_for_status()
     publish = r.json()
 
@@ -202,9 +210,60 @@ def publish_items(args, items):
     print("Started commit of publish: {}".format(commit))
 
     print("Polling for commit completion. . .")
-    task = poll_commit_completion(args.exodus_gw_url, commit)
+    task = poll_commit_completion(args, commit)
 
     print("Publish complete: {}".format(task))
+
+
+def check_service(args):
+    session = new_requests_session(args)
+
+    r = session.get("{}/healthcheck".format(args.exodus_gw_url))
+    r.raise_for_status()
+    print("exodus-gw healthcheck:", r.json())
+
+    r = session.get("{}/healthcheck-worker".format(args.exodus_gw_url))
+    r.raise_for_status()
+    print("exodus-gw worker healthcheck:", r.json())
+
+    r = session.get("{}/whoami".format(args.exodus_gw_url))
+    r.raise_for_status()
+    context = r.json()
+
+    for user_type, ident in (
+        ("client", "serviceAccountId"),
+        ("user", "internalUsername"),
+    ):
+        typed_ctx = context[user_type]
+        if typed_ctx["authenticated"]:
+            print(
+                "You are authenticated as {} {} with roles: {}".format(
+                    user_type, typed_ctx[ident], typed_ctx["roles"]
+                )
+            )
+            break
+    else:
+        print("Warning: you are not authenticated with exodus-gw.")
+
+
+def check_cert_args(args):
+    if args.cert and not os.path.exists(args.cert):
+        print(
+            "Warning: no cert found at {}, authentication may fail".format(
+                args.cert
+            )
+        )
+        args.cert = None
+        args.key = None
+
+    if args.key and not os.path.exists(args.key):
+        print(
+            "Warning: no key found at {}, authentication may fail".format(
+                args.key
+            )
+        )
+        args.cert = None
+        args.key = None
 
 
 def main():
@@ -213,9 +272,17 @@ def main():
         "--debug", action="store_true", help="Enable verbose logging"
     )
 
-    # TODO: we should point this at https by default, but that won't work
-    # well until RHELDST-3478 is fixed
-    parser.add_argument("--exodus-gw-url", default="http://localhost:8000")
+    parser.add_argument(
+        "--cert",
+        default=os.path.expandvars("${HOME}/certs/${USER}.crt"),
+        help="Certificate for HTTPS authentication with exodus-gw (must match --key)",
+    )
+    parser.add_argument(
+        "--key",
+        default=os.path.expandvars("${HOME}/certs/${USER}.key"),
+        help="Private key for HTTPS authentication with exodus-gw (must match --cert)",
+    )
+    parser.add_argument("--exodus-gw-url", default="https://localhost:8010")
 
     parser.add_argument("--env", default="test")
     parser.add_argument("src", help="source directory")
@@ -227,6 +294,9 @@ def main():
 
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
+
+    check_cert_args(args)
+    check_service(args)
 
     items = get_items(args)
     upload_items(args, items)
