@@ -67,6 +67,7 @@ import dramatiq
 from fastapi import FastAPI, Request
 from fastapi.exception_handlers import http_exception_handler
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .aws.util import xml_response
@@ -141,6 +142,13 @@ def db_shutdown() -> None:
     del app.state.db_engine
 
 
+def new_db_session(engine):
+    # Make a new DB session for use in the current request.
+    #
+    # This is in its own function so that it can be wrapped by tests.
+    return Session(bind=engine, autoflush=False, autocommit=False)
+
+
 @app.middleware("http")
 async def db_session(request: Request, call_next):
     """Maintain a DB session around each request, which is also shared
@@ -149,9 +157,7 @@ async def db_session(request: Request, call_next):
     An implicit commit occurs if and only if the request succeeds.
     """
 
-    request.state.db = Session(
-        bind=app.state.db_engine, autoflush=False, autocommit=False
-    )
+    request.state.db = new_db_session(app.state.db_engine)
 
     # Any dramatiq operations should also make use of this session.
     broker = dramatiq.get_broker()
@@ -160,10 +166,10 @@ async def db_session(request: Request, call_next):
     try:
         response = await call_next(request)
         if response.status_code >= 200 and response.status_code < 300:
-            request.state.db.commit()
+            await run_in_threadpool(request.state.db.commit)
     finally:
         broker.set_session(None)
-        request.state.db.close()
+        await run_in_threadpool(request.state.db.close)
         request.state.db = None
 
     return response

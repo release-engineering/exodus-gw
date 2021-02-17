@@ -5,7 +5,9 @@ import mock
 import pytest
 from sqlalchemy.orm.session import Session
 
-from exodus_gw import database, models, schemas, settings  # noqa
+from exodus_gw import database, main, models, schemas, settings  # noqa
+
+from .async_utils import BlockDetector
 
 
 @pytest.fixture(autouse=True)
@@ -76,6 +78,21 @@ def db():
         yield session
     finally:
         session.close()
+
+
+@pytest.fixture(autouse=True, scope="session")
+def db_session_block_detector():
+    """Wrap DB sessions created by the app with an object to detect
+    incorrect async/non-async mixing blocking the main thread.
+    """
+    old_ctor = main.new_db_session
+
+    def new_ctor(engine):
+        real_session = old_ctor(engine)
+        return BlockDetector(real_session)
+
+    with mock.patch("exodus_gw.main.new_db_session", new=new_ctor):
+        yield
 
 
 @pytest.fixture()
