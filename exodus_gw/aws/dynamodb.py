@@ -52,7 +52,11 @@ def create_request(env: str, items: List[models.Item], delete: bool = False):
         req_type = "PutRequest"
         item_type = "Item"
 
-    return {table: [{req_type: {item_type: item.aws_fmt}} for item in items]}
+    return {
+        table: [
+            {req_type: {item_type: item.aws_fmt(delete)}} for item in items
+        ]
+    }
 
 
 def write_batches(env: str, items: List[models.Item], delete: bool = False):

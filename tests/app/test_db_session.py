@@ -16,7 +16,7 @@ TEST_UUID = uuid.UUID("{12345678-1234-5678-1234-567812345678}")
 # rollback or raise based on params
 @app.post("/test_db_session/make_publish")
 def make_publish(mode: str = None, db: Session = deps.db):
-    p = Publish(id=TEST_UUID, env="test")
+    p = Publish(id=TEST_UUID, env="test", state="PENDING")
     db.add(p)
 
     if mode == "rollback":

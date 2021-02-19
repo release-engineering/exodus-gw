@@ -60,10 +60,6 @@ from exodus_gw.aws import dynamodb
                         "DeleteRequest": {
                             "Key": {
                                 "web_uri": {"S": "/some/path"},
-                                "object_key": {
-                                    "S": "0bacfc5268f9994065dd858ece3359fd"
-                                    "7a99d82af5be84202b8e84c2a5b07ffa"
-                                },
                                 "from_date": {"S": "2021-01-01T00:00:00.0"},
                             }
                         }
@@ -72,10 +68,6 @@ from exodus_gw.aws import dynamodb
                         "DeleteRequest": {
                             "Key": {
                                 "web_uri": {"S": "/other/path"},
-                                "object_key": {
-                                    "S": "e448a4330ff79a1b20069d436fae9480"
-                                    "6a0e2e3a6b309cd31421ef088c6439fb"
-                                },
                                 "from_date": {"S": "2021-01-01T00:00:00.0"},
                             }
                         }
@@ -84,10 +76,6 @@ from exodus_gw.aws import dynamodb
                         "DeleteRequest": {
                             "Key": {
                                 "web_uri": {"S": "/to/repomd.xml"},
-                                "object_key": {
-                                    "S": "3f449eb3b942af58e9aca4c1cffdef89"
-                                    "c3f1552c20787ae8c966767a1fedd3a5"
-                                },
                                 "from_date": {"S": "2021-01-01T00:00:00.0"},
                             }
                         }

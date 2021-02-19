@@ -10,4 +10,4 @@ class Task(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True)
     publish_id = Column(UUID(as_uuid=True), nullable=False)
-    state = Column(String)
+    state = Column(String, nullable=False)

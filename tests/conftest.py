@@ -97,8 +97,11 @@ def db_session_block_detector():
 
 @pytest.fixture()
 def fake_publish():
-    publish = models.Publish(env="test")
-    publish.id = uuid.UUID("123e4567-e89b-12d3-a456-426614174000")
+    publish = models.Publish(
+        id=uuid.UUID("123e4567-e89b-12d3-a456-426614174000"),
+        env="test",
+        state="PENDING",
+    )
     publish.items = [
         models.Item(
             web_uri="/some/path",
