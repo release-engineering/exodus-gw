@@ -55,8 +55,8 @@ aioitertools==0.7.1 \
     --hash=sha256:54a56c7cf3b5290d1cb5e8974353c9f52c677612b5d69a859369a020c53414a3 \
     --hash=sha256:8972308474c41ed5e0636819f948ebff32f2318e70f7e7d23cd208c4357cc773
     # via aiobotocore
-alembic==1.5.4 \
-    --hash=sha256:e871118b6174681f7e9a9ea67cfcae954c6d18e05b49c6b17f662d2530c76bf5
+alembic==1.5.5 \
+    --hash=sha256:df0028c19275a2cff137e39617a39cdcdbd1173733b87b6bfa257b7c0860213b
     # via -r requirements.in
 argh==0.26.2 \
     --hash=sha256:a9b3aaa1904eeb78e32394cd46c6f37ac0fb4af6dc488daa58971bdc7d7fcaf3 \
@@ -423,9 +423,7 @@ s3transfer==0.3.4 \
 six==1.15.0 \
     --hash=sha256:30639c035cdb23534cd4aa2dd52c3bf48f06e5f4a941509c8bafd8ce11080259 \
     --hash=sha256:8b74bedcbbbaca38ff6d7491d76f2b06b3592611af620f8426e82dddb04a5ced
-    # via
-    #   python-dateutil
-    #   tenacity
+    # via python-dateutil
 sqlalchemy==1.3.23 \
     --hash=sha256:040bdfc1d76a9074717a3f43455685f781c581f94472b010cd6c4754754e1862 \
     --hash=sha256:1fe5d8d39118c2b018c215c37b73fd6893c3e1d4895be745ca8ff6eb83333ed3 \
@@ -474,10 +472,6 @@ starlette==0.13.6 \
     # via
     #   -r requirements.in
     #   fastapi
-tenacity==6.3.1 \
-    --hash=sha256:baed357d9f35ec64264d8a4bbf004c35058fad8795c5b0d8a7dc77ecdcbb8f39 \
-    --hash=sha256:e14d191fb0a309b563904bbc336582efe2037de437e543b38da749769b544d7f
-    # via dramatiq-pg
 typing-extensions==3.7.4.3 \
     --hash=sha256:7cb407020f00f7bfc3cb3e7881628838e69d8f3fcab2f64742a5e76b2f841918 \
     --hash=sha256:99d4073b617d30288f569d3f13d2bd7548c3a7e4c8de87db09a9d29bb3a4a60c \
