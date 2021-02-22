@@ -21,9 +21,6 @@ def upgrade():
 
     with op.batch_alter_table(
         "publishes",
-        # recreate='always' to avoid "Cannot add a NOT NULL column with default value NULL"
-        # on sqlite < 3.32.0
-        recreate="always",
     ) as batch_op:
         batch_op.add_column(
             sa.Column(
