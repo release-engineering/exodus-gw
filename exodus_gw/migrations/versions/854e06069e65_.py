@@ -5,6 +5,8 @@ Revises: a60131dd10c4
 Create Date: 2021-02-18 11:06:59.636314
 
 """
+import os
+
 import sqlalchemy as sa
 from alembic import op
 
@@ -19,11 +21,17 @@ def upgrade():
     # clean all publishes first to avoid crashing on null state
     op.execute("DELETE FROM publishes")
 
+    # recreate='always' to avoid "Cannot add a NOT NULL column with default value NULL"
+    # on sqlite < 3.32.0
+    recreate = (
+        "always"
+        if "sqlite" in os.environ.get("EXODUS_GW_DB_URL", "")
+        else "auto"
+    )
+
     with op.batch_alter_table(
         "publishes",
-        # recreate='always' to avoid "Cannot add a NOT NULL column with default value NULL"
-        # on sqlite < 3.32.0
-        recreate="always",
+        recreate=recreate,
     ) as batch_op:
         batch_op.add_column(
             sa.Column(
