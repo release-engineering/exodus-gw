@@ -40,26 +40,47 @@ def batch_write(env: str, request: Dict[str, Any]):
     return response
 
 
-def create_request(env: str, items: List[models.Item], delete: bool = False):
+def create_request(
+    env: str, items: List[models.Item], from_date: str, delete: bool = False
+):
     """Create the dictionary structure expected by batch_write_item."""
 
-    table = get_environment(env).table
+    table_name = get_environment(env).table
 
     if delete:
-        req_type = "DeleteRequest"
-        item_type = "Key"
-    else:
-        req_type = "PutRequest"
-        item_type = "Item"
+        return {
+            table_name: [
+                {
+                    "DeleteRequest": {
+                        "Key": {
+                            "from_date": {"S": from_date},
+                            "web_uri": {"S": item.web_uri},
+                        }
+                    }
+                }
+                for item in items
+            ]
+        }
 
     return {
-        table: [
-            {req_type: {item_type: item.aws_fmt(delete)}} for item in items
+        table_name: [
+            {
+                "PutRequest": {
+                    "Item": {
+                        "from_date": {"S": from_date},
+                        "web_uri": {"S": item.web_uri},
+                        "object_key": {"S": item.object_key},
+                    }
+                }
+            }
+            for item in items
         ]
     }
 
 
-def write_batches(env: str, items: List[models.Item], delete: bool = False):
+def write_batches(
+    env: str, items: List[models.Item], from_date: str, delete: bool = False
+):
     """Submit batches of given items for writing via batch_write."""
 
     environment = get_environment(env)
@@ -70,7 +91,7 @@ def write_batches(env: str, items: List[models.Item], delete: bool = False):
     unprocessed_items = []
 
     for batch in batches:
-        request = create_request(env, list(batch), delete)
+        request = create_request(env, list(batch), from_date, delete)
 
         try:
             response = batch_write(env, request)

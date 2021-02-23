@@ -59,6 +59,7 @@ Publish objects should be treated as ephemeral; they are not persisted indefinit
 """
 
 import logging
+from datetime import datetime, timezone
 from typing import Dict, List, Union
 from uuid import UUID
 
@@ -204,7 +205,12 @@ def commit_publish(
             % (db_publish.id, db_publish.state),
         )
 
-    msg = worker.commit.send(publish_id=str(db_publish.id), env=env.name)
+    msg = worker.commit.send(
+        publish_id=str(db_publish.id),
+        env=env.name,
+        from_date=str(datetime.now(timezone.utc)),
+    )
+
     LOG.info("Enqueued commit for '%s'", msg.kwargs["publish_id"])
     db_publish.state = schemas.PublishStates.committing
 

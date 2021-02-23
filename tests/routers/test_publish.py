@@ -50,7 +50,7 @@ def test_publish_links(mock_db_session):
         db=mock_db_session,
     )
 
-    # The schema (realistic result) resulting from the publish
+    # The schema (realistic result) of the publish
     # should contain accurate links.
     assert schemas.Publish(**publish.__dict__).links == {
         "self": "/test/publish/%s" % publish.id,
@@ -79,12 +79,10 @@ def test_update_publish_items_typical(db):
                 {
                     "web_uri": "/uri1",
                     "object_key": "1" * 64,
-                    "from_date": "date1",
                 },
                 {
                     "web_uri": "/uri2",
                     "object_key": "2" * 64,
-                    "from_date": "date2",
                 },
             ],
         )
@@ -95,7 +93,6 @@ def test_update_publish_items_typical(db):
     # publish object should now have matching items
     db.refresh(publish)
 
-    # (note: ignoring from_date because it's planned for removal from the request format)
     items = sorted(publish.items, key=lambda item: item.web_uri)
     item_dicts = [
         {"web_uri": item.web_uri, "object_key": item.object_key}
@@ -129,7 +126,6 @@ def test_update_publish_items_single_item(db):
             json={
                 "web_uri": "/uri1",
                 "object_key": "1" * 64,
-                "from_date": "date1",
             },
         )
 
@@ -139,7 +135,6 @@ def test_update_publish_items_single_item(db):
     # publish object should now have a matching item
     db.refresh(publish)
 
-    # (note: ignoring from_date because it's planned for removal from the request format)
     item_dicts = [
         {"web_uri": item.web_uri, "object_key": item.object_key}
         for item in publish.items
@@ -170,12 +165,10 @@ def test_update_pubish_items_invalid_publish(db):
                 {
                     "web_uri": "/uri1",
                     "object_key": "1" * 64,
-                    "from_date": "date1",
                 },
                 {
                     "web_uri": "/uri2",
                     "object_key": "2" * 64,
-                    "from_date": "date2",
                 },
             ],
         )
@@ -207,7 +200,9 @@ def test_commit_publish(mock_commit, fake_publish, db):
     mock_commit.assert_has_calls(
         calls=[
             mock.call.send(
-                publish_id="123e4567-e89b-12d3-a456-426614174000", env="test"
+                publish_id="123e4567-e89b-12d3-a456-426614174000",
+                env="test",
+                from_date=mock.ANY,
             )
         ],
     )
