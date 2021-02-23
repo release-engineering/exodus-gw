@@ -76,11 +76,6 @@ def test_get_task(db):
         db.add(task)
         db.commit()
 
-        # Update the task's state.
-        db.refresh(task)
-        task.state = "COMPLETE"
-        db.commit()
-
         # Try to look up an invalid ID.
         resp = client.get("/task/%s" % publish_id)
 
@@ -92,9 +87,4 @@ def test_get_task(db):
 
     # Last request should have succeeded and returned the correct object.
     assert resp.ok
-    assert resp.json() == {
-        "id": "8d8a4692-c89b-4b57-840f-b3f0166148d2",
-        "state": "COMPLETE",
-        "publish_id": "48c67d99-5dd6-4939-ad1c-072639eee35a",
-        "links": {"self": "/task/8d8a4692-c89b-4b57-840f-b3f0166148d2"},
-    }
+    assert resp.json()["publish_id"] == publish_id
