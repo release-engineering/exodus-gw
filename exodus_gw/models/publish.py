@@ -1,6 +1,7 @@
 import uuid
+from datetime import datetime, timezone
 
-from sqlalchemy import Column, ForeignKey, String
+from sqlalchemy import Column, DateTime, ForeignKey, String, event
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -18,7 +19,13 @@ class Publish(Base):
     )
     env = Column(String, nullable=False)
     state = Column(String, nullable=False)
+    updated = Column(DateTime(timezone=True))
     items = relationship("Item", back_populates="publish")
+
+
+@event.listens_for(Publish, "before_update")
+def publish_before_update(_mapper, _connection, publish):
+    publish.updated = datetime.now(timezone.utc)
 
 
 class Item(Base):

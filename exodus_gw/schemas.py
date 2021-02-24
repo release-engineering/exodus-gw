@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 from os.path import join
 from typing import Dict, List
@@ -60,6 +61,10 @@ class Publish(PublishBase):
     state: PublishStates = Field(
         ..., description="Current state of this publish."
     )
+    updated: datetime = Field(
+        None,
+        description="DateTime of last update to this publish. None if never updated.",
+    )
     links: Dict[str, str] = Field(
         {}, description="""URL links related to this publish."""
     )
@@ -92,6 +97,10 @@ class Task(BaseModel):
         ..., description="Unique ID of publish object handled by this task."
     )
     state: TaskStates = Field(..., description="Current state of this task.")
+    updated: datetime = Field(
+        None,
+        description="DateTime of last update to this task. None if never updated.",
+    )
     links: Dict[str, str] = Field(
         {}, description="""URL links related to this task."""
     )
