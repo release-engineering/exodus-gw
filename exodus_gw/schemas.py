@@ -47,6 +47,10 @@ class PublishStates(str, Enum):
     committed = "COMMITTED"
     failed = "FAILED"
 
+    @classmethod
+    def terminal(cls) -> List["PublishStates"]:
+        return [cls.committed, cls.failed]
+
 
 class PublishBase(BaseModel):
     id: UUID = Field(..., description="Unique ID of publish object.")
@@ -87,6 +91,10 @@ class TaskStates(str, Enum):
     in_progress = "IN_PROGRESS"
     complete = "COMPLETE"
     failed = "FAILED"
+
+    @classmethod
+    def terminal(cls) -> List["TaskStates"]:
+        return [cls.failed, cls.complete]
 
 
 class Task(BaseModel):
