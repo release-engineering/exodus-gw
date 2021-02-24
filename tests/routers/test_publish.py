@@ -184,9 +184,8 @@ def test_update_pubish_items_invalid_publish(db):
 def test_commit_publish(mock_commit, fake_publish, db):
     """Ensure commit_publish delegates to worker correctly and creates task."""
 
-    with TestClient(app):
-        db.add(fake_publish)
-        db.commit()
+    db.add(fake_publish)
+    db.commit()
 
     publish_task = routers.publish.commit_publish(
         env=get_environment("test"),
@@ -212,11 +211,10 @@ def test_commit_publish(mock_commit, fake_publish, db):
 def test_commit_publish_prev_completed(mock_commit, fake_publish, db):
     """Ensure commit_publish fails for publishes in invalid state."""
 
-    with TestClient(app):
-        db.add(fake_publish)
-        # Simulate that this publish was published.
-        fake_publish.state = schemas.PublishStates.committed
-        db.commit()
+    db.add(fake_publish)
+    # Simulate that this publish was published.
+    fake_publish.state = schemas.PublishStates.committed
+    db.commit()
 
     with pytest.raises(HTTPException) as exc_info:
         routers.publish.commit_publish(

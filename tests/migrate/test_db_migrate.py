@@ -7,41 +7,44 @@ from exodus_gw.models import Publish
 from exodus_gw.settings import MigrationMode, Settings
 
 
-def test_db_migrate_typical(db):
+def test_db_migrate_typical(unmigrated_db):
     # Sanity check: at first there's no tables
     with pytest.raises(OperationalError):
-        db.query(Publish).count()
+        unmigrated_db.query(Publish).count()
 
     # Migrate should succeed
-    db_migrate(db.get_bind(), Settings())
+    db_migrate(unmigrated_db.get_bind(), Settings())
 
     # Now we can query stuff
-    assert db.query(Publish).count() == 0
+    assert unmigrated_db.query(Publish).count() == 0
 
 
-def test_db_migrate_reset(db):
+def test_db_migrate_reset(unmigrated_db):
     # First ensure there's some tables
-    db_migrate(db.get_bind(), Settings())
-    assert db.query(Publish).count() == 0
+    db_migrate(unmigrated_db.get_bind(), Settings())
+    assert unmigrated_db.query(Publish).count() == 0
 
     # Now if we request a reset with no migration afterward...
     db_migrate(
-        db.get_bind(),
+        unmigrated_db.get_bind(),
         Settings(db_reset=True, db_migration_mode=MigrationMode.none),
     )
 
     # ... then there should be nothing
     with pytest.raises(OperationalError):
-        db.query(Publish).count()
+        unmigrated_db.query(Publish).count()
 
 
-def test_db_migrate_model(db):
+def test_db_migrate_model(unmigrated_db):
     # Sanity check: at first there's no tables
     with pytest.raises(OperationalError):
-        db.query(Publish).count()
+        unmigrated_db.query(Publish).count()
 
     # Migrate using model should succeed
-    db_migrate(db.get_bind(), Settings(db_migration_mode=MigrationMode.model))
+    db_migrate(
+        unmigrated_db.get_bind(),
+        Settings(db_migration_mode=MigrationMode.model),
+    )
 
     # Now we can query stuff
-    assert db.query(Publish).count() == 0
+    assert unmigrated_db.query(Publish).count() == 0

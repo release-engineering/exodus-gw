@@ -2,10 +2,8 @@ import uuid
 from datetime import datetime, timezone
 
 import mock
-from fastapi.testclient import TestClient
 
 from exodus_gw import models, worker
-from exodus_gw.main import app
 
 NOW_UTC = datetime.now(timezone.utc)
 
@@ -30,21 +28,20 @@ def test_commit(mock_write_batches, mock_get_message, fake_publish, db):
     # Simulate successful write of items by write_batches.
     mock_write_batches.return_value = True
 
-    with TestClient(app):
-        db.add(fake_publish)
-        db.add(task)
-        # Caller would've set publish state to COMMITTING.
-        fake_publish.state = "COMMITTING"
-        db.commit()
+    db.add(fake_publish)
+    db.add(task)
+    # Caller would've set publish state to COMMITTING.
+    fake_publish.state = "COMMITTING"
+    db.commit()
 
-        worker.commit(str(fake_publish.id), fake_publish.env, NOW_UTC)
+    worker.commit(str(fake_publish.id), fake_publish.env, NOW_UTC)
 
-        # It should've set task state to COMPLETE.
-        db.refresh(task)
-        assert task.state == "COMPLETE"
-        # It should've set publish state to COMMITTED.
-        db.refresh(fake_publish)
-        assert fake_publish.state == "COMMITTED"
+    # It should've set task state to COMPLETE.
+    db.refresh(task)
+    assert task.state == "COMPLETE"
+    # It should've set publish state to COMMITTED.
+    db.refresh(fake_publish)
+    assert fake_publish.state == "COMMITTED"
 
     # It should've called write_batches for items and entry point items.
     mock_write_batches.assert_has_calls(
@@ -69,21 +66,20 @@ def test_commit_write_items_fail(
     # Simulate failed write of items and successful deletion of items.
     mock_write_batches.side_effect = [False, True]
 
-    with TestClient(app):
-        db.add(fake_publish)
-        db.add(task)
-        # Caller would've set publish state to COMMITTING.
-        fake_publish.state = "COMMITTING"
-        db.commit()
+    db.add(fake_publish)
+    db.add(task)
+    # Caller would've set publish state to COMMITTING.
+    fake_publish.state = "COMMITTING"
+    db.commit()
 
-        worker.commit(str(fake_publish.id), fake_publish.env, NOW_UTC)
+    worker.commit(str(fake_publish.id), fake_publish.env, NOW_UTC)
 
-        # It should've set task state to FAILED.
-        db.refresh(task)
-        assert task.state == "FAILED"
-        # It should've set publish state to FAILED.
-        db.refresh(fake_publish)
-        assert fake_publish.state == "FAILED"
+    # It should've set task state to FAILED.
+    db.refresh(task)
+    assert task.state == "FAILED"
+    # It should've set publish state to FAILED.
+    db.refresh(fake_publish)
+    assert fake_publish.state == "FAILED"
 
     # It should've called write_batches for items and deletion of items.
     mock_write_batches.assert_has_calls(
@@ -110,21 +106,20 @@ def test_commit_write_entry_point_items_fail(
     # and then successful deletion of items.
     mock_write_batches.side_effect = [True, False, True]
 
-    with TestClient(app):
-        db.add(fake_publish)
-        db.add(task)
-        # Caller would've set publish state to COMMITTING.
-        fake_publish.state = "COMMITTING"
-        db.commit()
+    db.add(fake_publish)
+    db.add(task)
+    # Caller would've set publish state to COMMITTING.
+    fake_publish.state = "COMMITTING"
+    db.commit()
 
-        worker.commit(str(fake_publish.id), fake_publish.env, NOW_UTC)
+    worker.commit(str(fake_publish.id), fake_publish.env, NOW_UTC)
 
-        # It should've set task state to FAILED.
-        db.refresh(task)
-        assert task.state == "FAILED"
-        # It should've set publish state to FAILED.
-        db.refresh(fake_publish)
-        assert fake_publish.state == "FAILED"
+    # It should've set task state to FAILED.
+    db.refresh(task)
+    assert task.state == "FAILED"
+    # It should've set publish state to FAILED.
+    db.refresh(fake_publish)
+    assert fake_publish.state == "FAILED"
 
     # It should've called write_batches for items, entry point items
     # and then deletion of all items.
@@ -152,21 +147,20 @@ def test_commit_write_exception(
     # Simulate failed write and deletion of items.
     mock_write_batches.side_effect = [False, RuntimeError()]
 
-    with TestClient(app):
-        db.add(fake_publish)
-        db.add(task)
-        # Caller would've set publish state to COMMITTING.
-        fake_publish.state = "COMMITTING"
-        db.commit()
+    db.add(fake_publish)
+    db.add(task)
+    # Caller would've set publish state to COMMITTING.
+    fake_publish.state = "COMMITTING"
+    db.commit()
 
-        worker.commit(str(fake_publish.id), fake_publish.env, NOW_UTC)
+    worker.commit(str(fake_publish.id), fake_publish.env, NOW_UTC)
 
-        # It should've set task state to FAILED.
-        db.refresh(task)
-        assert task.state == "FAILED"
-        # It should've set publish state to FAILED.
-        db.refresh(fake_publish)
-        assert fake_publish.state == "FAILED"
+    # It should've set task state to FAILED.
+    db.refresh(task)
+    assert task.state == "FAILED"
+    # It should've set publish state to FAILED.
+    db.refresh(fake_publish)
+    assert fake_publish.state == "FAILED"
 
     assert (
         "Task 8d8a4692-c89b-4b57-840f-b3f0166148d2 encountered an error"
@@ -186,11 +180,10 @@ def test_commit_completed_task(
         message_id=task.id, kwargs={"publish_id": task.publish_id}
     )
 
-    with TestClient(app):
-        db.add(task)
-        # Simulate prior completion of task.
-        task.state = "COMPLETE"
-        db.commit()
+    db.add(task)
+    # Simulate prior completion of task.
+    task.state = "COMPLETE"
+    db.commit()
 
     worker.commit(str(task.publish_id), "test", NOW_UTC)
 
@@ -216,12 +209,11 @@ def test_commit_completed_publish(
         message_id=task.id, kwargs={"publish_id": fake_publish.id}
     )
 
-    with TestClient(app):
-        db.add(task)
-        db.add(fake_publish)
-        # Simulate prior completion of publish.
-        fake_publish.state = "COMPLETE"
-        db.commit()
+    db.add(task)
+    db.add(fake_publish)
+    # Simulate prior completion of publish.
+    fake_publish.state = "COMPLETE"
+    db.commit()
 
     worker.commit(str(fake_publish.id), fake_publish.env, NOW_UTC)
 

@@ -3,6 +3,7 @@ import uuid
 
 import mock
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy.orm.session import Session
 
 from exodus_gw import database, main, models, schemas, settings  # noqa
@@ -70,14 +71,32 @@ def sqlite_in_tests(monkeypatch):
 
 
 @pytest.fixture()
-def db():
-    """Yields a real DB session configured using current settings."""
+def unmigrated_db():
+    """Yields a real DB session configured using current settings.
+
+    Note that this DB is likely to be empty. In the more common case that
+    a test wants a DB with all tables in place, use 'db' instead.
+    """
 
     session = Session(bind=database.db_engine(settings.Settings()))
     try:
         yield session
     finally:
         session.close()
+
+
+@pytest.fixture()
+def db(unmigrated_db):
+    """Yields a real DB session configured using current settings.
+
+    This session has the schema deployed prior to yielding, so the
+    test may assume all tables are already in place.
+    """
+
+    with TestClient(main.app):
+        pass
+
+    return unmigrated_db
 
 
 @pytest.fixture(autouse=True, scope="session")
