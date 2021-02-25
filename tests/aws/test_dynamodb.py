@@ -1,9 +1,12 @@
 import logging
+from datetime import datetime, timezone
 
 import mock
 import pytest
 
 from exodus_gw.aws import dynamodb
+
+NOW_UTC = str(datetime.now(timezone.utc))
 
 
 @pytest.mark.parametrize(
@@ -21,7 +24,7 @@ from exodus_gw.aws import dynamodb
                                     "S": "0bacfc5268f9994065dd858ece3359fd"
                                     "7a99d82af5be84202b8e84c2a5b07ffa"
                                 },
-                                "from_date": {"S": "2021-01-01T00:00:00.0"},
+                                "from_date": {"S": NOW_UTC},
                             }
                         }
                     },
@@ -33,7 +36,7 @@ from exodus_gw.aws import dynamodb
                                     "S": "e448a4330ff79a1b20069d436fae9480"
                                     "6a0e2e3a6b309cd31421ef088c6439fb"
                                 },
-                                "from_date": {"S": "2021-01-01T00:00:00.0"},
+                                "from_date": {"S": NOW_UTC},
                             }
                         }
                     },
@@ -45,7 +48,7 @@ from exodus_gw.aws import dynamodb
                                     "S": "3f449eb3b942af58e9aca4c1cffdef89"
                                     "c3f1552c20787ae8c966767a1fedd3a5"
                                 },
-                                "from_date": {"S": "2021-01-01T00:00:00.0"},
+                                "from_date": {"S": NOW_UTC},
                             }
                         }
                     },
@@ -60,7 +63,7 @@ from exodus_gw.aws import dynamodb
                         "DeleteRequest": {
                             "Key": {
                                 "web_uri": {"S": "/some/path"},
-                                "from_date": {"S": "2021-01-01T00:00:00.0"},
+                                "from_date": {"S": NOW_UTC},
                             }
                         }
                     },
@@ -68,7 +71,7 @@ from exodus_gw.aws import dynamodb
                         "DeleteRequest": {
                             "Key": {
                                 "web_uri": {"S": "/other/path"},
-                                "from_date": {"S": "2021-01-01T00:00:00.0"},
+                                "from_date": {"S": NOW_UTC},
                             }
                         }
                     },
@@ -76,7 +79,7 @@ from exodus_gw.aws import dynamodb
                         "DeleteRequest": {
                             "Key": {
                                 "web_uri": {"S": "/to/repomd.xml"},
-                                "from_date": {"S": "2021-01-01T00:00:00.0"},
+                                "from_date": {"S": NOW_UTC},
                             }
                         }
                     },
@@ -89,10 +92,13 @@ from exodus_gw.aws import dynamodb
 def test_batch_write(
     mock_boto3_client, fake_publish, delete, expected_request
 ):
-    request = dynamodb.create_request("test", fake_publish.items, delete)
+    request = dynamodb.create_request(
+        "test", fake_publish.items, NOW_UTC, delete
+    )
 
     # Represent successful write/delete of all items to the table.
     mock_boto3_client.batch_write_item.return_value = {"UnprocessedItems": {}}
+
     dynamodb.batch_write("test", request)
 
     # Should've requested write of all items.
@@ -103,7 +109,7 @@ def test_batch_write(
 
 def test_batch_write_item_limit(mock_boto3_client, fake_publish, caplog):
     items = fake_publish.items * 9
-    request = dynamodb.create_request("test", items)
+    request = dynamodb.create_request("test", items, NOW_UTC)
 
     with pytest.raises(ValueError) as exc_info:
         dynamodb.batch_write("test", request)
@@ -119,7 +125,10 @@ def test_write_batches(delete, mock_boto3_client, fake_publish, caplog):
 
     expected_msg = "Items successfully %s" % "deleted" if delete else "written"
 
-    assert dynamodb.write_batches("test", fake_publish.items, delete) is True
+    assert (
+        dynamodb.write_batches("test", fake_publish.items, NOW_UTC, delete)
+        is True
+    )
 
     assert expected_msg in caplog.text
 
@@ -130,12 +139,12 @@ def test_write_batches_put_fail(mock_batch_write, fake_publish, caplog):
     mock_batch_write.return_value = {
         "UnprocessedItems": {
             "my-table": [
-                {"PutRequest": {"Item": fake_publish.items[1].aws_fmt}},
+                {"PutRequest": {"Item": {"web_uri": {"S": "/some/path"}}}},
             ]
         }
     }
 
-    assert dynamodb.write_batches("test", fake_publish.items) is False
+    assert dynamodb.write_batches("test", fake_publish.items, NOW_UTC) is False
 
     assert "One or more writes were unsuccessful" in caplog.text
 
@@ -145,20 +154,22 @@ def test_write_batches_delete_fail(mock_batch_write, fake_publish, caplog):
     mock_batch_write.return_value = {
         "UnprocessedItems": {
             "my-table": [
-                {"PutRequest": {"Key": fake_publish.items[1].aws_fmt}},
+                {"PutRequest": {"Key": {"web_uri": {"S": "/some/path"}}}},
             ]
         }
     }
 
     with pytest.raises(RuntimeError) as exc_info:
-        dynamodb.write_batches("test", fake_publish.items, delete=True)
+        dynamodb.write_batches(
+            "test", fake_publish.items, NOW_UTC, delete=True
+        )
 
     assert (
         "Unprocessed items:\n\t%s"
         % str(
             {
                 "my-table": [
-                    {"PutRequest": {"Key": fake_publish.items[1].aws_fmt}},
+                    {"PutRequest": {"Key": {"web_uri": {"S": "/some/path"}}}},
                 ]
             }
         )
@@ -174,6 +185,6 @@ def test_write_batches_excs(mock_boto3_client, fake_publish, delete, caplog):
     expected_msg = "Exception while %s" % "deleting" if delete else "writing"
 
     with pytest.raises(ValueError):
-        dynamodb.write_batches("test", fake_publish.items, delete)
+        dynamodb.write_batches("test", fake_publish.items, NOW_UTC, delete)
 
     assert expected_msg in caplog.text

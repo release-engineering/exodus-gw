@@ -14,7 +14,7 @@ LOG = logging.getLogger("exodus-gw")
 
 
 @dramatiq.actor(time_limit=Settings().actor_time_limit)
-def commit(publish_id: str, env: str):
+def commit(publish_id: str, env: str, from_date: str):
     settings = Settings()
     db = Session(bind=db_engine(settings))
     current_message_id = CurrentMessage.get_current_message().message_id
@@ -60,14 +60,14 @@ def commit(publish_id: str, env: str):
 
     try:
         if items:
-            items_written = write_batches(env, items)
+            items_written = write_batches(env, items, from_date)
 
         if items_written and last_items:
-            last_items_written = write_batches(env, last_items)
+            last_items_written = write_batches(env, last_items, from_date)
 
         if not items_written or (last_items and not last_items_written):
             items = items + last_items if last_items else items
-            write_batches(env, items, delete=True)
+            write_batches(env, items, from_date, delete=True)
 
             task.state = schemas.TaskStates.failed
             publish.state = schemas.PublishStates.failed

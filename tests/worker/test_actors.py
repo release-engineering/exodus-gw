@@ -1,10 +1,13 @@
 import uuid
+from datetime import datetime, timezone
 
 import mock
 from fastapi.testclient import TestClient
 
 from exodus_gw import models, worker
 from exodus_gw.main import app
+
+NOW_UTC = datetime.now(timezone.utc)
 
 
 def _task(publish_id):
@@ -34,7 +37,7 @@ def test_commit(mock_write_batches, mock_get_message, fake_publish, db):
         fake_publish.state = "COMMITTING"
         db.commit()
 
-        worker.commit(str(fake_publish.id), fake_publish.env)
+        worker.commit(str(fake_publish.id), fake_publish.env, NOW_UTC)
 
         # It should've set task state to COMPLETE.
         db.refresh(task)
@@ -46,8 +49,8 @@ def test_commit(mock_write_batches, mock_get_message, fake_publish, db):
     # It should've called write_batches for items and entry point items.
     mock_write_batches.assert_has_calls(
         calls=[
-            mock.call("test", mock.ANY),
-            mock.call("test", mock.ANY),
+            mock.call("test", mock.ANY, NOW_UTC),
+            mock.call("test", mock.ANY, NOW_UTC),
         ]
     )
 
@@ -73,7 +76,7 @@ def test_commit_write_items_fail(
         fake_publish.state = "COMMITTING"
         db.commit()
 
-        worker.commit(str(fake_publish.id), fake_publish.env)
+        worker.commit(str(fake_publish.id), fake_publish.env, NOW_UTC)
 
         # It should've set task state to FAILED.
         db.refresh(task)
@@ -85,8 +88,8 @@ def test_commit_write_items_fail(
     # It should've called write_batches for items and deletion of items.
     mock_write_batches.assert_has_calls(
         calls=[
-            mock.call("test", mock.ANY),
-            mock.call("test", mock.ANY, delete=True),
+            mock.call("test", mock.ANY, NOW_UTC),
+            mock.call("test", mock.ANY, NOW_UTC, delete=True),
         ],
         any_order=False,
     )
@@ -114,7 +117,7 @@ def test_commit_write_entry_point_items_fail(
         fake_publish.state = "COMMITTING"
         db.commit()
 
-        worker.commit(str(fake_publish.id), fake_publish.env)
+        worker.commit(str(fake_publish.id), fake_publish.env, NOW_UTC)
 
         # It should've set task state to FAILED.
         db.refresh(task)
@@ -127,9 +130,9 @@ def test_commit_write_entry_point_items_fail(
     # and then deletion of all items.
     mock_write_batches.assert_has_calls(
         calls=[
-            mock.call("test", mock.ANY),
-            mock.call("test", mock.ANY),
-            mock.call("test", mock.ANY, delete=True),
+            mock.call("test", mock.ANY, NOW_UTC),
+            mock.call("test", mock.ANY, NOW_UTC),
+            mock.call("test", mock.ANY, NOW_UTC, delete=True),
         ],
         any_order=False,
     )
@@ -156,7 +159,7 @@ def test_commit_write_exception(
         fake_publish.state = "COMMITTING"
         db.commit()
 
-        worker.commit(str(fake_publish.id), fake_publish.env)
+        worker.commit(str(fake_publish.id), fake_publish.env, NOW_UTC)
 
         # It should've set task state to FAILED.
         db.refresh(task)
@@ -189,7 +192,7 @@ def test_commit_completed_task(
         task.state = "COMPLETE"
         db.commit()
 
-    worker.commit(str(task.publish_id), "test")
+    worker.commit(str(task.publish_id), "test", NOW_UTC)
 
     # It shouldn't have called write_batches.
     mock_write_batches.assert_not_called()
@@ -220,7 +223,7 @@ def test_commit_completed_publish(
         fake_publish.state = "COMPLETE"
         db.commit()
 
-    worker.commit(str(fake_publish.id), fake_publish.env)
+    worker.commit(str(fake_publish.id), fake_publish.env, NOW_UTC)
 
     # It shouldn't have called write_batches.
     mock_write_batches.assert_not_called()

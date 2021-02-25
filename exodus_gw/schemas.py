@@ -31,8 +31,6 @@ class ItemBase(BaseModel):
         ),
     )
 
-    from_date: str
-
 
 class Item(ItemBase):
     publish_id: UUID = Field(

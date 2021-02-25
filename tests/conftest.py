@@ -106,19 +106,16 @@ def fake_publish():
         models.Item(
             web_uri="/some/path",
             object_key="0bacfc5268f9994065dd858ece3359fd7a99d82af5be84202b8e84c2a5b07ffa",
-            from_date="2021-01-01T00:00:00.0",
             publish_id=publish.id,
         ),
         models.Item(
             web_uri="/other/path",
             object_key="e448a4330ff79a1b20069d436fae94806a0e2e3a6b309cd31421ef088c6439fb",
-            from_date="2021-01-01T00:00:00.0",
             publish_id=publish.id,
         ),
         models.Item(
             web_uri="/to/repomd.xml",
             object_key="3f449eb3b942af58e9aca4c1cffdef89c3f1552c20787ae8c966767a1fedd3a5",
-            from_date="2021-01-01T00:00:00.0",
             publish_id=publish.id,
         ),
     ]

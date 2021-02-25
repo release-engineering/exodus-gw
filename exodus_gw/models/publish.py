@@ -39,23 +39,8 @@ class Item(Base):
     )
     web_uri = Column(String, nullable=False)
     object_key = Column(String, nullable=False)
-    from_date = Column(String, nullable=False)
     publish_id = Column(
         UUID(as_uuid=True), ForeignKey("publishes.id"), nullable=False
     )
 
     publish = relationship("Publish", back_populates="items")
-
-    def aws_fmt(self, delete):
-        # Delete requests can only contain table keys, so leave others
-        # out for now.
-        result = {
-            "web_uri": {"S": self.web_uri},
-            "from_date": {"S": self.from_date},
-        }
-
-        if delete:
-            return result
-
-        result["object_key"] = {"S": self.object_key}
-        return result

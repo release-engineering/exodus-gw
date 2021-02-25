@@ -189,7 +189,6 @@ def publish_items(args, items):
                 {
                     "web_uri": item.dest_path,
                     "object_key": item.object_key,
-                    "from_date": "abc123",
                 }
                 for item in batch
             ],
