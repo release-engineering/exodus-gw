@@ -66,7 +66,7 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Body, HTTPException
 from sqlalchemy.orm import Session
 
-from .. import deps, models, schemas, worker
+from .. import auth, deps, models, schemas, worker
 from ..aws.util import validate_object_key
 from ..settings import Environment, Settings
 
@@ -100,11 +100,15 @@ router = APIRouter(tags=[openapi_tag["name"]])
             },
         }
     },
+    dependencies=[auth.needs_role("publisher")],
 )
 def publish(
     env: Environment = deps.env, db: Session = deps.db
 ) -> models.Publish:
-    """Creates and returns a new publish object."""
+    """Creates and returns a new publish object.
+
+    **Required roles**: `{env}-publisher`
+    """
 
     db_publish = models.Publish(id=uuid4(), env=env.name, state="PENDING")
     db.add(db_publish)
@@ -116,6 +120,7 @@ def publish(
     "/{env}/publish/{publish_id}",
     status_code=200,
     response_model=schemas.EmptyResponse,
+    dependencies=[auth.needs_role("publisher")],
 )
 def update_publish_items(
     items: Union[schemas.ItemBase, List[schemas.ItemBase]] = Body(
@@ -136,6 +141,8 @@ def update_publish_items(
     db: Session = deps.db,
 ) -> Dict[None, None]:
     """Add publish items to an existing publish object.
+
+    **Required roles**: `{env}-publisher`
 
     Publish items primarily are a mapping between a URI relative to the root of the CDN,
     and the key of a binary object which should be exposed from that URI.
@@ -176,6 +183,7 @@ def update_publish_items(
     "/{env}/publish/{publish_id}/commit",
     status_code=200,
     response_model=schemas.Task,
+    dependencies=[auth.needs_role("publisher")],
 )
 def commit_publish(
     publish_id: UUID = schemas.PathPublishId,
@@ -184,6 +192,8 @@ def commit_publish(
     settings: Settings = deps.settings,
 ) -> models.Task:
     """Commit an existing publish object.
+
+    **Required roles**: `{env}-publisher`
 
     Committing a publish has the following effects:
 

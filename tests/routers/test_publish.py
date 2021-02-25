@@ -19,9 +19,12 @@ from exodus_gw.settings import Environment, Settings, get_environment
         "test3",
     ],
 )
-def test_publish_env_exists(env, db):
+def test_publish_env_exists(env, db, auth_header):
     with TestClient(app) as client:
-        r = client.post("/%s/publish" % env)
+        r = client.post(
+            "/%s/publish" % env,
+            headers=auth_header(roles=["%s-publisher" % env]),
+        )
 
     # Should succeed
     assert r.ok
@@ -33,9 +36,11 @@ def test_publish_env_exists(env, db):
     assert publishes.count() == 1
 
 
-def test_publish_env_doesnt_exist():
+def test_publish_env_doesnt_exist(auth_header):
     with TestClient(app) as client:
-        r = client.post("/foo/publish")
+        r = client.post(
+            "/foo/publish", headers=auth_header(roles=["foo-publisher"])
+        )
 
     # It should fail
     assert r.status_code == 404
@@ -58,7 +63,7 @@ def test_publish_links(mock_db_session):
     }
 
 
-def test_update_publish_items_typical(db):
+def test_update_publish_items_typical(db, auth_header):
     """PUTting some items on a publish creates expected objects in DB."""
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
@@ -85,6 +90,7 @@ def test_update_publish_items_typical(db):
                     "object_key": "2" * 64,
                 },
             ],
+            headers=auth_header(roles=["test-publisher"]),
         )
 
     # It should have succeeded
@@ -106,7 +112,7 @@ def test_update_publish_items_typical(db):
     ]
 
 
-def test_update_publish_items_single_item(db):
+def test_update_publish_items_single_item(db, auth_header):
     """PUTting a single item on a publish creates expected object in DB."""
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
@@ -127,6 +133,7 @@ def test_update_publish_items_single_item(db):
                 "web_uri": "/uri1",
                 "object_key": "1" * 64,
             },
+            headers=auth_header(roles=["test-publisher"]),
         )
 
     # It should have succeeded
@@ -144,7 +151,7 @@ def test_update_publish_items_single_item(db):
     assert item_dicts == [{"web_uri": "/uri1", "object_key": "1" * 64}]
 
 
-def test_update_pubish_items_invalid_publish(db):
+def test_update_pubish_items_invalid_publish(db, auth_header):
     """PUTting items on a completed publish fails with code 409."""
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
@@ -171,6 +178,7 @@ def test_update_pubish_items_invalid_publish(db):
                     "object_key": "2" * 64,
                 },
             ],
+            headers=auth_header(roles=["test-publisher"]),
         )
 
     # It should have failed with 409

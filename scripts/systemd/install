@@ -66,6 +66,12 @@ EXODUS_GW_SRC_PATH=$(realpath -L ../..)
 
 # You'll have to change this too if you change the localstack port.
 #EXODUS_GW_S3_ENDPOINT_URL=https://localhost:3377
+
+# Disable migrations during development
+#EXODUS_GW_DB_MIGRATION_MODE=model
+
+# Drop and recreate tables on restart
+#EXODUS_GW_DB_RESET=true
 END
   fi
 

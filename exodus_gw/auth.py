@@ -78,10 +78,14 @@ def needs_role(rolename):
     >    "If caller does not have role xyz, they will never get here."
     """
 
-    async def check_roles(roles: Set[str] = Depends(caller_roles)):
-        if rolename not in roles:
+    async def check_roles(
+        env: Optional[str] = None, roles: Set[str] = Depends(caller_roles)
+    ):
+        role = env + "-" + rolename if env else rolename
+
+        if role not in roles:
             raise HTTPException(
-                403, "this operation requires role '%s'" % rolename
+                403, "this operation requires role '%s'" % role
             )
 
     return Depends(check_roles)

@@ -67,7 +67,7 @@ from typing import Optional
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, HTTPException, Path, Query, Request, Response
 
-from .. import deps
+from .. import auth, deps
 from ..aws.client import S3ClientWrapper as s3_client
 from ..aws.util import (
     RequestReader,
@@ -96,6 +96,7 @@ router = APIRouter(tags=[openapi_tag["name"]])
     "/upload/{env}/{key}",
     summary="Create/complete multipart upload",
     response_class=Response,
+    dependencies=[auth.needs_role("blob-uploader")],
 )
 async def multipart_upload(
     request: Request,
@@ -125,6 +126,8 @@ async def multipart_upload(
     ),
 ):
     """Create or complete a multi-part upload.
+
+    **Required roles**: `{env}-blob-uploader`
 
     To create a multi-part upload:
     - include ``uploads`` in query string, with no value (e.g. ``POST /upload/{env}/{key}?uploads``)
@@ -156,6 +159,7 @@ async def multipart_upload(
     "/upload/{env}/{key}",
     summary="Upload bytes",
     response_class=Response,
+    dependencies=[auth.needs_role("blob-uploader")],
 )
 async def upload(
     request: Request,
@@ -169,6 +173,8 @@ async def upload(
     ),
 ):
     """Write to an object, either as a standalone operation or within a multi-part upload.
+
+    **Required roles**: `{env}-blob-uploader`
 
     To upload an entire object:
     - include all object bytes in request body
@@ -283,6 +289,7 @@ async def multipart_put(
     summary="Abort multipart upload",
     response_description="Empty response",
     response_class=Response,
+    dependencies=[auth.needs_role("blob-uploader")],
 )
 async def abort_multipart_upload(
     env: Environment = deps.env,
@@ -290,6 +297,8 @@ async def abort_multipart_upload(
     uploadId: str = Query(..., description="ID of a multipart upload"),
 ):
     """Abort a multipart upload.
+
+    **Required roles**: `{env}-blob-uploader`
 
     If an upload cannot be completed, explicitly aborting it is recommended in order
     to free up resources as early as possible, although this is not mandatory.
@@ -312,12 +321,16 @@ async def abort_multipart_upload(
     "/upload/{env}/{key}",
     summary="Request head object",
     response_class=Response,
+    dependencies=[auth.needs_role("blob-uploader")],
 )
 async def head(
     env: Environment = deps.env,
     key: str = Path(..., description="S3 object key"),
 ):
-    """Retrieve metadata from an S3 object."""
+    """Retrieve metadata from an S3 object.
+
+    **Required roles**: `{env}-blob-uploader`
+    """
 
     validate_object_key(key)
 
