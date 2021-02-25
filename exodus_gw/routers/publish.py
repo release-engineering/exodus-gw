@@ -61,13 +61,13 @@ Publish objects should be treated as ephemeral; they are not persisted indefinit
 import logging
 from datetime import datetime, timezone
 from typing import Dict, List, Union
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Body, HTTPException
 from sqlalchemy.orm import Session
 
 from .. import deps, models, schemas, worker
-from ..crud import create_publish, update_publish
+from ..aws.util import validate_object_key
 from ..settings import Environment, Settings
 
 LOG = logging.getLogger("exodus-gw")
@@ -106,7 +106,10 @@ def publish(
 ) -> models.Publish:
     """Creates and returns a new publish object."""
 
-    return create_publish(env, db)
+    db_publish = models.Publish(id=uuid4(), env=env.name, state="PENDING")
+    db.add(db_publish)
+
+    return db_publish
 
 
 @router.put(
@@ -157,7 +160,14 @@ def update_publish_items(
             % (db_publish.id, db_publish.state),
         )
 
-    update_publish(db, items, db_publish.id)
+    # Coerce single items to list.
+    if not isinstance(items, list):
+        items = [items]
+
+    for item in items:
+        validate_object_key(item.object_key)
+
+        db.add(models.Item(**item.dict(), publish_id=db_publish.id))
 
     return {}
 
