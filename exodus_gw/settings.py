@@ -94,6 +94,17 @@ class Settings(BaseSettings):
     max_tries: int = 20
     """Maximum attempts to write to DynamoDB table."""
 
+    publish_timeout: int = 24
+    """Maximum amount of time (in hours) between updates to a pending publish before
+    it will be considered abandoned. Defaults to one day.
+    """
+
+    history_timeout: int = 24 * 14
+    """Maximum amount of time (in hours) to retain historical data for publishes and
+    tasks. Publishes and tasks in a terminal state will be erased after this time has
+    passed. Defaults to two weeks.
+    """
+
     actor_time_limit: int = 30 * 60000
     """Maximum amount of time (in milliseconds) actors may run."""
 

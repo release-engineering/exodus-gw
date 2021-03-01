@@ -20,7 +20,9 @@ class Publish(Base):
     env = Column(String, nullable=False)
     state = Column(String, nullable=False)
     updated = Column(DateTime(timezone=True))
-    items = relationship("Item", back_populates="publish")
+    items = relationship(
+        "Item", back_populates="publish", cascade="all, delete-orphan"
+    )
 
 
 @event.listens_for(Publish, "before_update")

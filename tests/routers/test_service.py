@@ -70,7 +70,6 @@ def test_get_task(db):
         state="NOT_STARTED",
     )
 
-    # Use TestClient to set up the test DB.
     with TestClient(app) as client:
         # Add a task object to the DB.
         db.add(task)

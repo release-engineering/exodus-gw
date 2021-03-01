@@ -1,9 +1,6 @@
 import uuid
 from datetime import datetime
 
-from fastapi.testclient import TestClient
-
-from exodus_gw.main import app
 from exodus_gw.models import Item, Publish, Task
 
 
@@ -31,35 +28,34 @@ def test_publish_task_before_update(db):
         state="NOT_STARTED",
     )
 
-    with TestClient(app):
-        db.add(publish)
-        db.add(task)
-        db.commit()
+    db.add(publish)
+    db.add(task)
+    db.commit()
 
-        # Updated should initially be null
-        assert publish.updated is None
-        assert task.updated is None
+    # Updated should initially be null
+    assert publish.updated is None
+    assert task.updated is None
 
-        # Change state of publish and task
-        publish.state = "COMMITTING"
-        task.state = "IN_PROGRESS"
-        db.commit()
+    # Change state of publish and task
+    publish.state = "COMMITTING"
+    task.state = "IN_PROGRESS"
+    db.commit()
 
-        # Updated should now hold datetime objects
-        p_updated = publish.updated
-        assert isinstance(p_updated, datetime)
+    # Updated should now hold datetime objects
+    p_updated = publish.updated
+    assert isinstance(p_updated, datetime)
 
-        t_updated = task.updated
-        assert isinstance(t_updated, datetime)
+    t_updated = task.updated
+    assert isinstance(t_updated, datetime)
 
-        # Change state of publish and task again
-        publish.state = "COMMITTED"
-        task.state = "COMPLETE"
-        db.commit()
+    # Change state of publish and task again
+    publish.state = "COMMITTED"
+    task.state = "COMPLETE"
+    db.commit()
 
-        # Updated should now hold different datetime objects
-        assert isinstance(publish.updated, datetime)
-        assert p_updated != publish.updated
+    # Updated should now hold different datetime objects
+    assert isinstance(publish.updated, datetime)
+    assert p_updated != publish.updated
 
-        assert isinstance(task.updated, datetime)
-        assert t_updated != task.updated
+    assert isinstance(task.updated, datetime)
+    assert t_updated != task.updated
