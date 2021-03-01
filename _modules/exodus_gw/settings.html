@@ -128,6 +128,17 @@
     <span class="n">max_tries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span>
     <span class="sd">&quot;&quot;&quot;Maximum attempts to write to DynamoDB table.&quot;&quot;&quot;</span>
 
+    <span class="n">publish_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">24</span>
+    <span class="sd">&quot;&quot;&quot;Maximum amount of time (in hours) between updates to a pending publish before</span>
+<span class="sd">    it will be considered abandoned. Defaults to one day.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">history_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">14</span>
+    <span class="sd">&quot;&quot;&quot;Maximum amount of time (in hours) to retain historical data for publishes and</span>
+<span class="sd">    tasks. Publishes and tasks in a terminal state will be erased after this time has</span>
+<span class="sd">    passed. Defaults to two weeks.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">actor_time_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span> <span class="o">*</span> <span class="mi">60000</span>
     <span class="sd">&quot;&quot;&quot;Maximum amount of time (in milliseconds) actors may run.&quot;&quot;&quot;</span>
 

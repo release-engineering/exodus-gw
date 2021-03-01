@@ -198,6 +198,21 @@ the target revision when migrating the DB.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt id="exodus_gw.settings.Settings.publish_timeout">
+<code class="sig-name descname"><span class="pre">publish_timeout</span></code><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.publish_timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum amount of time (in hours) between updates to a pending publish before
+it will be considered abandoned. Defaults to one day.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="exodus_gw.settings.Settings.history_timeout">
+<code class="sig-name descname"><span class="pre">history_timeout</span></code><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.history_timeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum amount of time (in hours) to retain historical data for publishes and
+tasks. Publishes and tasks in a terminal state will be erased after this time has
+passed. Defaults to two weeks.</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt id="exodus_gw.settings.Settings.actor_time_limit">
 <code class="sig-name descname"><span class="pre">actor_time_limit</span></code><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.9)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.actor_time_limit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Maximum amount of time (in milliseconds) actors may run.</p>
