@@ -1,12 +1,15 @@
+import base64
+import json
 import os
 import uuid
+from typing import List
 
 import mock
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm.session import Session
 
-from exodus_gw import database, main, models, schemas, settings  # noqa
+from exodus_gw import auth, database, main, models, schemas, settings  # noqa
 
 from .async_utils import BlockDetector
 
@@ -139,3 +142,22 @@ def fake_publish():
         ),
     ]
     yield publish
+
+
+@pytest.fixture
+def auth_header():
+    def _auth_header(roles: List[str] = []):
+        raw_context = {
+            "user": {
+                "authenticated": True,
+                "internalUsername": "fake-user",
+                "roles": roles,
+            }
+        }
+
+        json_context = json.dumps(raw_context).encode("utf-8")
+        b64_context = base64.b64encode(json_context)
+
+        return {"X-RhApiPlatform-CallContext": b64_context.decode("utf-8")}
+
+    return _auth_header

@@ -37,6 +37,14 @@ com.redhat.api.platform:\n\
 |\n$(sed -r -e 's|^|    |' %S/exodus-gw-dev/service.pem)\n\
   private-key-pkcs8-pem:\
 |\n$(sed -r -e 's|^|    |' %S/exodus-gw-dev/service-key.pem)\n\
+ security:\n\
+  roles:\n\
+   test-blob-uploader:\n\
+    users:\n\
+     byInternalUsername: [${USER}]\n\
+   test-publisher:\n\
+    users:\n\
+     byInternalUsername: [${USER}]\n\
 \nEND\n\
 "
 
