@@ -4,13 +4,11 @@
 #
 #    pip-compile --generate-hashes --output-file=requirements.txt requirements.in
 #
-aioboto3==8.2.0 \
-    --hash=sha256:0e390871a4ac9747485a54283f8f6a44008f06f244c26632c2aa8f9029d94317 \
-    --hash=sha256:69ef622b2bd7557975986909a9ed9fb1a9356087246b50ee596c4e20415bc0e3
+aioboto3==8.2.1 \
+    --hash=sha256:86457323fa0b4c4583fb9f3f7ad048045af006976e07f6c3285178da6e380d92
     # via -r requirements.in
-aiobotocore[boto3]==1.1.2 \
-    --hash=sha256:457549acaf3a3d10ad8a6256ec5b791ea885e4d2fa11783d22bb8f411a058141 \
-    --hash=sha256:54b23e3ac82955caa90ea320301255a4c738ff0a827599f57129e3f1d883c9ba
+aiobotocore[boto3]==1.2.1 \
+    --hash=sha256:58cc422e65fc89f7cb78eca740d241ac8e15f39f6b308cc23152711e8a987d45
     # via aioboto3
 aiohttp==3.7.4 \
     --hash=sha256:119feb2bd551e58d83d1b38bfa4cb921af8ddedec9fad7183132db334c3133e0 \
@@ -55,8 +53,9 @@ aioitertools==0.7.1 \
     --hash=sha256:54a56c7cf3b5290d1cb5e8974353c9f52c677612b5d69a859369a020c53414a3 \
     --hash=sha256:8972308474c41ed5e0636819f948ebff32f2318e70f7e7d23cd208c4357cc773
     # via aiobotocore
-alembic==1.5.5 \
-    --hash=sha256:df0028c19275a2cff137e39617a39cdcdbd1173733b87b6bfa257b7c0860213b
+alembic==1.5.6 \
+    --hash=sha256:8a8ccd58a262b1e3ac79b7224d0f9a4ac3bf96ace149972feb3ef9d7a06ac8b5 \
+    --hash=sha256:bcb9b6cd58761a517e19d927642cd8364f37cd2db4d28dd04ffad9cf70079ddf
     # via -r requirements.in
 argh==0.26.2 \
     --hash=sha256:a9b3aaa1904eeb78e32394cd46c6f37ac0fb4af6dc488daa58971bdc7d7fcaf3 \
@@ -82,13 +81,13 @@ backoff==1.10.0 \
     --hash=sha256:5e73e2cbe780e1915a204799dba0a01896f45f4385e636bcca7a0614d879d0cd \
     --hash=sha256:b8fba021fac74055ac05eb7c7bfce4723aedde6cd0a504e5326bcb0bdd6d19a4
     # via -r requirements.in
-boto3==1.14.44 \
-    --hash=sha256:01d45a986abd81d4b55f5649060fcbc49f6f87deaa508b99367a9d9ea21c0347 \
-    --hash=sha256:b1936392d1491b4de04a972636c91904ec814519d8847d11e3375d77d5df1b12
+boto3==1.16.52 \
+    --hash=sha256:360a9f805b11f2e468d48815193c55278765fb30b64350893ab63236a5034726 \
+    --hash=sha256:81c514185de8937ba75023a2466fae0cc6f170e6348fdac31c235c32ba9d58f3
     # via aiobotocore
-botocore==1.17.44 \
-    --hash=sha256:1b46ffe1d13922066c873323186cbf97e77c137e08e27039d9d684552ccc4892 \
-    --hash=sha256:1f6175bf59ffa068055b65f7d703eb1f748c338594a40dfdc645a6130280d8bb
+botocore==1.19.52 \
+    --hash=sha256:d8f50e4162012ccfab64c2db4fcc99313d46d57789072251bab56013d66546e2 \
+    --hash=sha256:dc5ec23deadbe9327d3c81d03fddf80805c549059baabd80dea605941fe6a221
     # via
     #   aiobotocore
     #   boto3
@@ -105,11 +104,6 @@ defusedxml==0.6.0 \
     --hash=sha256:6687150770438374ab581bb7a1b327a847dd9c5749e396102de3fad4e8a3ef93 \
     --hash=sha256:f684034d135af4c6cbb949b8a4d2ed61634515257a67299e5f940fbaa34377f5
     # via -r requirements.in
-docutils==0.15.2 \
-    --hash=sha256:6c4f696463b79f1fb8ba0c594b63840ebd41f059e92b31957c46b74a4599b6d0 \
-    --hash=sha256:9e4d7ecfc600058e07ba661411a2b7de2fd0fafa17d1a7f7361cd47b1175c827 \
-    --hash=sha256:a2aeea129088da402665e92e0b25b04b073c04b2dce4ab65caaa38b7ce2e1a99
-    # via botocore
 dramatiq[watch]==1.10.0 \
     --hash=sha256:ce23c4520b50785414aca088c25c6a2274512f67ec468042aee0c379ee1d700e \
     --hash=sha256:d3f629ff01e1da67f46579cba549e115fbe0b32a31fa52c53f6c322a4456566a
