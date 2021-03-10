@@ -86,13 +86,6 @@ openapi_tag = {"name": "upload", "description": __doc__}
 router = APIRouter(tags=[openapi_tag["name"]])
 
 
-# A partial TODO list for this API:
-# - format of 'key' should be enforced (sha256sum)
-# - a way to check if object is already uploaded, e.g. HEAD
-# - limits on chunk sizes during multipart upload should be decided and enforced
-# - requests should be authenticated
-
-
 @router.post(
     "/upload/{env}/{key}",
     summary="Create/complete multipart upload",
