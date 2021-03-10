@@ -319,8 +319,12 @@ async def abort_multipart_upload(
 
 @router.head(
     "/upload/{env}/{key}",
-    summary="Request head object",
+    summary="Get object metadata",
     response_class=Response,
+    responses={
+        200: {"description": "Object exists"},
+        404: {"description": "Object or environment does not exist"},
+    },
     dependencies=[auth.needs_role("blob-uploader")],
 )
 async def head(
@@ -328,6 +332,11 @@ async def head(
     key: str = Path(..., description="S3 object key"),
 ):
     """Retrieve metadata from an S3 object.
+
+    Note that, as explained in [the upload API overview](#tag/upload), AWS-specific
+    headers such as `x-amz-*` are not included in the response.
+    The main purpose of this API is to determine whether or not an object
+    identified by checksum exists on the CDN.
 
     **Required roles**: `{env}-blob-uploader`
     """
