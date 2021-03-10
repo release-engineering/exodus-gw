@@ -6,8 +6,8 @@ them to clients of the CDN, but is a prerequisite of publishing files,
 which is achieved via the [publish](#tag/publish) APIs.
 
 The upload API is a partially compatible subset of the S3 API.
-It supports at least enough functionality such that the boto S3
-client and resource may be used.
+It supports at least enough functionality such that the AWS SDK may be
+used when uploading to exodus-gw.
 
 Differences from the AWS S3 API include:
 
@@ -32,7 +32,8 @@ Differences from the AWS S3 API include:
 
 As the upload API is partially compatible with S3, it is possible to use
 existing S3 clients such as the AWS SDK to perform uploads. This is the
-recommended method of using the API.
+recommended method of using the API. Here we show an example using boto, the
+AWS SDK for Python.
 
 Use `endpoint_url` when creating a boto resource or client to point at exodus-gw.
 Region and credentials will be ignored.
