@@ -22,9 +22,11 @@
 import argparse
 import hashlib
 import logging
+import os
 import sys
 
 import boto3
+from botocore.config import Config
 
 
 def get_object_key(filename):
@@ -46,6 +48,17 @@ def main():
     parser.add_argument(
         "--endpoint-url", default="https://localhost:8010/upload"
     )
+    parser.add_argument(
+        "--cert",
+        default=os.path.expandvars("${HOME}/certs/${USER}.crt"),
+        help="Certificate for HTTPS authentication with exodus-gw (must match --key)",
+    )
+    parser.add_argument(
+        "--key",
+        default=os.path.expandvars("${HOME}/certs/${USER}.key"),
+        help="Private key for HTTPS authentication with exodus-gw (must match --cert)",
+    )
+
     parser.add_argument("--env", default="dev")
     parser.add_argument("files", nargs="+")
 
@@ -54,7 +67,11 @@ def main():
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
 
-    s3 = boto3.resource("s3", endpoint_url=args.endpoint_url)
+    s3 = boto3.resource(
+        "s3",
+        endpoint_url=args.endpoint_url,
+        config=Config(client_cert=(args.cert, args.key)),
+    )
     bucket = s3.Bucket(args.env)
 
     print(
