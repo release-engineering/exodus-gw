@@ -3,7 +3,7 @@ exodus-gw
 
 Publishing microservice for Red Hat's Content Delivery Network
 
-[![Build Status](https://travis-ci.com/release-engineering/exodus-gw.svg?branch=master)](https://travis-ci.com/release-engineering/exodus-gw)
+![Build Status](https://github.com/release-engineering/exodus-gw/actions/workflows/ci.yml/badge.svg?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/release-engineering/exodus-gw/badge.svg?branch=master)](https://coveralls.io/github/release-engineering/exodus-gw?branch=master)
 
 - [Source](https://github.com/release-engineering/exodus-gw)
