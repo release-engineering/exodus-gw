@@ -8,11 +8,6 @@ Available APIs are grouped into the following categories:
 - [publish](#tag/publish): atomically publish a set of blobs on the CDN under specified paths,
   making them accessible to end-users.
 
-## Warning
-
-exodus-gw is in early stages of development. All APIs are subject
-to backwards-incompatible changes without warning.
-
 ## Overview of API usage
 
 A typical content publishing workflow using exodus-gw will consist of:
@@ -78,6 +73,9 @@ from .settings import load_settings
 
 app = FastAPI(
     title="exodus-gw",
+    # This is the API version, which should follow SemVer rules.
+    # The API version is not the same thing as the exodus-gw project version.
+    version="1.0.0",
     description=__doc__,
     openapi_tags=[
         service.openapi_tag,
