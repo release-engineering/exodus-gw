@@ -21,4 +21,4 @@ wcwidth
 zipp
 flake8
 docutils==0.15.2
-urllib3==1.25.11
+urllib3==1.26.3
