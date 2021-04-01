@@ -370,9 +370,9 @@ python-dateutil==2.8.1 \
     # via
     #   alembic
     #   botocore
-python-dotenv==0.15.0 \
-    --hash=sha256:0c8d1b80d1a1e91717ea7d526178e3882732420b03f08afea0406db6402e220e \
-    --hash=sha256:587825ed60b1711daea4832cf37524dfd404325b7db5e25ebe88c495c9f807a0
+python-dotenv==0.16.0 \
+    --hash=sha256:31d752f5b748f4e292448c9a0cac6a08ed5e6f4cefab85044462dcad56905cec \
+    --hash=sha256:9fa413c37d4652d3fa02fea0ff465c384f5db75eab259c4fc5d0c5b8bf20edd4
     # via uvicorn
 python-editor==1.0.4 \
     --hash=sha256:1bf6e860a8ad52a14c3ee1252d5dc25b2030618ed80c022598f00176adc8367d \
@@ -404,9 +404,9 @@ pyyaml==5.4.1 \
     # via
     #   uvicorn
     #   watchdog
-s3transfer==0.3.4 \
-    --hash=sha256:1e28620e5b444652ed752cf87c7e0cb15b0e578972568c6609f0f18212f259ed \
-    --hash=sha256:7fdddb4f22275cf1d32129e21f056337fd2a80b6ccef1664528145b72c49e6d2
+s3transfer==0.3.6 \
+    --hash=sha256:5d48b1fd2232141a9d5fb279709117aaba506cacea7f86f11bc392f06bfa8fc2 \
+    --hash=sha256:c5dadf598762899d8cfaecf68eba649cd25b0ce93b6c954b156aaa3eed160547
     # via boto3
 six==1.15.0 \
     --hash=sha256:30639c035cdb23534cd4aa2dd52c3bf48f06e5f4a941509c8bafd8ce11080259 \
