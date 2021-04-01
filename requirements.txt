@@ -181,9 +181,8 @@ greenlet==1.0.0 \
     # via
     #   gevent
     #   sqlalchemy
-gunicorn==20.0.4 \
-    --hash=sha256:1904bb2b8a43658807108d59c3f3d56c2b6121a701161de0ddf9ad140073c626 \
-    --hash=sha256:cd4a810dd51bf497552cf3f863b575dabd73d6ad6a91075b65936b151cbf4f9c
+gunicorn==20.1.0 \
+    --hash=sha256:e0a968b5ba15f8a328fdfd7ab1fcb5af4470c28aaf7e55df02a99bc13138e6e8
     # via -r requirements.in
 h11==0.12.0 \
     --hash=sha256:36a3cb8c0a032f56e2da7084577878a035d3b61d104230d4bd49c0c6b555a9c6 \
@@ -404,9 +403,9 @@ pyyaml==5.4.1 \
     # via
     #   uvicorn
     #   watchdog
-s3transfer==0.3.4 \
-    --hash=sha256:1e28620e5b444652ed752cf87c7e0cb15b0e578972568c6609f0f18212f259ed \
-    --hash=sha256:7fdddb4f22275cf1d32129e21f056337fd2a80b6ccef1664528145b72c49e6d2
+s3transfer==0.3.6 \
+    --hash=sha256:5d48b1fd2232141a9d5fb279709117aaba506cacea7f86f11bc392f06bfa8fc2 \
+    --hash=sha256:c5dadf598762899d8cfaecf68eba649cd25b0ce93b6c954b156aaa3eed160547
     # via boto3
 six==1.15.0 \
     --hash=sha256:30639c035cdb23534cd4aa2dd52c3bf48f06e5f4a941509c8bafd8ce11080259 \
