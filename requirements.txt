@@ -4,11 +4,11 @@
 #
 #    pip-compile --generate-hashes --output-file=requirements.txt requirements.in
 #
-aioboto3==8.2.1 \
-    --hash=sha256:86457323fa0b4c4583fb9f3f7ad048045af006976e07f6c3285178da6e380d92
+aioboto3==8.3.0 \
+    --hash=sha256:f019b151bf38ec4807b39ef0afd20bbaa694be529c7faa2e3a83cb083309d120
     # via -r requirements.in
-aiobotocore[boto3]==1.2.1 \
-    --hash=sha256:58cc422e65fc89f7cb78eca740d241ac8e15f39f6b308cc23152711e8a987d45
+aiobotocore[boto3]==1.2.2 \
+    --hash=sha256:37c23166603a3bd134e5f6fc22dbbf8c274d4d24c71418fba292ed2cd7a0bf43
     # via aioboto3
 aiohttp==3.7.4.post0 \
     --hash=sha256:02f46fc0e3c5ac58b80d4d56eb0a7c7d97fcef69ace9326289fb9f1955e65cfe \
