@@ -29,12 +29,9 @@ jobs:
         docker build . -f openshift/containers/exodus-gw/Dockerfile
 
     - name: Run auto-tests
-      run: tox -e cov
-
-    - name: Publish coverage
-      uses: AndreMiras/coveralls-python-action@develop
-      with:
-        github-token: ${{ github.token }}
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: tox -e cov-ci
 
     - name: Run static analysis
       run: tox -e static
