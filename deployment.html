@@ -4,8 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Deployment Guide &#8212; exodus-gw  documentation</title>
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
@@ -34,9 +33,9 @@
 
           <div class="body" role="main">
             
-  <section id="deployment-guide">
+  <div class="section" id="deployment-guide">
 <span id="deploy-guide"></span><h1>Deployment Guide<a class="headerlink" href="#deployment-guide" title="Permalink to this headline">¶</a></h1>
-<section id="target-platform">
+<div class="section" id="target-platform">
 <h2>Target platform<a class="headerlink" href="#target-platform" title="Permalink to this headline">¶</a></h2>
 <p>exodus-gw is an ASGI application which may be deployed using any ASGI-compliant
 web server. The development team’s recommended setup is summarized as:</p>
@@ -51,8 +50,8 @@ applies.</p>
 <li><p>Deploy the service’s primary container behind a reverse-proxy implementing
 authentication according to your organization’s needs (see next section).</p></li>
 </ul>
-</section>
-<section id="authentication-authorization">
+</div>
+<div class="section" id="authentication-authorization">
 <h2>Authentication &amp; Authorization<a class="headerlink" href="#authentication-authorization" title="Permalink to this headline">¶</a></h2>
 <p>The exodus-gw service does not implement any authentication mechanism. It is instead
 designed to integrate with a reverse-proxy implementing any desired mechanism.</p>
@@ -85,8 +84,8 @@ Other fields are unused or used only for logging.</p>
 <p>Within Red Hat, a container known as “platform-sidecar” is used as the reverse proxy - consult
 internal documentation for information on this component. In other contexts, any reverse
 proxy may be used as long as it produces headers according to the scheme documented above.</p>
-</section>
-<section id="database-migrations">
+</div>
+<div class="section" id="database-migrations">
 <h2>Database Migrations<a class="headerlink" href="#database-migrations" title="Permalink to this headline">¶</a></h2>
 <p>The exodus-gw service uses a postgres database.</p>
 <p>On startup, the service will run database migrations to ensure the DB implements the
@@ -97,8 +96,8 @@ service, even with old and new versions of the service running simultaneously
 <p>Downgrading to an earlier version of the schema is not directly supported by the
 service. However, as exodus-gw is designed not to store any permanent state, dropping
 and recreating the exodus-gw database is a viable option if needed.</p>
-</section>
-<section id="settings">
+</div>
+<div class="section" id="settings">
 <h2>Settings<a class="headerlink" href="#settings" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="exodus_gw.settings.Settings">
@@ -283,8 +282,8 @@ users may specify a logger name and the level at which to set said logger.</p>
 <span class="na">...</span>
 </pre></div>
 </div>
-</section>
-</section>
+</div>
+</div>
 
 
           </div>
@@ -307,7 +306,7 @@ users may specify a logger name and the level at which to set said logger.</p>
 
 
 <h3>Navigation</h3>
-<p><span class="caption-text">Contents:</span></p>
+<p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Deployment Guide</a><ul>
@@ -364,7 +363,7 @@ users may specify a logger name and the level at which to set said logger.</p>
       &copy;2020, Red Hat.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.3</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.4</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
