@@ -4,7 +4,8 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
     <title>Development Guide &#8212; exodus-gw  documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
@@ -32,11 +33,11 @@
 
           <div class="body" role="main">
             
-  <div class="section" id="development-guide">
+  <section id="development-guide">
 <span id="dev-guide"></span><h1>Development Guide<a class="headerlink" href="#development-guide" title="Permalink to this headline">¶</a></h1>
 <p>This document contains useful info for developers contributing
 to the exodus-gw project.</p>
-<div class="section" id="running-exodus-gw-services-with-tox">
+<section id="running-exodus-gw-services-with-tox">
 <h2>Running exodus-gw services with tox<a class="headerlink" href="#running-exodus-gw-services-with-tox" title="Permalink to this headline">¶</a></h2>
 <p>A development instance of the exodus-gw service may be run locally
 using tox. Commands are provided for running both the API and background
@@ -54,8 +55,8 @@ as described in <a class="reference internal" href="deployment.html#deploy-guide
 <p>Note that tox will not start or manage any dependencies of exodus-gw.
 A more complete development environment can be provided using systemd
 units, as described below.</p>
-</div>
-<div class="section" id="systemd-based-development-environment">
+</section>
+<section id="systemd-based-development-environment">
 <h2>Systemd-based development environment<a class="headerlink" href="#systemd-based-development-environment" title="Permalink to this headline">¶</a></h2>
 <p>A systemd-based development environment is offered which allows running
 an instance of exodus-gw along with its dependencies, via systemd
@@ -73,7 +74,7 @@ a complete instance of the service in Kubernetes/OpenShift.</p>
 <p>Note: the sidecar proxy is only enabled when you instantiate the environment
 from within Red Hat’s network. Otherwise, the service will only be available
 via http.</p>
-<div class="section" id="prerequisites">
+<section id="prerequisites">
 <h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>The dev env is designed for use on currently supported versions of Fedora Workstation.</p></li>
@@ -81,8 +82,8 @@ via http.</p>
 <li><p>You may need to install some packages. If so, the install script will list the needed
 packages for you.</p></li>
 </ul>
-</div>
-<div class="section" id="installation">
+</section>
+<section id="installation">
 <h3>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h3>
 <p>In the exodus-gw repo, run:</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>scripts/systemd/install
@@ -93,8 +94,8 @@ commands for you to run.</p>
 <p>If installation succeeds, various systemd user units will be installed and
 set as dependencies of a new <code class="docutils literal notranslate"><span class="pre">exodus-gw</span></code> target. The script will also output a few
 example commands to get you started with using the dev env.</p>
-</div>
-<div class="section" id="uninstallation">
+</section>
+<section id="uninstallation">
 <h3>Uninstallation<a class="headerlink" href="#uninstallation" title="Permalink to this headline">¶</a></h3>
 <p>If you want to remove the dev env, run:</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>scripts/systemd/uninstall
@@ -106,8 +107,8 @@ changes written to the DB and localstack), run:</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>scripts/systemd/clean
 </pre></div>
 </div>
-</div>
-<div class="section" id="configuration">
+</section>
+<section id="configuration">
 <h3>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h3>
 <p>If you need to adjust the configuration of the development environment, such as
 using custom ports for services to avoid conflicts, you can edit the environment
@@ -120,8 +121,8 @@ port, you may add to this file:</p>
 </div>
 <p>The development environment installation process will generate a template file with
 the most useful environment variables listed.</p>
-</div>
-<div class="section" id="cheat-sheet">
+</section>
+<section id="cheat-sheet">
 <h3>Cheat sheet<a class="headerlink" href="#cheat-sheet" title="Permalink to this headline">¶</a></h3>
 <p>Various example commands are listed here which may be useful when working with
 the development environment.</p>
@@ -244,9 +245,9 @@ exodus-gw-localstack.service or use the <code class="docutils literal notranslat
 </tr>
 </tbody>
 </table>
-</div>
-</div>
-<div class="section" id="spoofing-authentication">
+</section>
+</section>
+<section id="spoofing-authentication">
 <h2>Spoofing authentication<a class="headerlink" href="#spoofing-authentication" title="Permalink to this headline">¶</a></h2>
 <p>The exodus-gw service parses an <code class="docutils literal notranslate"><span class="pre">X-RhApiPlatform-CallContext</span></code> header for information
 relating to authentication &amp; authorization; see <a class="reference internal" href="deployment.html#deploy-guide"><span class="std std-ref">Deployment Guide</span></a> for more info on
@@ -269,8 +270,8 @@ using those roles.</p>
 (for example, if you don’t access to the sidecar container).
 If you are accessing the service using https, the same certificates and keys as
 used for production may be used in your local environment.</p>
-</div>
-<div class="section" id="disabling-migrations-during-development">
+</section>
+<section id="disabling-migrations-during-development">
 <h2>Disabling migrations during development<a class="headerlink" href="#disabling-migrations-during-development" title="Permalink to this headline">¶</a></h2>
 <p>The exodus-gw schema in production is managed via alembic migrations.</p>
 <p>When prototyping schema changes during development, it can be unreasonably
@@ -303,8 +304,8 @@ tables when the service starts.</p></li>
 </ul>
 <p>The resulting migration should be included in the same pull request as your
 sqlalchemy model changes.</p>
-</div>
-</div>
+</section>
+</section>
 
 
           </div>
