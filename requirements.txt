@@ -96,9 +96,9 @@ defusedxml==0.7.1 \
     --hash=sha256:1bb3032db185915b62d7c6209c5a8792be6a32ab2fedacc84e01b52c51aa3e69 \
     --hash=sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61
     # via -r requirements.in
-dramatiq[watch]==1.10.0 \
-    --hash=sha256:ce23c4520b50785414aca088c25c6a2274512f67ec468042aee0c379ee1d700e \
-    --hash=sha256:d3f629ff01e1da67f46579cba549e115fbe0b32a31fa52c53f6c322a4456566a
+dramatiq[watch]==1.11.0 \
+    --hash=sha256:bb209d0d54e36e7c3f31862ca3f088752d9a3799a5a46d7979d6891326de5a14 \
+    --hash=sha256:dea14f45d3fba339d5e6aadfe67f6b403b0c9464e2d2210a79fcf54a6ae763a8
     # via -r requirements.in
 fastapi==0.65.1 \
     --hash=sha256:478b7e0cbb52c9913b9903d88ae14195cb8a479c4596e0b2f2238d317840a7dc \
