@@ -446,9 +446,9 @@ typing-extensions==3.10.0.0 \
     #   aiohttp
     #   aioitertools
     #   pydantic
-urllib3==1.26.5 \
-    --hash=sha256:753a0374df26658f99d826cfe40394a686d05985786d946fbe4165b5148f5a7c \
-    --hash=sha256:a7acd0977125325f516bda9735fa7142b909a8d01e8b2e4c8108d0984e6e0098
+urllib3==1.26.6 \
+    --hash=sha256:39fb8672126159acb139a7718dd10806104dec1e2f0f6c88aab05d17df10c8d4 \
+    --hash=sha256:f57b4c16c62fa2760b7e3d97c35b255512fb6b59a259730f36ba32ce9f8e342f
     # via botocore
 uvicorn[standard]==0.14.0 \
     --hash=sha256:2a76bb359171a504b3d1c853409af3adbfa5cef374a4a59e5881945a97a93eae \
@@ -466,15 +466,15 @@ uvloop==0.15.2 \
     --hash=sha256:b45218c99795803fb8bdbc9435ff7f54e3a591b44cd4c121b02fa83affb61c7c \
     --hash=sha256:e5e5f855c9bf483ee6cd1eb9a179b740de80cb0ae2988e3fa22309b78e2ea0e7
     # via uvicorn
-watchdog-gevent==0.1 \
-    --hash=sha256:a9ef201bbbbaa1f87a6e4c164d55cd077cc9b4406b2f7444854d2bbde7a599de \
-    --hash=sha256:d19f1276a728dfb3ae3f1c8ada6e791f1726fd4336dff18b4ea35ed3ade35c6a
-    # via dramatiq
 watchdog==0.8.3 \
     --hash=sha256:7e65882adb7746039b6f3876ee174952f8eaaa34491ba34333ddf1fe35de4162
     # via
     #   dramatiq
     #   watchdog-gevent
+watchdog-gevent==0.1 \
+    --hash=sha256:a9ef201bbbbaa1f87a6e4c164d55cd077cc9b4406b2f7444854d2bbde7a599de \
+    --hash=sha256:d19f1276a728dfb3ae3f1c8ada6e791f1726fd4336dff18b4ea35ed3ade35c6a
+    # via dramatiq
 watchgod==0.7 \
     --hash=sha256:48140d62b0ebe9dd9cf8381337f06351e1f2e70b2203fa9c6eff4e572ca84f29 \
     --hash=sha256:d6c1ea21df37847ac0537ca0d6c2f4cdf513562e95f77bb93abbcf05573407b7
