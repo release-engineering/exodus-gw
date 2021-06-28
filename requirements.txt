@@ -4,11 +4,11 @@
 #
 #    pip-compile --generate-hashes --output-file=requirements.txt requirements.in
 #
-aioboto3==8.3.0 \
-    --hash=sha256:f019b151bf38ec4807b39ef0afd20bbaa694be529c7faa2e3a83cb083309d120
+aioboto3==9.0.0 \
+    --hash=sha256:b3cf9904dfa59f8556d85d31ae5e8293becadea4fc2732b68c85719f2a90015d
     # via -r requirements.in
-aiobotocore[boto3]==1.2.2 \
-    --hash=sha256:37c23166603a3bd134e5f6fc22dbbf8c274d4d24c71418fba292ed2cd7a0bf43
+aiobotocore[boto3]==1.3.1 \
+    --hash=sha256:8ecee55346651e0f4cbda883e3e16cfe11460b8d7adcc08d0017cbb867636ae1
     # via aioboto3
 aiohttp==3.7.4.post0 \
     --hash=sha256:02f46fc0e3c5ac58b80d4d56eb0a7c7d97fcef69ace9326289fb9f1955e65cfe \
@@ -77,13 +77,13 @@ backoff==1.10.0 \
     --hash=sha256:5e73e2cbe780e1915a204799dba0a01896f45f4385e636bcca7a0614d879d0cd \
     --hash=sha256:b8fba021fac74055ac05eb7c7bfce4723aedde6cd0a504e5326bcb0bdd6d19a4
     # via -r requirements.in
-boto3==1.16.52 \
-    --hash=sha256:360a9f805b11f2e468d48815193c55278765fb30b64350893ab63236a5034726 \
-    --hash=sha256:81c514185de8937ba75023a2466fae0cc6f170e6348fdac31c235c32ba9d58f3
+boto3==1.17.49 \
+    --hash=sha256:a482135c30fa07eaf4370314dd0fb49117222a266d0423b2075aed3835ed1f04 \
+    --hash=sha256:d5ef160442925f5944e4cde88589f0f195f6c284f05613114fc6bbc35e342fa7
     # via aiobotocore
-botocore==1.19.52 \
-    --hash=sha256:d8f50e4162012ccfab64c2db4fcc99313d46d57789072251bab56013d66546e2 \
-    --hash=sha256:dc5ec23deadbe9327d3c81d03fddf80805c549059baabd80dea605941fe6a221
+botocore==1.20.49 \
+    --hash=sha256:6a672ba41dd00e5c1c1824ca8143d180d88de8736d78c0b1f96b8d3cb0466561 \
+    --hash=sha256:f7f103fa0651c69dd360c7d0ecd874854303de5cc0869e0cbc2818a52baacc69
     # via
     #   aiobotocore
     #   boto3
@@ -466,15 +466,15 @@ uvloop==0.15.2 \
     --hash=sha256:b45218c99795803fb8bdbc9435ff7f54e3a591b44cd4c121b02fa83affb61c7c \
     --hash=sha256:e5e5f855c9bf483ee6cd1eb9a179b740de80cb0ae2988e3fa22309b78e2ea0e7
     # via uvicorn
-watchdog-gevent==0.1 \
-    --hash=sha256:a9ef201bbbbaa1f87a6e4c164d55cd077cc9b4406b2f7444854d2bbde7a599de \
-    --hash=sha256:d19f1276a728dfb3ae3f1c8ada6e791f1726fd4336dff18b4ea35ed3ade35c6a
-    # via dramatiq
 watchdog==0.8.3 \
     --hash=sha256:7e65882adb7746039b6f3876ee174952f8eaaa34491ba34333ddf1fe35de4162
     # via
     #   dramatiq
     #   watchdog-gevent
+watchdog-gevent==0.1 \
+    --hash=sha256:a9ef201bbbbaa1f87a6e4c164d55cd077cc9b4406b2f7444854d2bbde7a599de \
+    --hash=sha256:d19f1276a728dfb3ae3f1c8ada6e791f1726fd4336dff18b4ea35ed3ade35c6a
+    # via dramatiq
 watchgod==0.7 \
     --hash=sha256:48140d62b0ebe9dd9cf8381337f06351e1f2e70b2203fa9c6eff4e572ca84f29 \
     --hash=sha256:d6c1ea21df37847ac0537ca0d6c2f4cdf513562e95f77bb93abbcf05573407b7
