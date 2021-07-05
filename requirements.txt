@@ -104,9 +104,9 @@ dramatiq[watch]==1.11.0 \
     --hash=sha256:bb209d0d54e36e7c3f31862ca3f088752d9a3799a5a46d7979d6891326de5a14 \
     --hash=sha256:dea14f45d3fba339d5e6aadfe67f6b403b0c9464e2d2210a79fcf54a6ae763a8
     # via -r requirements.in
-fastapi==0.65.2 \
-    --hash=sha256:39569a18914075b2f1aaa03bcb9dc96a38e0e5dabaf3972e088c9077dfffa379 \
-    --hash=sha256:8359e55d8412a5571c0736013d90af235d6949ec4ce978e9b63500c8f4b6f714
+fastapi==0.66.0 \
+    --hash=sha256:6ea4225448786f3d6fae737713789f87631a7455f65580de0a4a2e50471060d9 \
+    --hash=sha256:85d8aee8c3c46171f4cb7bb3651425a42c07cb9183345d100ef55d88ca2ce15f
     # via -r requirements.in
 gevent==21.1.2 \
     --hash=sha256:16574e4aa902ebc7bad564e25aa9740a82620fdeb61e0bbf5cbc32e84c13cb6a \
