@@ -16,7 +16,11 @@ def get_long_description():
 
 def get_requirements():
     with open("requirements.in") as reqs:
-        return [line.split()[0] for line in reqs.read().splitlines()]
+        return [
+            line.split()[0]
+            for line in reqs.read().splitlines()
+            if not line.startswith("#")
+        ]
 
 
 setup(
