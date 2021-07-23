@@ -1,11 +1,22 @@
 repos:
+
 -   repo: https://github.com/ambv/black
-    rev: 20.8b1
+    rev: 21.6b0
     hooks:
     - id: black
-      language_version: python3.6
+
 -   repo: https://github.com/pycqa/isort/
     rev: 5.6.4
     hooks:
     - id: isort
-      language_version: python3.6
+
+-   repo: https://github.com/frnmst/md-toc
+    rev: 8.0.0
+    hooks:
+    - id: md-toc
+
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.1
+    hooks:
+    - id: end-of-file-fixer
+    - id: trailing-whitespace
