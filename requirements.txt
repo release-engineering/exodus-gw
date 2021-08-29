@@ -105,9 +105,9 @@ dramatiq[watch]==1.11.0 \
     --hash=sha256:bb209d0d54e36e7c3f31862ca3f088752d9a3799a5a46d7979d6891326de5a14 \
     --hash=sha256:dea14f45d3fba339d5e6aadfe67f6b403b0c9464e2d2210a79fcf54a6ae763a8
     # via -r requirements.in
-fastapi==0.68.0 \
-    --hash=sha256:c9256a89b0436223b45f53fe3a39b178f3da6be5841a2c59deedff4b676d003f \
-    --hash=sha256:f4dba2596b1e0a1f962834c3b9ec4291a7aec387a1031c6c2e25bf239d27fd0f
+fastapi==0.68.1 \
+    --hash=sha256:644bb815bae326575c4b2842469fb83053a4b974b82fa792ff9283d17fbbd99d \
+    --hash=sha256:94d2820906c36b9b8303796fb7271337ec89c74223229e3cfcf056b5a7d59e23
     # via -r requirements.in
 gevent==21.8.0 \
     --hash=sha256:02d1e8ca227d0ab0b7917fd7e411f9a534475e0a41fb6f434e9264b20155201a \
@@ -470,10 +470,10 @@ starlette==0.14.2 \
     --hash=sha256:3c8e48e52736b3161e34c9f0e8153b4f32ec5d8995a3ee1d59410d92f75162ed \
     --hash=sha256:7d49f4a27f8742262ef1470608c59ddbc66baf37c148e938c7038e6bc7a998aa
     # via fastapi
-typing-extensions==3.10.0.0 \
-    --hash=sha256:0ac0f89795dd19de6b97debb0c6af1c70987fd80a2d62d1958f7e56fcc31b497 \
-    --hash=sha256:50b6f157849174217d0656f99dc82fe932884fb250826c18350e159ec6cdf342 \
-    --hash=sha256:779383f6086d90c99ae41cf0ff39aac8a7937a9283ce0a414e5dd782f4c94a84
+typing-extensions==3.10.0.1 \
+    --hash=sha256:045dd532231acfa03628df5e0c66dba64e2cc8fc8b844538d4ad6d5dd6cb82dc \
+    --hash=sha256:83af6730a045fda60f46510f7f1f094776d90321caa4d97d20ef38871bef4bd3 \
+    --hash=sha256:8bbffbd37fbeb9747a0241fdfde5ae99d4531ad1d1a41ccaea62100e15a5814c
     # via
     #   aiohttp
     #   pydantic
