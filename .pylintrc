@@ -126,4 +126,6 @@ disable=print-statement,
         # Issues with subscript of typing.Union, typing.List
         unsubscriptable-object,
         # It's sometimes reasonable to handle any Exception without checking it
-        broad-except
+        broad-except,
+        # no immediate need to refactor every string
+        consider-using-f-string

@@ -43,43 +43,44 @@ def commit(publish_id: str, env: str, from_date: str):
         db.commit()
         return
 
-    items = []
-    last_items = []
+    if publish.items:
+        items = []
+        last_items = []
 
-    for item in publish.items:
-        if basename(item.web_uri) in settings.entry_point_files:
-            last_items.append(item)
-        else:
-            items.append(item)
+        for item in publish.items:
+            if basename(item.web_uri) in settings.entry_point_files:
+                last_items.append(item)
+            else:
+                items.append(item)
 
-    items_written = False
-    last_items_written = False
+        items_written = False
+        last_items_written = False
 
-    task.state = schemas.TaskStates.in_progress
-    db.commit()
+        task.state = schemas.TaskStates.in_progress
+        db.commit()
 
-    try:
-        if items:
-            items_written = write_batches(env, items, from_date)
+        try:
+            if items:
+                items_written = write_batches(env, items, from_date)
 
-        if items_written and last_items:
-            last_items_written = write_batches(env, last_items, from_date)
+            if items_written and last_items:
+                last_items_written = write_batches(env, last_items, from_date)
 
-        if not items_written or (last_items and not last_items_written):
-            items = items + last_items if last_items else items
-            write_batches(env, items, from_date, delete=True)
+            if not items_written or (last_items and not last_items_written):
+                items = items + last_items if last_items else items
+                write_batches(env, items, from_date, delete=True)
+
+                task.state = schemas.TaskStates.failed
+                publish.state = schemas.PublishStates.failed
+                db.commit()
+                return
+        except Exception:
+            LOG.exception("Task %s encountered an error", task.id)
 
             task.state = schemas.TaskStates.failed
             publish.state = schemas.PublishStates.failed
             db.commit()
             return
-    except Exception:
-        LOG.exception("Task %s encountered an error", task.id)
-
-        task.state = schemas.TaskStates.failed
-        publish.state = schemas.PublishStates.failed
-        db.commit()
-        return
 
     task.state = schemas.TaskStates.complete
     publish.state = schemas.PublishStates.committed
