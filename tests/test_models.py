@@ -8,6 +8,7 @@ def test_Item_init():
     item = Item(
         web_uri="/some/path",
         object_key="abcde",
+        link_to="",
         publish_id="123e4567-e89b-12d3-a456-426614174000",
     )
     assert item.web_uri == "/some/path"

@@ -89,6 +89,10 @@ def test_update_publish_items_typical(db, auth_header):
                     "web_uri": "/uri2",
                     "object_key": "2" * 64,
                 },
+                {
+                    "web_uri": "/uri3",
+                    "link_to": "/uri1",
+                },
             ],
             headers=auth_header(roles=["test-publisher"]),
         )
@@ -101,14 +105,19 @@ def test_update_publish_items_typical(db, auth_header):
 
     items = sorted(publish.items, key=lambda item: item.web_uri)
     item_dicts = [
-        {"web_uri": item.web_uri, "object_key": item.object_key}
+        {
+            "web_uri": item.web_uri,
+            "object_key": item.object_key,
+            "link_to": item.link_to,
+        }
         for item in items
     ]
 
     # Should have stored exactly what we asked for
     assert item_dicts == [
-        {"web_uri": "/uri1", "object_key": "1" * 64},
-        {"web_uri": "/uri2", "object_key": "2" * 64},
+        {"web_uri": "/uri1", "object_key": "1" * 64, "link_to": ""},
+        {"web_uri": "/uri2", "object_key": "2" * 64, "link_to": ""},
+        {"web_uri": "/uri3", "object_key": "", "link_to": "/uri1"},
     ]
 
 
@@ -143,12 +152,18 @@ def test_update_publish_items_single_item(db, auth_header):
     db.refresh(publish)
 
     item_dicts = [
-        {"web_uri": item.web_uri, "object_key": item.object_key}
+        {
+            "web_uri": item.web_uri,
+            "object_key": item.object_key,
+            "link_to": item.link_to,
+        }
         for item in publish.items
     ]
 
     # Should have stored exactly what we asked for
-    assert item_dicts == [{"web_uri": "/uri1", "object_key": "1" * 64}]
+    assert item_dicts == [
+        {"web_uri": "/uri1", "object_key": "1" * 64, "link_to": ""}
+    ]
 
 
 def test_update_pubish_items_invalid_publish(db, auth_header):
@@ -173,10 +188,6 @@ def test_update_pubish_items_invalid_publish(db, auth_header):
                     "web_uri": "/uri1",
                     "object_key": "1" * 64,
                 },
-                {
-                    "web_uri": "/uri2",
-                    "object_key": "2" * 64,
-                },
             ],
             headers=auth_header(roles=["test-publisher"]),
         )
@@ -185,6 +196,67 @@ def test_update_pubish_items_invalid_publish(db, auth_header):
     assert r.status_code == 409
     assert r.json() == {
         "detail": "Publish %s in unexpected state, 'COMPLETE'" % publish_id
+    }
+
+
+def test_update_publish_items_invalid_item(db, auth_header):
+    """PUTting an item without object_key or link_to fails with code 400."""
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(
+        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
+    )
+
+    with TestClient(app) as client:
+        # ensure a publish object exists
+        db.add(publish)
+        db.commit()
+
+        # Try to add an item to it
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json={
+                "web_uri": "/uri1",
+            },
+            headers=auth_header(roles=["test-publisher"]),
+        )
+
+    # It should have failed with 400
+    assert r.status_code == 400
+    assert r.json() == {"detail": "No object key or link target for '/uri1'"}
+
+
+def test_update_publish_items_invalid_link(db, auth_header):
+    """PUTting an item with a non-absolute link_to fails with code 400."""
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(
+        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
+    )
+
+    with TestClient(app) as client:
+        # ensure a publish object exists
+        db.add(publish)
+        db.commit()
+
+        # Try to add an item to it
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json=[
+                {
+                    "web_uri": "/uri2",
+                    "link_to": "/../../uri1",
+                },
+            ],
+            headers=auth_header(roles=["test-publisher"]),
+        )
+
+    # It should have failed with 400
+    assert r.status_code == 400
+    assert r.json() == {
+        "detail": "Link target is not an absolute path: '/../../uri1'"
     }
 
 

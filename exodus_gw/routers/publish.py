@@ -59,6 +59,7 @@ Publish objects should be treated as ephemeral; they are not persisted indefinit
 """
 
 import logging
+import os
 from datetime import datetime, timezone
 from typing import Dict, List, Union
 from uuid import UUID, uuid4
@@ -123,7 +124,7 @@ def publish(
     dependencies=[auth.needs_role("publisher")],
 )
 def update_publish_items(
-    items: Union[schemas.ItemBase, List[schemas.ItemBase]] = Body(
+    items: Union[List[schemas.ItemBase], schemas.ItemBase] = Body(
         ...,
         example=[
             {
@@ -133,6 +134,10 @@ def update_publish_items(
             {
                 "web_uri": "/my/slightly-less-awesome/other-file.iso",
                 "object_key": "c06545d4e1a1c8e221d47e7d568c035fb32c6b6124881fd0bc17983bd9088ae0",
+            },
+            {
+                "web_uri": "/another/route/to/my/awsome/file.iso",
+                "link_to": "/my/awesome/file.iso",
             },
         ],
     ),
@@ -172,7 +177,19 @@ def update_publish_items(
         items = [items]
 
     for item in items:
-        validate_object_key(item.object_key)
+        if not item.object_key and not item.link_to:
+            raise HTTPException(
+                status_code=400,
+                detail="No object key or link target for '%s'" % item.web_uri,
+            )
+        if item.object_key:
+            validate_object_key(item.object_key)
+        elif item.link_to != os.path.abspath(item.link_to):
+            raise HTTPException(
+                status_code=400,
+                detail="Link target is not an absolute path: '%s'"
+                % item.link_to,
+            )
 
         db.add(models.Item(**item.dict(), publish_id=db_publish.id))
 
