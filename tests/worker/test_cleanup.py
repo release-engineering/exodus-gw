@@ -66,8 +66,8 @@ def test_cleanup_mixed(caplog, db):
         state=PublishStates.pending,
         updated=eight_days_ago,
         items=[
-            Item(web_uri="/1", object_key="abc"),
-            Item(web_uri="/2", object_key="aabbcc"),
+            Item(web_uri="/1", object_key="abc", link_to=""),
+            Item(web_uri="/2", object_key="aabbcc", link_to=""),
         ],
     )
     p2_abandoned = Publish(
@@ -90,8 +90,8 @@ def test_cleanup_mixed(caplog, db):
         state=PublishStates.committed,
         updated=twenty_days_ago,
         items=[
-            Item(web_uri="/1", object_key="abc"),
-            Item(web_uri="/2", object_key="aabbcc"),
+            Item(web_uri="/1", object_key="abc", link_to=""),
+            Item(web_uri="/2", object_key="aabbcc", link_to=""),
         ],
     )
     p2_old = Publish(

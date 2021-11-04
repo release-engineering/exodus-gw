@@ -24,12 +24,13 @@ class ItemBase(BaseModel):
         description="URI, relative to CDN root, which shall be used to expose this object.",
     )
     object_key: str = Field(
-        ...,
+        "",
         description=(
             "Key of blob to be exposed; should be the SHA256 checksum of a previously uploaded "
             "piece of content, in lowercase hex-digest form."
         ),
     )
+    link_to: str = Field("", description="Path of file targeted by symlink.")
 
 
 class Item(ItemBase):

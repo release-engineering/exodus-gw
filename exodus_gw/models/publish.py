@@ -40,7 +40,8 @@ class Item(Base):
         default=uuid.uuid4,
     )
     web_uri = Column(String, nullable=False)
-    object_key = Column(String, nullable=False)
+    object_key = Column(String, nullable=True)
+    link_to = Column(String, nullable=True)
     publish_id = Column(
         UUID(as_uuid=True), ForeignKey("publishes.id"), nullable=False
     )
