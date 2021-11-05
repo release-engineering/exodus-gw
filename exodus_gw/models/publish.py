@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
+from fastapi import HTTPException
 from sqlalchemy import Column, DateTime, ForeignKey, String, event
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -23,6 +24,28 @@ class Publish(Base):
     items = relationship(
         "Item", back_populates="publish", cascade="all, delete-orphan"
     )
+
+    def resolve_links(self):
+        ok_items = []
+        ln_items = []
+        for item in self.items:
+            if item.object_key:
+                ok_items.append(item)
+            else:
+                ln_items.append(item)
+
+        for ln_item in ln_items:
+            matched = [i for i in ok_items if i.web_uri == ln_item.link_to]
+            if not matched:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        "Unable to resolve item object_key:"
+                        "\n\tURI: '%s'\n\tLink: '%s'"
+                    )
+                    % (ln_item.web_uri, ln_item.link_to),
+                )
+            ln_item.object_key = matched[0].object_key
 
 
 @event.listens_for(Publish, "before_update")
