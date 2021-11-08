@@ -35,7 +35,7 @@ class Publish(Base):
                 ln_items.append(item)
 
         for ln_item in ln_items:
-            ln_item.object_key = ok_items[ln_item.link_to]
+            ln_item.object_key = ok_items.get(ln_item.link_to)
             if not ln_item.object_key:
                 raise HTTPException(
                     status_code=400,
