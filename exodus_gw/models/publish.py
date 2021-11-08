@@ -30,7 +30,7 @@ class Publish(Base):
         ln_items = []
         for item in self.items:
             if item.object_key:
-                ok_items[item.web_uri] = [item.object_key]
+                ok_items[item.web_uri] = item.object_key
             else:
                 ln_items.append(item)
 
