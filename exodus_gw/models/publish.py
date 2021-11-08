@@ -26,17 +26,17 @@ class Publish(Base):
     )
 
     def resolve_links(self):
-        ok_items = []
+        ok_items = {}
         ln_items = []
         for item in self.items:
             if item.object_key:
-                ok_items.append(item)
+                ok_items[item.web_uri] = [item.object_key]
             else:
                 ln_items.append(item)
 
         for ln_item in ln_items:
-            matched = [i for i in ok_items if i.web_uri == ln_item.link_to]
-            if not matched:
+            ln_item.object_key = ok_items[ln_item.link_to]
+            if not ln_item.object_key:
                 raise HTTPException(
                     status_code=400,
                     detail=(
@@ -45,7 +45,6 @@ class Publish(Base):
                     )
                     % (ln_item.web_uri, ln_item.link_to),
                 )
-            ln_item.object_key = matched[0].object_key
 
 
 @event.listens_for(Publish, "before_update")
