@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from exodus_gw import routers, schemas
 from exodus_gw.main import app
-from exodus_gw.models import Publish, Task
+from exodus_gw.models import Item, Publish, Task
 from exodus_gw.settings import Environment, Settings, get_environment
 
 
@@ -308,6 +308,81 @@ def test_commit_publish_prev_completed(mock_commit, fake_publish, db):
     assert (
         exc_info.value.detail
         == "Publish %s in unexpected state, 'COMMITTED'" % fake_publish.id
+    )
+
+    mock_commit.assert_not_called()
+
+
+@mock.patch("exodus_gw.worker.commit")
+def test_commit_publish_linked_items(mock_commit, fake_publish, db):
+    """Ensure commit_publish correctly resolves links."""
+
+    # Add an item with link to an existing item.
+    ln_item = Item(
+        web_uri="/alternate/route/to/some/path",
+        object_key="",
+        link_to="/some/path",
+        publish_id=fake_publish.id,
+    )
+    fake_publish.items.append(ln_item)
+
+    db.add(fake_publish)
+    db.commit()
+
+    publish_task = routers.publish.commit_publish(
+        env=get_environment("test"),
+        publish_id=fake_publish.id,
+        db=db,
+        settings=Settings(),
+    )
+
+    # Should've filled item's object_key with known value.
+    assert ln_item.object_key == (
+        "0bacfc5268f9994065dd858ece3359fd7a99d82af5be84202b8e84c2a5b07ffa"
+    )
+    # Should've created and sent task.
+    assert isinstance(publish_task, Task)
+
+    mock_commit.assert_has_calls(
+        calls=[
+            mock.call.send(
+                publish_id="123e4567-e89b-12d3-a456-426614174000",
+                env="test",
+                from_date=mock.ANY,
+            )
+        ],
+    )
+
+
+@mock.patch("exodus_gw.worker.commit")
+def test_commit_publish_unresolved_links(mock_commit, fake_publish, db):
+    """Ensure commit_publish raises for unresolved links."""
+
+    # Add an item with link to a non-existent item.
+    ln_item = Item(
+        web_uri="/alternate/route/to/bad/path",
+        object_key="",
+        link_to="/bad/path",
+        publish_id=fake_publish.id,
+    )
+    fake_publish.items.append(ln_item)
+
+    db.add(fake_publish)
+    db.commit()
+
+    with pytest.raises(HTTPException) as exc_info:
+        routers.publish.commit_publish(
+            env=get_environment("test"),
+            publish_id=fake_publish.id,
+            db=db,
+            settings=Settings(),
+        )
+
+    assert exc_info.value.status_code == 400
+    assert (
+        exc_info.value.detail
+        == "Unable to resolve item object_key:\n\tURI: '%s'\n\tLink: '%s'"
+        % (ln_item.web_uri, ln_item.link_to)
     )
 
     mock_commit.assert_not_called()

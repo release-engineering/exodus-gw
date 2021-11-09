@@ -242,6 +242,8 @@ def commit_publish(
             % (db_publish.id, db_publish.state),
         )
 
+    db_publish.resolve_links()
+
     msg = worker.commit.send(
         publish_id=str(db_publish.id),
         env=env.name,
