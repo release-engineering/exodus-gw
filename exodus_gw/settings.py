@@ -8,11 +8,12 @@ from pydantic import BaseSettings
 
 
 class Environment(object):
-    def __init__(self, name, aws_profile, bucket, table):
+    def __init__(self, name, aws_profile, bucket, table, config_table):
         self.name = name
         self.aws_profile = aws_profile
         self.bucket = bucket
         self.table = table
+        self.config_table = config_table
 
 
 class MigrationMode(str, Enum):
@@ -178,12 +179,14 @@ def load_settings() -> Settings:
         aws_profile = config.get(env, "aws_profile", fallback=None)
         bucket = config.get(env, "bucket", fallback=None)
         table = config.get(env, "table", fallback=None)
+        config_table = config.get(env, "config_table", fallback=None)
         settings.environments.append(
             Environment(
                 name=env.replace("env.", ""),
                 aws_profile=aws_profile,
                 bucket=bucket,
                 table=table,
+                config_table=config_table,
             )
         )
 

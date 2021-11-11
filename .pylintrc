@@ -128,4 +128,6 @@ disable=print-statement,
         # It's sometimes reasonable to handle any Exception without checking it
         broad-except,
         # no immediate need to refactor every string
-        consider-using-f-string
+        consider-using-f-string,
+        # it's resonable to have more than five (5) arguments
+        too-many-arguments,

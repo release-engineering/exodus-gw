@@ -9,7 +9,7 @@ def assert_not_main_thread(message):
     It'll be included in the error message.
     """
 
-    thread = threading.currentThread()
+    thread = threading.current_thread()
     if thread != threading.main_thread():
         # OK, fine
         return

@@ -1,10 +1,13 @@
 import io
+import logging
 import re
 from typing import AnyStr
 from xml.etree.ElementTree import Element, ElementTree, SubElement
 
 from defusedxml.ElementTree import fromstring
 from fastapi import HTTPException, Response
+
+LOG = logging.getLogger("exodus-gw")
 
 
 def validate_object_key(key: str):
@@ -123,3 +126,39 @@ class RequestReader:
         # a helper to make tests easier to write.
         # tests can patch over this to effectively disable streaming.
         return cls(request)
+
+
+def uri_alias(uri, aliases):
+    # Resolve every alias between paths within the uri (e.g.
+    # allow RHUI paths to be aliased to non-RHUI).
+    #
+    # Aliases are expected to come from cdn-definitions.
+
+    new_uri = ""
+    remaining = aliases
+
+    # We do multiple passes here to ensure that nested aliases
+    # are resolved correctly, regardless of the order in which
+    # they're provided.
+    while remaining:
+        processed = []
+
+        for alias in remaining:
+            if uri.startswith(alias["src"] + "/") or uri == alias["src"]:
+                new_uri = uri.replace(alias["src"], alias["dest"], 1)
+                LOG.debug(
+                    "Resolved alias:\n\tsrc: %s\n\tdest: %s", uri, new_uri
+                )
+                uri = new_uri
+                processed.append(alias)
+
+        if not processed:
+            # We didn't resolve any alias, then we're done processing.
+            break
+
+        # We resolved at least one alias, so we need another round
+        # in case others apply now. But take out anything we've already
+        # processed, so it is not possible to recurse.
+        remaining = [r for r in remaining if r not in processed]
+
+    return uri
