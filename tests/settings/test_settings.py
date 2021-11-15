@@ -44,6 +44,7 @@ def test_load_settings_override(monkeypatch):
                 "aws_profile": "test",
                 "bucket": "my-bucket",
                 "table": "my-table",
+                "config_table": "my-config",
             },
         ),
         (
@@ -52,6 +53,7 @@ def test_load_settings_override(monkeypatch):
                 "aws_profile": "test2",
                 "bucket": "my-bucket2",
                 "table": "my-table2",
+                "config_table": "my-config2",
             },
         ),
         (
@@ -60,6 +62,7 @@ def test_load_settings_override(monkeypatch):
                 "aws_profile": "test3",
                 "bucket": "my-bucket3",
                 "table": "my-table3",
+                "config_table": "my-config3",
             },
         ),
         ("bad", None),
@@ -73,6 +76,7 @@ def test_get_environment(env, expected):
         assert env_obj.aws_profile == expected["aws_profile"]
         assert env_obj.bucket == expected["bucket"]
         assert env_obj.table == expected["table"]
+        assert env_obj.config_table == expected["config_table"]
 
     else:
         with pytest.raises(HTTPException) as exc_info:

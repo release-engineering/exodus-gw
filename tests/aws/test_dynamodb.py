@@ -5,6 +5,7 @@ import mock
 import pytest
 
 from exodus_gw.aws import dynamodb
+from exodus_gw.settings import get_environment
 
 NOW_UTC = str(datetime.now(timezone.utc))
 
@@ -92,14 +93,16 @@ NOW_UTC = str(datetime.now(timezone.utc))
 def test_batch_write(
     mock_boto3_client, fake_publish, delete, expected_request
 ):
+    env = get_environment("test")
+
     request = dynamodb.create_request(
-        "test", fake_publish.items, NOW_UTC, delete
+        env, fake_publish.items, NOW_UTC, delete=delete
     )
 
     # Represent successful write/delete of all items to the table.
     mock_boto3_client.batch_write_item.return_value = {"UnprocessedItems": {}}
 
-    dynamodb.batch_write("test", request)
+    dynamodb.batch_write(env, request)
 
     # Should've requested write of all items.
     mock_boto3_client.batch_write_item.assert_called_once_with(
@@ -109,10 +112,12 @@ def test_batch_write(
 
 def test_batch_write_item_limit(mock_boto3_client, fake_publish, caplog):
     items = fake_publish.items * 9
-    request = dynamodb.create_request("test", items, NOW_UTC)
+    env = get_environment("test")
+
+    request = dynamodb.create_request(env, items, NOW_UTC)
 
     with pytest.raises(ValueError) as exc_info:
-        dynamodb.batch_write("test", request)
+        dynamodb.batch_write(env, request)
 
     assert "Cannot process more than 25 items per request" in caplog.text
     assert str(exc_info.value) == "Request contains too many items (27)"
@@ -121,7 +126,11 @@ def test_batch_write_item_limit(mock_boto3_client, fake_publish, caplog):
 @pytest.mark.parametrize("delete", [False, True], ids=["Put", "Delete"])
 def test_write_batches(delete, mock_boto3_client, fake_publish, caplog):
     caplog.set_level(logging.INFO, logger="exodus-gw")
+
     mock_boto3_client.batch_write_item.return_value = {"UnprocessedItems": {}}
+    mock_boto3_client.query.return_value = {
+        "Items": [{"config": {"S": '{"origin_alias": []}'}}]
+    }
 
     expected_msg = "Items successfully %s" % "deleted" if delete else "written"
 

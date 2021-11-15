@@ -51,7 +51,13 @@ def test_publish_env_doesnt_exist(auth_header):
 
 def test_publish_links(mock_db_session):
     publish = routers.publish.publish(
-        env=Environment("test", "some-profile", "some-bucket", "some-table"),
+        env=Environment(
+            "test",
+            "some-profile",
+            "some-bucket",
+            "some-table",
+            "some-config-table",
+        ),
         db=mock_db_session,
     )
 

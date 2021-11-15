@@ -13,6 +13,26 @@ from exodus_gw import auth, database, main, models, schemas, settings  # noqa
 
 from .async_utils import BlockDetector
 
+BASE_QUERY_RESPONSE = {
+    "ConsumedCapacity": {
+        "CapacityUnits": 1,
+        "GlobalSecondaryIndexes": {},
+        "LocalSecondaryIndexes": {},
+        "ReadCapacityUnits": 0,
+        "Table": {
+            "CapacityUnits": 0,
+            "ReadCapacityUnits": 0,
+            "WriteCapacityUnits": 0,
+        },
+        "TableName": "my-table",
+        "WriteCapacityUnits": 0,
+    },
+    "Count": 0,
+    "Items": [],
+    "LastEvaluatedKey": {},
+    "ScannedCount": 0,
+}
+
 
 @pytest.fixture(autouse=True)
 def mock_aws_client():
@@ -29,6 +49,7 @@ def mock_aws_client():
 def mock_boto3_client():
     with mock.patch("boto3.session.Session") as mock_session:
         client = mock.MagicMock()
+        client.query.return_value = BASE_QUERY_RESPONSE
         client.__enter__.return_value = client
         mock_session().client.return_value = client
         yield client
