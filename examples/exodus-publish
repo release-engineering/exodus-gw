@@ -1,0 +1,277 @@
+#!/usr/bin/env python3
+#
+# Commands to explicitly manage a publish object in exodus-gw.
+#
+# Example:
+#
+#  # Start a publish and put the ID into $PUBLISH
+#  $ PUBLISH=$(examples/exodus-publish --url https://exodus-gw.example.com/ --env qa new)
+#
+#  # Do whatever here to add items onto the publish, e.g.
+#  # using exodus-rsync or other tools
+#  $ exodus-rsync --exodus-publish=$PUBLISH src exodus:/dest ...
+#
+#  # Once done, commit it.
+#  # The script remembers the last created publish automatically, so you can
+#  # simply write 'commit'.
+#  $ examples/exodus-publish commit
+#
+
+import argparse
+import json
+import logging
+import os
+import sys
+import time
+from collections import namedtuple
+from urllib.parse import urljoin
+
+import requests
+
+LOG = logging.getLogger("exodus-publish")
+
+DEFAULT_URL = "https://localhost:8010"
+
+# A file at which we persist state, so that 'commit' can automatically commit
+# the last created publish.
+STATE_PATH = os.path.expandvars("${HOME}/.config/exodus-publish")
+
+# Subset of arguments relating to exodus-gw that we'll include in persisted state
+GwArgs = namedtuple("GwArgs", ["cert", "key", "url"])
+
+
+def clear():
+    """Remove any persisted state."""
+    if os.path.exists(STATE_PATH):
+        os.unlink(STATE_PATH)
+
+
+def save(state: dict):
+    """Persist 'state' as the current state."""
+    with open(STATE_PATH, "wt") as f:
+        json.dump(state, f)
+
+
+def load() -> dict:
+    """Load and return the most recently persisted state, or an empty dict."""
+    if not os.path.exists(STATE_PATH):
+        return {}
+    with open(STATE_PATH, "rt") as f:
+        return json.load(f)
+
+
+def assert_success(response: requests.Response):
+    """Raise if 'response' was not successful.
+
+    This is the same as response.raise_for_status(), merely wrapping it
+    to ensure the body is logged when possible."""
+
+    try:
+        response.raise_for_status()
+    except Exception as outer:
+        try:
+            body = response.json()
+        except:
+            raise outer
+
+        LOG.error("Unsuccessful response from exodus-gw: %s", body)
+        raise
+
+
+def new_requests_session(args: GwArgs) -> requests.Session:
+    """Get a new session appropriate for requests to exodus-gw."""
+    session = requests.Session()
+    if args.cert:
+        session.cert = (args.cert, args.key)
+    return session
+
+
+def new_publish(args):
+    """Implements the 'new' command, creating a new publish."""
+    state = load()
+
+    if state.get("publish"):
+        publish_id = state["publish"]["id"]
+        if args.force:
+            LOG.warning("Discarding existing publish %s", publish_id)
+        else:
+            LOG.error(
+                "Refusing to create new publish as %s already exists (use --force to override)",
+                publish_id,
+            )
+            sys.exit(4)
+
+    session = new_requests_session(args)
+
+    r = session.post(os.path.join(args.url, args.env, "publish"))
+    assert_success(r)
+    publish = r.json()
+
+    # The publish, along with arguments used to create it, are now saved.
+    # This allows 'commit' to work with this publish without having to
+    # explicitly be told the publish ID, exodus-gw URL etc.
+    save(
+        {
+            "publish": publish,
+            "url": args.url,
+            "cert": args.cert,
+            "key": args.key,
+            "env": args.env,
+        }
+    )
+
+    # Do a bare print of the publish id.
+    #
+    # This is done via print and not logger so that it can be used
+    # programmatically from a shell, e.g. PUBLISH=$(exodus-publish new ...)
+    print(publish["id"])
+
+
+def find_publish(state, args) -> dict:
+    """Given previously persisted state, and command-line arguments,
+    returns the publish object we should operate on (or exits if this
+    can't be determined).
+    """
+    if args.publish_id:
+        if not args.env:
+            LOG.error("Must provide --env when using --publish-id")
+            sys.exit(12)
+        return {
+            "id": args.publish_id,
+            "links": {
+                "commit": f"/{args.env}/publish/{args.publish_id}/commit",
+                "self": f"/{args.env}/publish/{args.publish_id}",
+            },
+        }
+
+    if state.get("publish"):
+        return state["publish"]
+
+    LOG.error(
+        (
+            "Don't know which publish to commit! "
+            "Either start a new publish with 'new', or specify a publish "
+            "using '--publish-id'."
+        )
+    )
+    sys.exit(11)
+
+
+def find_gw(state, args) -> GwArgs:
+    """Given previously persisted state, and command-line arguments,
+    returns GwArgs for the exodus-gw environment we should use (or
+    exits if this can't be determined).
+    """
+    if args.url != DEFAULT_URL:
+        return GwArgs(cert=args.cert, key=args.key, url=args.url)
+
+    if state.get("url"):
+        return GwArgs(cert=state["cert"], key=state["key"], url=state["url"])
+
+    LOG.error(("'--url' option must be provided"))
+    sys.exit(18)
+
+
+def commit_publish(args):
+    """Implements the 'commit' command, committing a publish."""
+
+    # We might use a publish object previously saved, or an object requested
+    # by command-line arguments, depending what's in 'state' and 'args'.
+    state = load()
+    publish = find_publish(state, args)
+    gw = find_gw(state, args)
+
+    session = new_requests_session(gw)
+
+    LOG.info("Committing publish %s on %s ...", publish["id"], gw.url)
+
+    commit_url = urljoin(gw.url, publish["links"]["commit"])
+    r = session.post(commit_url)
+    assert_success(r)
+
+    # We have a publish task, now wait for it to complete.
+    task = r.json()
+
+    task_id = task["id"]
+    task_url = urljoin(gw.url, task["links"]["self"])
+    task_state = task["state"]
+
+    while task_state not in ["COMPLETE", "FAILED"]:
+        LOG.info("Task %s: %s", task_id, task_state)
+        time.sleep(5)
+
+        r = session.get(task_url)
+        assert_success(r)
+
+        task = r.json()
+        task_state = task["state"]
+
+    LOG.info("Task %s: %s", task_id, task_state)
+
+    # Whether it worked or not, we're done with that publish now, so clear
+    # any persisted state.
+    clear()
+
+    if task_state == "COMPLETE":
+        LOG.info("Publish successfully committed at %s", task["updated"])
+    else:
+        LOG.error("Publish task failed!")
+        sys.exit(38)
+
+
+def no_command(_):
+    """Fallback used to give an error message when no subcommand is provided."""
+    LOG.error("A subcommand must be specified (try --help)")
+    sys.exit(30)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--debug", action="store_true", help="Enable verbose logging"
+    )
+    parser.set_defaults(func=no_command)
+
+    gw = parser.add_argument_group("exodus-gw settings")
+
+    gw.add_argument(
+        "--cert",
+        default=os.path.expandvars("${HOME}/certs/${USER}.crt"),
+        help="Certificate for HTTPS authentication with exodus-gw (must match --key)",
+    )
+    gw.add_argument(
+        "--key",
+        default=os.path.expandvars("${HOME}/certs/${USER}.key"),
+        help="Private key for HTTPS authentication with exodus-gw (must match --cert)",
+    )
+    gw.add_argument("--url", default=DEFAULT_URL)
+    gw.add_argument("--env", default="test")
+
+    subparsers = parser.add_subparsers()
+
+    new_parser = subparsers.add_parser("new", help="create a new publish")
+    new_parser.set_defaults(func=new_publish)
+    new_parser.add_argument(
+        "--force", action="store_true", help="Force creation of new publish"
+    )
+
+    commit_parser = subparsers.add_parser("commit", help="commit publish")
+    commit_parser.set_defaults(func=commit_publish)
+    commit_parser.add_argument(
+        "--publish-id",
+        help="Commit this publish; if omitted, commits the previously created publish",
+    )
+
+    args = parser.parse_args()
+
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.WARN, format="%(message)s")
+        LOG.setLevel(logging.INFO)
+
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()
