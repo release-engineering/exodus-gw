@@ -4,34 +4,16 @@ import os
 import uuid
 from typing import List
 
+import dramatiq
 import mock
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm.session import Session
 
-from exodus_gw import auth, database, main, models, schemas, settings  # noqa
+from exodus_gw import database, main, models, settings  # noqa
+from exodus_gw.dramatiq import Broker
 
 from .async_utils import BlockDetector
-
-BASE_QUERY_RESPONSE = {
-    "ConsumedCapacity": {
-        "CapacityUnits": 1,
-        "GlobalSecondaryIndexes": {},
-        "LocalSecondaryIndexes": {},
-        "ReadCapacityUnits": 0,
-        "Table": {
-            "CapacityUnits": 0,
-            "ReadCapacityUnits": 0,
-            "WriteCapacityUnits": 0,
-        },
-        "TableName": "my-table",
-        "WriteCapacityUnits": 0,
-    },
-    "Count": 0,
-    "Items": [],
-    "LastEvaluatedKey": {},
-    "ScannedCount": 0,
-}
 
 
 @pytest.fixture(autouse=True)
@@ -49,7 +31,25 @@ def mock_aws_client():
 def mock_boto3_client():
     with mock.patch("boto3.session.Session") as mock_session:
         client = mock.MagicMock()
-        client.query.return_value = BASE_QUERY_RESPONSE
+        client.query.return_value = {
+            "ConsumedCapacity": {
+                "CapacityUnits": 0,
+                "GlobalSecondaryIndexes": {},
+                "LocalSecondaryIndexes": {},
+                "ReadCapacityUnits": 0,
+                "Table": {
+                    "CapacityUnits": 0,
+                    "ReadCapacityUnits": 0,
+                    "WriteCapacityUnits": 0,
+                },
+                "TableName": "my-table",
+                "WriteCapacityUnits": 0,
+            },
+            "Count": 0,
+            "Items": [],
+            "LastEvaluatedKey": {},
+            "ScannedCount": 0,
+        }
         client.__enter__.return_value = client
         mock_session().client.return_value = client
         yield client
@@ -92,6 +92,41 @@ def sqlite_in_tests(monkeypatch):
         "EXODUS_GW_DB_URL", "sqlite:///%s?check_same_thread=false" % filename
     )
     yield
+
+
+@pytest.fixture(autouse=True)
+def sqlite_broker_in_tests(sqlite_in_tests):
+    """Reset dramatiq broker to a new instance pointing at sqlite DB for duration of
+    tests.
+    This is required because the dramatiq design is such that a broker needs to be
+    installed at import-time, and actors declared using the decorator will be pointing
+    at that broker. Since that happens too early for us to set up our test fixtures,
+    we need to reinstall another broker pointing at our sqlite DB after we've set
+    that up.
+    """
+
+    old_broker = dramatiq.get_broker()
+
+    new_broker = Broker()
+    dramatiq.set_broker(new_broker)
+
+    # All actors are currently pointing at old_broker which is not using sqlite.
+    # This will break a call to .send() on those actors.
+    # Point them towards new_broker instead which will allow them to work.
+    actors = []
+    for actor in old_broker.actors.values():
+        actors.append(actor)
+        actor.broker = new_broker
+        new_broker.declare_actor(actor)
+
+    # Everything now points at the sqlite-enabled broker, so proceed with test
+    yield
+
+    # Now roll back our changes
+    for actor in actors:
+        actor.broker = old_broker
+
+    dramatiq.set_broker(old_broker)
 
 
 @pytest.fixture()
@@ -182,3 +217,32 @@ def auth_header():
         return {"X-RhApiPlatform-CallContext": b64_context.decode("utf-8")}
 
     return _auth_header
+
+
+@pytest.fixture
+def fake_config():
+    return {
+        "listing": {
+            "/content/dist/rhel/server": {
+                "values": ["8"],
+                "var": "releasever",
+            },
+            "/content/dist/rhel/server/8": {
+                "values": ["x86_64"],
+                "var": "basearch",
+            },
+        },
+        "origin_alias": [
+            {"src": "/content/origin", "dest": "/origin"},
+            {"src": "/origin/rpm", "dest": "/origin/rpms"},
+        ],
+        "releasever_alias": [
+            {
+                "dest": "/content/dist/rhel8/8.5",
+                "src": "/content/dist/rhel8/8",
+            },
+        ],
+        "rhui_alias": [
+            {"dest": "/content/dist/rhel8", "src": "/content/dist/rhel8/rhui"},
+        ],
+    }

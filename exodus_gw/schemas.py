@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 from os.path import join
-from typing import Dict, List
+from typing import Dict, List, Optional
 from uuid import UUID
 
 from fastapi import Path
@@ -100,7 +100,7 @@ class TaskStates(str, Enum):
 
 class Task(BaseModel):
     id: UUID = Field(..., description="Unique ID of task object.")
-    publish_id: UUID = Field(
+    publish_id: Optional[UUID] = Field(
         ..., description="Unique ID of publish object handled by this task."
     )
     state: TaskStates = Field(..., description="Current state of this task.")

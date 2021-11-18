@@ -116,6 +116,13 @@ class Settings(BaseSettings):
     ]
     """List of file names that should be saved for last when publishing."""
 
+    config_cache_ttl: int = 2
+    """Time (in minutes) config is expected to live in components that consume it.
+
+    Determines the delay for deployment task completion to allow for
+    existing caches to expire and the newly deployed config to take effect.
+    """
+
     worker_keepalive_timeout: int = 60 * 5
     """Background worker keepalive timeout, in seconds. If a worker fails to update its
     status within this time period, it is assumed dead.

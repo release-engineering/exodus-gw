@@ -29,7 +29,7 @@ def batch_write(env_obj: Environment, request: Dict[str, Any]):
     Item limit of 25 is, at this time, imposed by AWS's boto3 library.
     """
 
-    item_count = len(request[env_obj.table])
+    item_count = len(request.get(env_obj.table, []))
 
     if item_count > 25:
         LOG.error("Cannot process more than 25 items per request")

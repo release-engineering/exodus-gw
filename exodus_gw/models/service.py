@@ -11,7 +11,7 @@ class Task(Base):
     __tablename__ = "tasks"
 
     id = Column(UUID(as_uuid=True), primary_key=True)
-    publish_id = Column(UUID(as_uuid=True), nullable=False)
+    publish_id = Column(UUID(as_uuid=True))
     state = Column(String, nullable=False)
     updated = Column(DateTime(timezone=True))
 
