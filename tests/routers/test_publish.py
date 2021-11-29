@@ -172,7 +172,7 @@ def test_update_publish_items_single_item(db, auth_header):
     ]
 
 
-def test_update_pubish_items_invalid_publish(db, auth_header):
+def test_update_publish_items_invalid_publish(db, auth_header):
     """PUTting items on a completed publish fails with code 409."""
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
