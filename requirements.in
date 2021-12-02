@@ -6,6 +6,7 @@ uvicorn[standard]
 gunicorn
 psycopg2
 sqlalchemy
+jsonschema
 alembic
 backoff
 dramatiq[watch]
@@ -13,3 +14,6 @@ pycron
 # Needed to get compatible idna between requirements.txt and test-requirements.txt,
 # consider removing when 'requests' no longer requires <3
 idna<3
+# Required by alembic but not resolved by pip-compile.
+importlib-metadata
+importlib-resources
