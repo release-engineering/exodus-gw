@@ -1,11 +1,13 @@
 from datetime import datetime
 from enum import Enum
-from os.path import join
+from os.path import abspath, join, normpath
 from typing import Dict, List, Optional
 from uuid import UUID
 
 from fastapi import Path
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, Field, root_validator, validator
+
+from .aws.util import validate_object_key
 
 PathPublishId = Path(
     ...,
@@ -16,6 +18,13 @@ PathPublishId = Path(
 PathTaskId = Path(
     ..., title="task ID", description="UUID of an existing task object."
 )
+
+
+def normalize_path(path: str):
+    if path:
+        path = normpath(path)
+        path = "/" + path if not path.startswith("/") else path
+    return path
 
 
 class ItemBase(BaseModel):
@@ -31,6 +40,38 @@ class ItemBase(BaseModel):
         ),
     )
     link_to: str = Field("", description="Path of file targeted by symlink.")
+
+    _normalize_web_uri = validator("web_uri", allow_reuse=True)(normalize_path)
+    _normalize_link_to = validator("link_to", allow_reuse=True)(normalize_path)
+
+    @validator("link_to", pre=True)
+    @classmethod
+    def absolute_link_to(cls, v):
+        if v != abspath(v):
+            raise ValueError("Link target is not an absolute path: %s" % v)
+        return v
+
+    @validator("object_key")
+    @classmethod
+    def validate_object_key(cls, v):
+        validate_object_key(v)
+        return v
+
+    @root_validator(pre=True)
+    @classmethod
+    def ensure_web_uri(cls, values):
+        if not values.get("web_uri"):
+            raise ValueError("No URI specified for item:\n\t%s" % values)
+        return values
+
+    @root_validator(pre=True)
+    @classmethod
+    def ensure_path(cls, values):
+        if "object_key" not in values and "link_to" not in values:
+            raise ValueError(
+                "No object key or link target for '%s'" % values.get("web_uri")
+            )
+        return values
 
 
 class Item(ItemBase):
