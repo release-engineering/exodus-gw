@@ -80,7 +80,8 @@ def test_deploy_config(
     assert body["kwargs"]["task_id"] == str(t.id)
 
     # And actor call should have been delayed by this long.
-    assert (body["options"]["eta"] - body["message_timestamp"]) == 120000
+    delay = body["options"]["eta"] - body["message_timestamp"]
+    assert abs(delay - 120000) < 1000
 
 
 @mock.patch("exodus_gw.worker.deploy.CurrentMessage.get_current_message")
