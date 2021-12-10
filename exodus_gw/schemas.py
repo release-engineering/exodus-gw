@@ -1,13 +1,12 @@
+import re
 from datetime import datetime
 from enum import Enum
-from os.path import abspath, join, normpath
+from os.path import join, normpath
 from typing import Dict, List, Optional
 from uuid import UUID
 
 from fastapi import Path
-from pydantic import BaseModel, Field, root_validator, validator
-
-from .aws.util import validate_object_key
+from pydantic import BaseModel, Field, root_validator
 
 PathPublishId = Path(
     ...,
@@ -41,36 +40,33 @@ class ItemBase(BaseModel):
     )
     link_to: str = Field("", description="Path of file targeted by symlink.")
 
-    _normalize_web_uri = validator("web_uri", allow_reuse=True)(normalize_path)
-    _normalize_link_to = validator("link_to", allow_reuse=True)(normalize_path)
-
-    @validator("link_to", pre=True)
+    @root_validator()
     @classmethod
-    def absolute_link_to(cls, v):
-        if v != abspath(v):
-            raise ValueError("Link target is not an absolute path: %s" % v)
-        return v
+    def validate_item(cls, values):
+        web_uri = values.get("web_uri")
+        object_key = values.get("object_key")
+        link_to = values.get("link_to")
 
-    @validator("object_key")
-    @classmethod
-    def validate_object_key(cls, v):
-        validate_object_key(v)
-        return v
+        if not web_uri:
+            raise ValueError("No URI: %s" % values)
+        values["web_uri"] = normalize_path(web_uri)
 
-    @root_validator(pre=True)
-    @classmethod
-    def ensure_web_uri(cls, values):
-        if not values.get("web_uri"):
-            raise ValueError("No URI specified for item:\n\t%s" % values)
-        return values
-
-    @root_validator(pre=True)
-    @classmethod
-    def ensure_path(cls, values):
-        if "object_key" not in values and "link_to" not in values:
+        if link_to and object_key:
             raise ValueError(
-                "No object key or link target for '%s'" % values.get("web_uri")
+                "Both link target and object key present: %s" % values
             )
+
+        if link_to:
+            values["link_to"] = normalize_path(link_to)
+        elif object_key:
+            pattern = re.compile(r"[0-9a-f]{64}")
+            if not re.match(pattern, object_key):
+                raise ValueError(
+                    "Invalid object key; must be sha256sum: %s" % values
+                )
+        else:
+            raise ValueError("No object key or link target: %s" % values)
+
         return values
 
 
