@@ -79,7 +79,7 @@ def test_update_publish_items_typical(db, auth_header):
     )
 
     with TestClient(app) as client:
-        # ensure a publish object exists
+        # Ensure a publish object exists
         db.add(publish)
         db.commit()
 
@@ -106,7 +106,7 @@ def test_update_publish_items_typical(db, auth_header):
     # It should have succeeded
     assert r.ok
 
-    # publish object should now have matching items
+    # Publish object should now have matching items
     db.refresh(publish)
 
     items = sorted(publish.items, key=lambda item: item.web_uri)
@@ -127,8 +127,8 @@ def test_update_publish_items_typical(db, auth_header):
     ]
 
 
-def test_update_publish_items_single_item(db, auth_header):
-    """PUTting a single item on a publish creates expected object in DB."""
+def test_update_publish_items_path_normalization(db, auth_header):
+    """URI and link target paths are normalized in PUT items."""
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
 
@@ -137,24 +137,24 @@ def test_update_publish_items_single_item(db, auth_header):
     )
 
     with TestClient(app) as client:
-        # ensure a publish object exists
+        # Ensure a publish object exists
         db.add(publish)
         db.commit()
 
-        # Try to add an item to it
+        # Add an item to it with some messy paths
         r = client.put(
             "/test/publish/%s" % publish_id,
-            json={
-                "web_uri": "/uri1",
-                "object_key": "1" * 64,
-            },
+            json=[
+                {"web_uri": "some/path", "object_key": "1" * 64},
+                {"web_uri": "link/to/some/path", "link_to": "/some/path"},
+            ],
             headers=auth_header(roles=["test-publisher"]),
         )
 
     # It should have succeeded
     assert r.ok
 
-    # publish object should now have a matching item
+    # Publish object should now have matching items
     db.refresh(publish)
 
     item_dicts = [
@@ -166,9 +166,14 @@ def test_update_publish_items_single_item(db, auth_header):
         for item in publish.items
     ]
 
-    # Should have stored exactly what we asked for
+    # Should have stored normalized web_uri and link_to paths
     assert item_dicts == [
-        {"web_uri": "/uri1", "object_key": "1" * 64, "link_to": ""}
+        {"web_uri": "/some/path", "object_key": "1" * 64, "link_to": ""},
+        {
+            "web_uri": "/link/to/some/path",
+            "object_key": "",
+            "link_to": "/some/path",
+        },
     ]
 
 
@@ -205,8 +210,8 @@ def test_update_publish_items_invalid_publish(db, auth_header):
     }
 
 
-def test_update_publish_items_invalid_item(db, auth_header):
-    """PUTting an item without object_key or link_to fails with code 400."""
+def test_update_publish_items_no_uri(db, auth_header):
+    """PUTting an item with no web_uri fails validation."""
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
 
@@ -222,19 +227,50 @@ def test_update_publish_items_invalid_item(db, auth_header):
         # Try to add an item to it
         r = client.put(
             "/test/publish/%s" % publish_id,
-            json={
-                "web_uri": "/uri1",
-            },
+            json=[
+                {
+                    "web_uri": "",
+                    "link_to": "/uri1",
+                },
+            ],
             headers=auth_header(roles=["test-publisher"]),
         )
 
     # It should have failed with 400
     assert r.status_code == 400
-    assert r.json() == {"detail": "No object key or link target for '/uri1'"}
+    assert r.json()["detail"] == [
+        "No URI specified for item:\n\t{'web_uri': '', 'link_to': '/uri1'}"
+    ]
+
+
+def test_update_publish_items_invalid_item(db, auth_header):
+    """PUTting an item without object_key or link_to fails validation."""
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(
+        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
+    )
+
+    with TestClient(app) as client:
+        # ensure a publish object exists
+        db.add(publish)
+        db.commit()
+
+        # Try to add an item to it
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json=[{"web_uri": "/uri1"}],
+            headers=auth_header(roles=["test-publisher"]),
+        )
+
+    # It should have failed with 400
+    assert r.status_code == 400
+    assert r.json()["detail"] == ["No object key or link target for '/uri1'"]
 
 
 def test_update_publish_items_invalid_link(db, auth_header):
-    """PUTting an item with a non-absolute link_to fails with code 400."""
+    """PUTting an item with a non-absolute link_to fails validation."""
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
 
@@ -261,9 +297,9 @@ def test_update_publish_items_invalid_link(db, auth_header):
 
     # It should have failed with 400
     assert r.status_code == 400
-    assert r.json() == {
-        "detail": "Link target is not an absolute path: '/../../uri1'"
-    }
+    assert r.json()["detail"] == [
+        "Link target is not an absolute path: /../../uri1"
+    ]
 
 
 @mock.patch("exodus_gw.worker.commit")

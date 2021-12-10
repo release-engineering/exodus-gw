@@ -61,6 +61,8 @@ import logging.config
 import dramatiq
 from fastapi import FastAPI, Request
 from fastapi.exception_handlers import http_exception_handler
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -87,6 +89,14 @@ app.include_router(service.router)
 app.include_router(upload.router)
 app.include_router(publish.router)
 app.include_router(deploy.router)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    # When validating requests, multiple violations are possible.
+    # Let's return them all to expedite troubleshooting.
+    msgs = [e["msg"] for e in exc.errors()]
+    return JSONResponse(status_code=400, content={"detail": msgs})
 
 
 @app.exception_handler(StarletteHTTPException)

@@ -59,16 +59,14 @@ Publish objects should be treated as ephemeral; they are not persisted indefinit
 """
 
 import logging
-import os
 from datetime import datetime, timezone
-from typing import Dict, List, Union
+from typing import Dict, List
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Body, HTTPException
 from sqlalchemy.orm import Session
 
 from .. import auth, deps, models, schemas, worker
-from ..aws.util import validate_object_key
 from ..settings import Environment, Settings
 
 LOG = logging.getLogger("exodus-gw")
@@ -124,7 +122,7 @@ def publish(
     dependencies=[auth.needs_role("publisher")],
 )
 def update_publish_items(
-    items: Union[List[schemas.ItemBase], schemas.ItemBase] = Body(
+    items: List[schemas.ItemBase] = Body(
         ...,
         example=[
             {
@@ -172,25 +170,7 @@ def update_publish_items(
             % (db_publish.id, db_publish.state),
         )
 
-    # Coerce single items to list.
-    if not isinstance(items, list):
-        items = [items]
-
     for item in items:
-        if not item.object_key and not item.link_to:
-            raise HTTPException(
-                status_code=400,
-                detail="No object key or link target for '%s'" % item.web_uri,
-            )
-        if item.object_key:
-            validate_object_key(item.object_key)
-        elif item.link_to != os.path.abspath(item.link_to):
-            raise HTTPException(
-                status_code=400,
-                detail="Link target is not an absolute path: '%s'"
-                % item.link_to,
-            )
-
         db.add(models.Item(**item.dict(), publish_id=db_publish.id))
 
     return {}
