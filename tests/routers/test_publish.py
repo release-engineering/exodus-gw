@@ -236,11 +236,11 @@ def test_update_publish_items_no_uri(db, auth_header):
             headers=auth_header(roles=["test-publisher"]),
         )
 
+    expected_item = {"web_uri": "", "object_key": "", "link_to": "/uri1"}
+
     # It should have failed with 400
     assert r.status_code == 400
-    assert r.json()["detail"] == [
-        "No URI specified for item:\n\t{'web_uri': '', 'link_to': '/uri1'}"
-    ]
+    assert r.json() == {"detail": ["No URI: %s" % expected_item]}
 
 
 def test_update_publish_items_invalid_item(db, auth_header):
@@ -264,12 +264,16 @@ def test_update_publish_items_invalid_item(db, auth_header):
             headers=auth_header(roles=["test-publisher"]),
         )
 
+    expected_item = {"web_uri": "/uri1", "object_key": "", "link_to": ""}
+
     # It should have failed with 400
     assert r.status_code == 400
-    assert r.json()["detail"] == ["No object key or link target for '/uri1'"]
+    assert r.json() == {
+        "detail": ["No object key or link target: %s" % expected_item]
+    }
 
 
-def test_update_publish_items_invalid_link(db, auth_header):
+def test_update_publish_items_link_and_key(db, auth_header):
     """PUTting an item with a non-absolute link_to fails validation."""
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
@@ -289,17 +293,65 @@ def test_update_publish_items_invalid_link(db, auth_header):
             json=[
                 {
                     "web_uri": "/uri2",
-                    "link_to": "/../../uri1",
+                    "object_key": "1" * 64,
+                    "link_to": "/uri1",
                 },
             ],
             headers=auth_header(roles=["test-publisher"]),
         )
 
+    expected_item = {
+        "web_uri": "/uri2",
+        "object_key": "1" * 64,
+        "link_to": "/uri1",
+    }
+
     # It should have failed with 400
     assert r.status_code == 400
-    assert r.json()["detail"] == [
-        "Link target is not an absolute path: /../../uri1"
-    ]
+    assert r.json() == {
+        "detail": [
+            "Both link target and object key present: %s" % expected_item
+        ]
+    }
+
+
+def test_update_publish_items_invalid_object_key(db, auth_header):
+    """PUTting an item with an non-sha256sum object_key fails validation."""
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(
+        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
+    )
+
+    with TestClient(app) as client:
+        # ensure a publish object exists
+        db.add(publish)
+        db.commit()
+
+        # Try to add an item to it
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json=[
+                {
+                    "web_uri": "/uri2",
+                    "object_key": "somethingshyof64_with!non-alphanum$",
+                },
+            ],
+            headers=auth_header(roles=["test-publisher"]),
+        )
+
+    expected_item = {
+        "web_uri": "/uri2",
+        "object_key": "somethingshyof64_with!non-alphanum$",
+        "link_to": "",
+    }
+
+    # It should have failed with 400
+    assert r.status_code == 400
+    assert r.json() == {
+        "detail": ["Invalid object key; must be sha256sum: %s" % expected_item]
+    }
 
 
 @mock.patch("exodus_gw.worker.commit")
