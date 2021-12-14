@@ -1,0 +1,137 @@
+#!/usr/bin/env python3
+
+import argparse
+import logging
+import os
+from urllib.parse import urljoin
+
+import backoff
+import exodus_config
+import requests
+from cdsutils import EngProductProxy
+
+
+def new_requests_session(args):
+    session = requests.Session()
+    if args.cert:
+        session.cert = (args.cert, args.key)
+    return session
+
+def check_service(args):
+    session = new_requests_session(args)
+
+    r = session.get("{}/healthcheck".format(args.exodus_gw_url))
+    r.raise_for_status()
+    print("exodus-gw healthcheck:", r.json())
+
+    r = session.get("{}/healthcheck-worker".format(args.exodus_gw_url))
+    r.raise_for_status()
+    print("exodus-gw worker healthcheck:", r.json())
+
+    r = session.get("{}/whoami".format(args.exodus_gw_url))
+    r.raise_for_status()
+    context = r.json()
+
+    for user_type, ident in (
+        ("client", "serviceAccountId"),
+        ("user", "internalUsername"),
+    ):
+        typed_ctx = context[user_type]
+        if typed_ctx["authenticated"]:
+            print(
+                "You are authenticated as {} {} with roles: {}".format(
+                    user_type, typed_ctx[ident], typed_ctx["roles"]
+                )
+            )
+            break
+    else:
+        print("Warning: you are not authenticated with exodus-gw.")
+
+
+def check_cert_args(args):
+    if args.cert and not os.path.exists(args.cert):
+        print(
+            "Warning: no cert found at {}, authentication may fail".format(
+                args.cert
+            )
+        )
+        args.cert = None
+        args.key = None
+
+    if args.key and not os.path.exists(args.key):
+        print(
+            "Warning: no key found at {}, authentication may fail".format(
+                args.key
+            )
+        )
+        args.cert = None
+        args.key = None
+
+
+@backoff.on_predicate(
+    wait_gen=backoff.expo,
+    predicate=lambda task: task["state"] not in ("FAILED", "COMPLETE"),
+    max_time=1800,
+)
+def poll_commit_completion(args, commit):
+    session = new_requests_session(args)
+
+    task_url = urljoin(args.exodus_gw_url, commit["links"]["self"])
+
+    r = session.get(task_url)
+    r.raise_for_status()
+    task = r.json()
+
+    print("Task state: {}".format(task["state"]))
+
+    return task
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--debug", action="store_true", help="Enable verbose logging"
+    )
+
+    parser.add_argument(
+        "--cert",
+        default=os.path.expandvars("${HOME}/certs/${USER}.crt"),
+        help="Certificate for HTTPS authentication with exodus-gw (must match --key)",
+    )
+    parser.add_argument(
+        "--key",
+        default=os.path.expandvars("${HOME}/certs/${USER}.key"),
+        help="Private key for HTTPS authentication with exodus-gw (must match --cert)",
+    )
+    parser.add_argument("--exodus-gw-url", default="https://localhost:8010")
+    parser.add_argument("--env", default="test")
+
+    args = parser.parse_args()
+
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+
+    check_cert_args(args)
+    check_service(args)
+
+    eng_pp = EngProductProxy("prod")
+    config = exodus_config.derive_exodus_config(eng_pp)
+
+    post_url = os.path.join(args.exodus_gw_url, args.env, "deploy-config")
+    
+    print("Submitting config to %s" % post_url)
+
+    session = new_requests_session(args)
+    r = session.post(post_url, json=config)
+    r.raise_for_status()
+    task = r.json()
+
+    print("Polling for task completion. . .")
+    task = poll_commit_completion(args, task)
+
+    print("Successfully deployed config: {}".format(task))
+
+
+if __name__ == "__main__":
+    main()
+
