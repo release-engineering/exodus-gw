@@ -101,6 +101,7 @@ def create_request(
                             "from_date": {"S": from_date},
                             "web_uri": {"S": web_uri},
                             "object_key": {"S": item.object_key},
+                            "content_type": {"S": item.content_type},
                         }
                     }
                 }

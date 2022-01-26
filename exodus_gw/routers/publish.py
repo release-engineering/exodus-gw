@@ -128,10 +128,12 @@ def update_publish_items(
             {
                 "web_uri": "/my/awesome/file.iso",
                 "object_key": "aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f",
+                "content_type": "application/octet-stream",
             },
             {
                 "web_uri": "/my/slightly-less-awesome/other-file.iso",
                 "object_key": "c06545d4e1a1c8e221d47e7d568c035fb32c6b6124881fd0bc17983bd9088ae0",
+                "content_type": "application/octet-stream",
             },
             {
                 "web_uri": "/another/route/to/my/awsome/file.iso",

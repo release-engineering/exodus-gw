@@ -38,6 +38,10 @@ class ItemBase(BaseModel):
             "piece of content, in lowercase hex-digest form."
         ),
     )
+    content_type: str = Field(
+        "",
+        description="Content type of the content associated with this object.",
+    )
     link_to: str = Field("", description="Path of file targeted by symlink.")
 
     @root_validator()
@@ -45,6 +49,7 @@ class ItemBase(BaseModel):
     def validate_item(cls, values):
         web_uri = values.get("web_uri")
         object_key = values.get("object_key")
+        content_type = values.get("content_type")
         link_to = values.get("link_to")
 
         if not web_uri:
@@ -55,6 +60,8 @@ class ItemBase(BaseModel):
             raise ValueError(
                 "Both link target and object key present: %s" % values
             )
+        if link_to and content_type:
+            raise ValueError("Content type specified for link: %s" % values)
 
         if link_to:
             values["link_to"] = normalize_path(link_to)
@@ -66,6 +73,15 @@ class ItemBase(BaseModel):
                 )
         else:
             raise ValueError("No object key or link target: %s" % values)
+
+        if content_type:
+            # Enforce MIME type structure
+            # TYPE/SUBTYPE[+SUFFIX][;PARAMETER=VALUE]
+            pattern = re.compile(
+                r"^[-\w]+/[-.\w]+(\+[-\w]*)?(;[-\w]+=[-\w]+)?"
+            )
+            if not re.match(pattern, content_type):
+                raise ValueError("Invalid content type: %s" % values)
 
         return values
 
