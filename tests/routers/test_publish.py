@@ -90,10 +90,12 @@ def test_update_publish_items_typical(db, auth_header):
                 {
                     "web_uri": "/uri1",
                     "object_key": "1" * 64,
+                    "content_type": "application/octet-stream",
                 },
                 {
                     "web_uri": "/uri2",
                     "object_key": "2" * 64,
+                    "content_type": "application/octet-stream",
                 },
                 {
                     "web_uri": "/uri3",
@@ -114,6 +116,7 @@ def test_update_publish_items_typical(db, auth_header):
         {
             "web_uri": item.web_uri,
             "object_key": item.object_key,
+            "content_type": item.content_type,
             "link_to": item.link_to,
         }
         for item in items
@@ -121,9 +124,24 @@ def test_update_publish_items_typical(db, auth_header):
 
     # Should have stored exactly what we asked for
     assert item_dicts == [
-        {"web_uri": "/uri1", "object_key": "1" * 64, "link_to": ""},
-        {"web_uri": "/uri2", "object_key": "2" * 64, "link_to": ""},
-        {"web_uri": "/uri3", "object_key": "", "link_to": "/uri1"},
+        {
+            "web_uri": "/uri1",
+            "object_key": "1" * 64,
+            "content_type": "application/octet-stream",
+            "link_to": "",
+        },
+        {
+            "web_uri": "/uri2",
+            "object_key": "2" * 64,
+            "content_type": "application/octet-stream",
+            "link_to": "",
+        },
+        {
+            "web_uri": "/uri3",
+            "object_key": "",
+            "content_type": "",
+            "link_to": "/uri1",
+        },
     ]
 
 
@@ -236,7 +254,12 @@ def test_update_publish_items_no_uri(db, auth_header):
             headers=auth_header(roles=["test-publisher"]),
         )
 
-    expected_item = {"web_uri": "", "object_key": "", "link_to": "/uri1"}
+    expected_item = {
+        "web_uri": "",
+        "object_key": "",
+        "content_type": "",
+        "link_to": "/uri1",
+    }
 
     # It should have failed with 400
     assert r.status_code == 400
@@ -264,7 +287,12 @@ def test_update_publish_items_invalid_item(db, auth_header):
             headers=auth_header(roles=["test-publisher"]),
         )
 
-    expected_item = {"web_uri": "/uri1", "object_key": "", "link_to": ""}
+    expected_item = {
+        "web_uri": "/uri1",
+        "object_key": "",
+        "content_type": "",
+        "link_to": "",
+    }
 
     # It should have failed with 400
     assert r.status_code == 400
@@ -274,7 +302,7 @@ def test_update_publish_items_invalid_item(db, auth_header):
 
 
 def test_update_publish_items_link_and_key(db, auth_header):
-    """PUTting an item with a non-absolute link_to fails validation."""
+    """PUTting an item with both link_to and object_key fails validation."""
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
 
@@ -303,6 +331,7 @@ def test_update_publish_items_link_and_key(db, auth_header):
     expected_item = {
         "web_uri": "/uri2",
         "object_key": "1" * 64,
+        "content_type": "",
         "link_to": "/uri1",
     }
 
@@ -312,6 +341,47 @@ def test_update_publish_items_link_and_key(db, auth_header):
         "detail": [
             "Both link target and object key present: %s" % expected_item
         ]
+    }
+
+
+def test_update_publish_items_link_content_type(db, auth_header):
+    """PUTting an item with link_to and content_type fails validation."""
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(
+        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
+    )
+
+    with TestClient(app) as client:
+        # ensure a publish object exists
+        db.add(publish)
+        db.commit()
+
+        # Try to add an item to it
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json=[
+                {
+                    "web_uri": "/uri2",
+                    "link_to": "/uri1",
+                    "content_type": "application/octet-stream",
+                },
+            ],
+            headers=auth_header(roles=["test-publisher"]),
+        )
+
+    expected_item = {
+        "web_uri": "/uri2",
+        "object_key": "",
+        "content_type": "application/octet-stream",
+        "link_to": "/uri1",
+    }
+
+    # It should have failed with 400
+    assert r.status_code == 400
+    assert r.json() == {
+        "detail": ["Content type specified for link: %s" % expected_item]
     }
 
 
@@ -344,6 +414,7 @@ def test_update_publish_items_invalid_object_key(db, auth_header):
     expected_item = {
         "web_uri": "/uri2",
         "object_key": "somethingshyof64_with!non-alphanum$",
+        "content_type": "",
         "link_to": "",
     }
 
@@ -352,6 +423,45 @@ def test_update_publish_items_invalid_object_key(db, auth_header):
     assert r.json() == {
         "detail": ["Invalid object key; must be sha256sum: %s" % expected_item]
     }
+
+
+def test_update_publish_items_invalid_content_type(db, auth_header):
+    """PUTting an item with a non-MIME type content type fails validation."""
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(
+        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
+    )
+
+    with TestClient(app) as client:
+        # ensure a publish object exists
+        db.add(publish)
+        db.commit()
+
+        # Try to add an item to it
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json=[
+                {
+                    "web_uri": "/uri2",
+                    "object_key": "1" * 64,
+                    "content_type": "type_nosubtype",
+                },
+            ],
+            headers=auth_header(roles=["test-publisher"]),
+        )
+
+    expected_item = {
+        "web_uri": "/uri2",
+        "object_key": "1" * 64,
+        "content_type": "type_nosubtype",
+        "link_to": "",
+    }
+
+    # It should have failed with 400
+    assert r.status_code == 400
+    assert r.json() == {"detail": ["Invalid content type: %s" % expected_item]}
 
 
 @mock.patch("exodus_gw.worker.commit")

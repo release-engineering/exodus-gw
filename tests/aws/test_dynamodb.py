@@ -26,6 +26,7 @@ NOW_UTC = str(datetime.now(timezone.utc))
                                     "7a99d82af5be84202b8e84c2a5b07ffa"
                                 },
                                 "from_date": {"S": NOW_UTC},
+                                "content_type": {"S": None},
                             }
                         }
                     },
@@ -38,6 +39,7 @@ NOW_UTC = str(datetime.now(timezone.utc))
                                     "6a0e2e3a6b309cd31421ef088c6439fb"
                                 },
                                 "from_date": {"S": NOW_UTC},
+                                "content_type": {"S": None},
                             }
                         }
                     },
@@ -50,6 +52,7 @@ NOW_UTC = str(datetime.now(timezone.utc))
                                     "c3f1552c20787ae8c966767a1fedd3a5"
                                 },
                                 "from_date": {"S": NOW_UTC},
+                                "content_type": {"S": None},
                             }
                         }
                     },
