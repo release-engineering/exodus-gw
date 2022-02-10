@@ -182,27 +182,18 @@ the development environment.
 
        - Other parameters can be omitted.
 
-   * - ``scripts/localstack-s3-init``
+   * - ``scripts/localstack-init``
 
-       ``scripts/localstack-s3-init some-bucket``
-
-     - Create a bucket in localstack.
+     - Create resources in localstack.
 
        The localstack environment is initially empty, which will make it impossible to
-       upload any objects. For upload to work with exodus-gw, you'll want to create one
-       or more buckets matching the info in ``exodus-gw.ini``. The script will make a bucket
-       matching the ``test`` environment if no name is specified.
+       upload any objects. For upload to work with exodus-gw, you'll want to create buckets
+       and DynamoDB tables matching the info in ``exodus-gw.ini``. This script will create
+       those resources.
 
-   * - ``scripts/localstack-dynamodb-init``
-
-       ``scripts/localstack-dynamodb-init some-table``
-
-     - Create a table in localstack.
-
-       The localstack environment is initially empty, which will make it impossible to
-       execute any publish tasks. For publish to work with exodus-gw, you'll want to create
-       one or more tables matching the info in ``exodus-gw.ini``. The script will make a table
-       matching the ``test`` environment if no name is specified.
+       The script uses defaults which are only appropriate for the ``test`` environment
+       defined in the repo's ``exodus-gw.ini``. Check the other ``localstack-*-init``
+       scripts if you need to create buckets/tables with other names.
 
    * - ``aws --endpoint-url=https://localhost:3377 s3 ls s3://my-bucket``
      - List files in localstack s3 bucket.
