@@ -101,6 +101,10 @@ def test_update_publish_items_typical(db, auth_header):
                     "web_uri": "/uri3",
                     "link_to": "/uri1",
                 },
+                {
+                    "web_uri": "/uri4",
+                    "object_key": "absent",
+                },
             ],
             headers=auth_header(roles=["test-publisher"]),
         )
@@ -141,6 +145,12 @@ def test_update_publish_items_typical(db, auth_header):
             "object_key": "",
             "content_type": "",
             "link_to": "/uri1",
+        },
+        {
+            "web_uri": "/uri4",
+            "object_key": "absent",
+            "content_type": "",
+            "link_to": "",
         },
     ]
 
@@ -422,6 +432,50 @@ def test_update_publish_items_invalid_object_key(db, auth_header):
     assert r.status_code == 400
     assert r.json() == {
         "detail": ["Invalid object key; must be sha256sum: %s" % expected_item]
+    }
+
+
+def test_update_publish_absent_items_with_content_type(db, auth_header):
+    """PUTting an absent item with a content type fails validation."""
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(
+        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
+    )
+
+    with TestClient(app) as client:
+        # ensure a publish object exists
+        db.add(publish)
+        db.commit()
+
+        # Try to add an item to it
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json=[
+                {
+                    "web_uri": "/uri1",
+                    "object_key": "absent",
+                    "content_type": "application/octet-stream",
+                },
+            ],
+            headers=auth_header(roles=["test-publisher"]),
+        )
+
+    expected_item = {
+        "web_uri": "/uri1",
+        "object_key": "absent",
+        "content_type": "application/octet-stream",
+        "link_to": "",
+    }
+
+    # It should have failed with 400
+    assert r.status_code == 400
+    assert r.json() == {
+        "detail": [
+            "Cannot set content type when object_key is 'absent': %s"
+            % expected_item
+        ]
     }
 
 
