@@ -85,9 +85,9 @@ aiohttp==3.8.1 \
     --hash=sha256:fa0ffcace9b3aa34d205d8130f7873fcfefcb6a4dd3dd705b0dab69af6712642 \
     --hash=sha256:fc5471e1a54de15ef71c1bc6ebe80d4dc681ea600e68bfd1cbce40427f0b7578
     # via aiobotocore
-aioitertools==0.8.0 \
-    --hash=sha256:3a141f01d1050ac8c01917aee248d262736dab875ce0471f0dba5f619346b452 \
-    --hash=sha256:8b02facfbc9b0f1867739949a223f3d3267ed8663691cc95abd94e2c1d8c2b46
+aioitertools==0.9.0 \
+    --hash=sha256:0fd203d53192193973cae71fa14f0d3689328388ad41ca4a4e03e433f98871ac \
+    --hash=sha256:70a643f07be2b0437674bde442548e18a6d33a653d23bc4be9dc9ba6f3116f94
     # via aiobotocore
 aiosignal==1.2.0 \
     --hash=sha256:26e62109036cd181df6e6ad646f91f0dcfd05fe16d0cb924138ff2ab75d64e3a \
@@ -130,9 +130,9 @@ botocore==1.23.24 \
     #   aiobotocore
     #   boto3
     #   s3transfer
-charset-normalizer==2.0.11 \
-    --hash=sha256:2842d8f5e82a1f6aa437380934d5e1cd4fcf2003b06fed6940769c164a480a45 \
-    --hash=sha256:98398a9d69ee80548c762ba991a4728bfc3836768ed226b3945908d1a688371c
+charset-normalizer==2.0.12 \
+    --hash=sha256:2857e29ff0d34db842cd7ca3230549d1a697f96ee6d3fb071cfa6c7393832597 \
+    --hash=sha256:6881edbebdb17b39b4eaaa821b438bf6eddffb4468cf344f09f89def34a8b1df
     # via aiohttp
 click==8.0.3 \
     --hash=sha256:353f466495adaeb40b6b5f592f9f91cb22372351c84caeb068132442a4518ef3 \
@@ -348,9 +348,9 @@ idna==2.10 \
     #   -r requirements.in
     #   anyio
     #   yarl
-importlib-metadata==4.10.1 \
-    --hash=sha256:899e2a40a8c4a1aec681feef45733de8a6c58f3f6a0dbed2eb6574b4387a77b6 \
-    --hash=sha256:951f0d8a5b7260e9db5e41d429285b5f451e928479f19d80818878527d36e95e
+importlib-metadata==4.11.0 \
+    --hash=sha256:6affcdb3aec542dd98df8211e730bba6c5f2bec8288d47bacacde898f548c9ad \
+    --hash=sha256:9e5e553bbba1843cb4a00823014b907616be46ee503d2b9ba001d214a8da218f
     # via
     #   -r requirements.in
     #   alembic
@@ -690,10 +690,12 @@ starlette==0.17.1 \
     --hash=sha256:26a18cbda5e6b651c964c12c88b36d9898481cd428ed6e063f5f29c418f73050 \
     --hash=sha256:57eab3cc975a28af62f6faec94d355a410634940f10b30d68d31cb5ec1b44ae8
     # via fastapi
-typing-extensions==4.0.1 \
-    --hash=sha256:4ca091dea149f945ec56afb48dae714f21e8692ef22a395223bcd328961b6a0e \
-    --hash=sha256:7f001e5ac290a0c0401508864c7ec868be4e701886d5b573a9528ed3973d9d3b
-    # via pydantic
+typing-extensions==4.1.0 \
+    --hash=sha256:ba97c5143e5bb067b57793c726dd857b1671d4b02ced273ca0538e71ff009095 \
+    --hash=sha256:c13180fbaa7cd97065a4915ceba012bdb31dc34743e63ddee16360161d358414
+    # via
+    #   aioitertools
+    #   pydantic
 urllib3==1.26.8 \
     --hash=sha256:000ca7f471a233c2251c6c7023ee85305721bfdf18621ebff4fd17a8653427ed \
     --hash=sha256:0e7c33d9a63e7ddfcb86780aac87befc2fbddf46c58dbb487e0855f7ceec283c
