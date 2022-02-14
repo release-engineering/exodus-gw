@@ -57,6 +57,8 @@ def test_publish_links(mock_db_session):
             "some-bucket",
             "some-table",
             "some-config-table",
+            "some/test/url",
+            "a12c3b4fe56",
         ),
         db=mock_db_session,
     )

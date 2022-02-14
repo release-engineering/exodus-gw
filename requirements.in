@@ -11,6 +11,7 @@ alembic
 backoff
 dramatiq[watch]
 pycron
+cryptography
 # Needed to get compatible idna between requirements.txt and test-requirements.txt,
 # consider removing when 'requests' no longer requires <3
 idna<3

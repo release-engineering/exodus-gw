@@ -70,7 +70,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from .aws.util import xml_response
 from .database import db_engine
 from .migrate import db_migrate
-from .routers import deploy, publish, service, upload
+from .routers import cdn, deploy, publish, service, upload
 from .settings import load_settings
 
 app = FastAPI(
@@ -89,6 +89,7 @@ app.include_router(service.router)
 app.include_router(upload.router)
 app.include_router(publish.router)
 app.include_router(deploy.router)
+app.include_router(cdn.router)
 
 
 @app.exception_handler(RequestValidationError)

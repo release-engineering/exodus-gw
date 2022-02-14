@@ -8,12 +8,27 @@ from pydantic import BaseSettings
 
 
 class Environment(object):
-    def __init__(self, name, aws_profile, bucket, table, config_table):
+    def __init__(
+        self,
+        name,
+        aws_profile,
+        bucket,
+        table,
+        config_table,
+        cdn_url,
+        cdn_key_id,
+    ):
         self.name = name
         self.aws_profile = aws_profile
         self.bucket = bucket
         self.table = table
         self.config_table = config_table
+        self.cdn_url = cdn_url
+        self.cdn_key_id = cdn_key_id
+
+    @property
+    def cdn_private_key(self):
+        return os.getenv("EXODUS_GW_CDN_PRIVATE_KEY_%s" % self.name.upper())
 
 
 class MigrationMode(str, Enum):
@@ -151,6 +166,9 @@ class Settings(BaseSettings):
     """Delay, in minutes, after exodus-gw workers start up before any scheduled tasks
     should run."""
 
+    cdn_signature_timeout: int = 60 * 30
+    """Time (in seconds) signed URLs remain valid."""
+
     class Config:
         env_prefix = "exodus_gw_"
 
@@ -187,6 +205,9 @@ def load_settings() -> Settings:
         bucket = config.get(env, "bucket", fallback=None)
         table = config.get(env, "table", fallback=None)
         config_table = config.get(env, "config_table", fallback=None)
+        cdn_url = config.get(env, "cdn_url", fallback=None)
+        cdn_key_id = config.get(env, "cdn_key_id", fallback=None)
+
         settings.environments.append(
             Environment(
                 name=env.replace("env.", ""),
@@ -194,6 +215,8 @@ def load_settings() -> Settings:
                 bucket=bucket,
                 table=table,
                 config_table=config_table,
+                cdn_url=cdn_url,
+                cdn_key_id=cdn_key_id,
             )
         )
 
