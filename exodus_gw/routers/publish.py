@@ -136,8 +136,12 @@ def update_publish_items(
                 "content_type": "application/octet-stream",
             },
             {
-                "web_uri": "/another/route/to/my/awsome/file.iso",
+                "web_uri": "/another/route/to/my/awesome/file.iso",
                 "link_to": "/my/awesome/file.iso",
+            },
+            {
+                "web_uri": "/my/awesome/deletion.iso",
+                "object_key": "absent",
             },
         ],
     ),

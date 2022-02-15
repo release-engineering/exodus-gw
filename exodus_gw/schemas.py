@@ -35,7 +35,10 @@ class ItemBase(BaseModel):
         "",
         description=(
             "Key of blob to be exposed; should be the SHA256 checksum of a previously uploaded "
-            "piece of content, in lowercase hex-digest form."
+            "piece of content, in lowercase hex-digest form. \n\n"
+            "Alternatively, the string 'absent' to indicate that no content shall be exposed at the given URI. "
+            "Publishing an item with key 'absent' can be used to effectively delete formerly published "
+            "content from the point of view of a CDN consumer."
         ),
     )
     content_type: str = Field(
@@ -67,7 +70,13 @@ class ItemBase(BaseModel):
             values["link_to"] = normalize_path(link_to)
         elif object_key:
             pattern = re.compile(r"[0-9a-f]{64}")
-            if not re.match(pattern, object_key):
+            if object_key == "absent":
+                if content_type:
+                    raise ValueError(
+                        "Cannot set content type when object_key is 'absent': %s"
+                        % values
+                    )
+            elif not re.match(pattern, object_key):
                 raise ValueError(
                     "Invalid object key; must be sha256sum: %s" % values
                 )
