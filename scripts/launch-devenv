@@ -45,8 +45,7 @@ setup_certs(){
 }
 
 init_aws_infra(){
-    scripts/localstack-s3-init
-    scripts/localstack-dynamodb-init
+    scripts/localstack-init
 }
 
 run(){

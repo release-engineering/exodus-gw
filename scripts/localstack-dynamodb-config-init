@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Create a dynamodb table for content in the dev env's localstack instance.
+# Create a dynamodb table for config in the dev env's localstack instance.
 #
 # You will need to run this when:
 # - initially creating the dev env, or
@@ -9,7 +9,7 @@
 #
 
 # should match table for the environment you want to use in exodus-gw.ini
-TABLE_NAME="${1:-my-table}"
+TABLE_NAME="${1:-my-config}"
 
 ENV_FILE="~/.config/exodus-gw-dev/.env"
 
@@ -24,8 +24,8 @@ exec aws \
    dynamodb \
    create-table \
    --table-name "${TABLE_NAME}" \
-  --attribute-definitions AttributeName=web_uri,AttributeType=S \
+  --attribute-definitions AttributeName=config_id,AttributeType=S \
                           AttributeName=from_date,AttributeType=S \
-  --key-schema AttributeName=web_uri,KeyType=HASH \
+  --key-schema AttributeName=config_id,KeyType=HASH \
                AttributeName=from_date,KeyType=RANGE \
   --provisioned-throughput ReadCapacityUnits=10,WriteCapacityUnits=10

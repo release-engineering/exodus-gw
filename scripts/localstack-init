@@ -1,0 +1,21 @@
+#!/bin/sh
+#
+# Populate localstack with basic resources needed for exodus-gw to run.
+#
+# This script accepts no arguments and is only usable for the default
+# config in exodus-gw.ini. If you want to deploy different buckets/tables,
+# invoke the localstack-*-init scripts separately.
+#
+# You will need to run this when:
+# - initially creating the dev env, or
+# - after cleaning it
+#
+thisdir=$(dirname $0)
+
+# Note: we continue on error here because the DDB steps will complain if
+# tables already exist, which is inconvenient
+set -x
+
+$thisdir/localstack-s3-init
+$thisdir/localstack-dynamodb-init
+$thisdir/localstack-dynamodb-config-init
