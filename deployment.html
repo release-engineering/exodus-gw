@@ -63,18 +63,18 @@ be considered completely unsecured - all users will be able to perform all opera
 </div>
 <p>This reverse-proxy must add an <code class="docutils literal notranslate"><span class="pre">X-RhApiPlatform-CallContext</span></code> header onto all incoming
 requests. This header must contain a base64-encoded form of the following JSON object:</p>
-<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-  <span class="nt">&quot;client&quot;</span><span class="p">:</span> <span class="p">{</span>
-    <span class="nt">&quot;roles&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;someRole&quot;</span><span class="p">,</span> <span class="s2">&quot;anotherRole&quot;</span><span class="p">],</span>
-    <span class="nt">&quot;authenticated&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
-    <span class="nt">&quot;serviceAccountId&quot;</span><span class="p">:</span> <span class="s2">&quot;clientappname&quot;</span>
-  <span class="p">},</span>
-  <span class="nt">&quot;user&quot;</span><span class="p">:</span> <span class="p">{</span>
-    <span class="nt">&quot;roles&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;viewer&quot;</span><span class="p">],</span>
-    <span class="nt">&quot;authenticated&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
-    <span class="nt">&quot;internalUsername&quot;</span><span class="p">:</span> <span class="s2">&quot;someuser&quot;</span>
-  <span class="p">}</span>
-<span class="p">}</span>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;client&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;roles&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;someRole&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;anotherRole&quot;</span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;authenticated&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;serviceAccountId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;clientappname&quot;</span><span class="w"></span>
+<span class="w">  </span><span class="p">},</span><span class="w"></span>
+<span class="w">  </span><span class="nt">&quot;user&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;roles&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;viewer&quot;</span><span class="p">],</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;authenticated&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="nt">&quot;internalUsername&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;someuser&quot;</span><span class="w"></span>
+<span class="w">  </span><span class="p">}</span><span class="w"></span>
+<span class="p">}</span><span class="w"></span>
 </pre></div>
 </div>
 <p>The <code class="docutils literal notranslate"><span class="pre">roles</span></code> and <code class="docutils literal notranslate"><span class="pre">authenticated</span></code> fields influence whether an exodus-gw request will be
@@ -276,19 +276,19 @@ should run.</p>
 <p>To enable per-environment configuration of exodus-gw, exodus-gw.ini is available to point the
 application at specific AWS resources and declare the AWS profile to use when interacting with
 those resources. Each environment must appear in its own section with the prefix “env.”.</p>
-<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[env.prod]</span>
-<span class="na">aws_profile</span> <span class="o">=</span> <span class="s">production</span>
-<span class="na">bucket</span> <span class="o">=</span> <span class="s">cdn-prod-s3</span>
-<span class="na">table</span> <span class="o">=</span> <span class="s">cdn-prod-db</span>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[env.prod]</span><span class="w"></span>
+<span class="na">aws_profile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">production</span><span class="w"></span>
+<span class="na">bucket</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">cdn-prod-s3</span><span class="w"></span>
+<span class="na">table</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">cdn-prod-db</span><span class="w"></span>
 </pre></div>
 </div>
 <p>Logger levels may also be configured via exodus-gw.ini. Under a section named “loglevels”,
 users may specify a logger name and the level at which to set said logger.</p>
-<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[loglevels]</span>
-<span class="na">root</span> <span class="o">=</span> <span class="s">NOTSET</span>
-<span class="na">exodus-gw</span> <span class="o">=</span> <span class="s">INFO</span>
-<span class="na">s3</span> <span class="o">=</span> <span class="s">DEBUG</span>
-<span class="na">...</span>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[loglevels]</span><span class="w"></span>
+<span class="na">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">NOTSET</span><span class="w"></span>
+<span class="na">exodus-gw</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">INFO</span><span class="w"></span>
+<span class="na">s3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">DEBUG</span><span class="w"></span>
+<span class="na">...</span><span class="w"></span>
 </pre></div>
 </div>
 </section>
@@ -372,7 +372,7 @@ users may specify a logger name and the level at which to set said logger.</p>
       &copy;2020, Red Hat.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.3.1</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.4.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
