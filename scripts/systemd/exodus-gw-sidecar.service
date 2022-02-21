@@ -18,14 +18,6 @@ Environment=EXODUS_GW_SIDECAR_IMAGE=images.paas.redhat.com/it-platform/platform-
 Environment=PODMAN_SYSTEMD_UNIT=%n
 Restart=on-failure
 
-# Make self-signed cert
-ExecStartPre=mkdir -p %S/exodus-gw-dev
-ExecStartPre=-sscg \
-  --cert-file=%S/exodus-gw-dev/service.pem \
-  --cert-key-file=%S/exodus-gw-dev/service-key.pem \
-  --ca-file=%S/exodus-gw-dev/ca.crt \
-  --subject-alt-name localhost
-
 # Make properties file
 ExecStartPre=sh -c "cat >%S/exodus-gw-dev/platform-sidecar.yaml <<END\n\
 server.ssl.client-auth: want\n\
