@@ -6,14 +6,20 @@ Description=exodus-gw development cert
 [Service]
 Type=oneshot
 ExecStartPre=mkdir -p %S/exodus-gw-dev
+
+# Only run if one of the outputs is missing or empty.
+ExecCondition=sh -c '! ( \
+  test -s %S/exodus-gw-dev/ca.crt && \
+  test -s %S/exodus-gw-dev/service.pem && \
+  test -s %S/exodus-gw-dev/service-key.pem \
+)'
+
 ExecStart=sscg \
   --cert-file=%S/exodus-gw-dev/service.pem \
   --cert-key-file=%S/exodus-gw-dev/service-key.pem \
   --ca-file=%S/exodus-gw-dev/ca.crt \
-  --subject-alt-name localhost
-
-# This exit code means the cert already exists, which is OK.
-SuccessExitStatus=17
+  --subject-alt-name localhost \
+  --force
 
 [Install]
 WantedBy=exodus-gw.target
