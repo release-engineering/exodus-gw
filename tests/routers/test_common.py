@@ -51,6 +51,9 @@ def test_requires_auth(api_route):
         # Unauthenticated users have no way to find these tasks or to know what
         # they represent. It'd be safest to lock this down too.
         "/task/{task_id}",
+        # authorization for the CDN is handled elsewhere, by other means, we
+        # don't want to restrict it in Exodus gateway
+        "/{env}/cdn/{url:path}",
     ]:
         pytest.skip("auth not required")
 
