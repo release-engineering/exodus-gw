@@ -166,22 +166,6 @@ the development environment.
    * - ``curl https://localhost:3377``
      - Sanity check for localstack
 
-   * - ``aws configure --profile test``
-     - Create a ``test`` profile for AWS CLI.
-
-       In order for exodus-gw to work, an AWS profile must exist in ``~/.aws/credentials``
-       matching the ``aws_profile`` in ``exodus-gw.ini``.  This command will help to create
-       a profile if you don't already have one.
-
-       It'll prompt for a few parameters:
-
-       - For region, use ``us-east-1``.
-
-       - For access keys, use any dummy value (e.g. ``"x"``) - these won't be used,
-         but must be present.
-
-       - Other parameters can be omitted.
-
    * - ``scripts/localstack-init``
 
      - Create resources in localstack.

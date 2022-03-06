@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Populate localstack with basic resources needed for exodus-gw to run.
 #
@@ -12,9 +12,29 @@
 #
 thisdir=$(dirname $0)
 
+ensure_aws_profile()(
+  # Ensure the user has an AWS profile named 'test' (name matching
+  # the profile expected in exodus-gw.ini).
+  #
+  # If the profile already exists, we do nothing since the user might
+  # have configured it a certain way and we shouldn't mess with it.
+  # However if it doesn't exist, we define a minimal one.
+  if ! aws configure list-profiles | egrep --silent "^test$"; then
+    aws configure set profile.test.region us-east-1
+    aws configure set profile.test.aws_access_key_id fake-key-id
+    aws configure set profile.test.aws_secret_access_key fake-key
+  fi
+)
+
+set -e
+ensure_aws_profile
+export AWS_PROFILE=test
+
+set -x
+
 # Note: we continue on error here because the DDB steps will complain if
 # tables already exist, which is inconvenient
-set -x
+set +e
 
 $thisdir/localstack-s3-init
 $thisdir/localstack-dynamodb-init
