@@ -173,21 +173,7 @@ The method of obtaining these is beyond the scope of this documentation.</p>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">curl</span> <span class="pre">https://localhost:3377</span></code></p></td>
 <td><p>Sanity check for localstack</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">aws</span> <span class="pre">configure</span> <span class="pre">--profile</span> <span class="pre">test</span></code></p></td>
-<td><p>Create a <code class="docutils literal notranslate"><span class="pre">test</span></code> profile for AWS CLI.</p>
-<p>In order for exodus-gw to work, an AWS profile must exist in <code class="docutils literal notranslate"><span class="pre">~/.aws/credentials</span></code>
-matching the <code class="docutils literal notranslate"><span class="pre">aws_profile</span></code> in <code class="docutils literal notranslate"><span class="pre">exodus-gw.ini</span></code>.  This command will help to create
-a profile if you don’t already have one.</p>
-<p>It’ll prompt for a few parameters:</p>
-<ul class="simple">
-<li><p>For region, use <code class="docutils literal notranslate"><span class="pre">us-east-1</span></code>.</p></li>
-<li><p>For access keys, use any dummy value (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;x&quot;</span></code>) - these won’t be used,
-but must be present.</p></li>
-<li><p>Other parameters can be omitted.</p></li>
-</ul>
-</td>
-</tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">scripts/localstack-init</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">scripts/localstack-init</span></code></p></td>
 <td><p>Create resources in localstack.</p>
 <p>The localstack environment is initially empty, which will make it impossible to
 upload any objects. For upload to work with exodus-gw, you’ll want to create buckets
@@ -198,35 +184,35 @@ defined in the repo’s <code class="docutils literal notranslate"><span class="
 scripts if you need to create buckets/tables with other names.</p>
 </td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">aws</span> <span class="pre">--endpoint-url=https://localhost:3377</span> <span class="pre">s3</span> <span class="pre">ls</span> <span class="pre">s3://my-bucket</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">aws</span> <span class="pre">--endpoint-url=https://localhost:3377</span> <span class="pre">s3</span> <span class="pre">ls</span> <span class="pre">s3://my-bucket</span></code></p></td>
 <td><p>List files in localstack s3 bucket.</p>
 <p>Can be used to check the outcome of an upload.</p>
 </td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">aws</span> <span class="pre">--endpoint-url=https://localhost:3377</span> <span class="pre">dynamodb</span> <span class="pre">scan</span> <span class="pre">--table-name</span> <span class="pre">my-table</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">aws</span> <span class="pre">--endpoint-url=https://localhost:3377</span> <span class="pre">dynamodb</span> <span class="pre">scan</span> <span class="pre">--table-name</span> <span class="pre">my-table</span></code></p></td>
 <td><p>Dump all content of a dynamodb table in localstack.</p>
 <p>Can be used to check the outcome of a publish.</p>
 </td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">examples/s3-upload</span> <span class="pre">--endpoint-url</span> <span class="pre">https://localhost:8010/upload</span> <span class="pre">--env</span> <span class="pre">test</span> <span class="pre">some-file</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">examples/s3-upload</span> <span class="pre">--endpoint-url</span> <span class="pre">https://localhost:8010/upload</span> <span class="pre">--env</span> <span class="pre">test</span> <span class="pre">some-file</span></code></p></td>
 <td><p>Upload an object via exodus-gw.</p>
 <p>This will write to the localstack service.
 If you’re not sure whether anything really happened, check the logs of
 exodus-gw-localstack.service or use the <code class="docutils literal notranslate"><span class="pre">s3</span> <span class="pre">ls</span></code> command above.</p>
 </td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">psql</span> <span class="pre">-h</span> <span class="pre">localhost</span> <span class="pre">-p</span> <span class="pre">3355</span> <span class="pre">-U</span> <span class="pre">exodus-gw</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">psql</span> <span class="pre">-h</span> <span class="pre">localhost</span> <span class="pre">-p</span> <span class="pre">3355</span> <span class="pre">-U</span> <span class="pre">exodus-gw</span></code></p></td>
 <td><p>Connect to the postgres database.</p>
 <p>The database will be empty until exodus-gw has started successfully at least once.</p>
 </td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">systemctl</span> <span class="pre">--user</span> <span class="pre">stop</span> <span class="pre">exodus-gw-db</span></code></p>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">systemctl</span> <span class="pre">--user</span> <span class="pre">stop</span> <span class="pre">exodus-gw-db</span></code></p>
 <p><code class="docutils literal notranslate"><span class="pre">rm</span> <span class="pre">-rf</span> <span class="pre">~/.config/exodus-gw-dev/postgresql/</span></code></p>
 <p><code class="docutils literal notranslate"><span class="pre">systemctl</span> <span class="pre">--user</span> <span class="pre">start</span> <span class="pre">exodus-gw.target</span></code></p>
 </td>
 <td><p>Clean database while leaving other data untouched.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">systemctl</span> <span class="pre">--user</span> <span class="pre">stop</span> <span class="pre">exodus-gw-localstack</span></code></p>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">systemctl</span> <span class="pre">--user</span> <span class="pre">stop</span> <span class="pre">exodus-gw-localstack</span></code></p>
 <p><code class="docutils literal notranslate"><span class="pre">rm</span> <span class="pre">-rf</span> <span class="pre">~/.config/exodus-gw-dev/localstack/</span></code></p>
 <p><code class="docutils literal notranslate"><span class="pre">systemctl</span> <span class="pre">--user</span> <span class="pre">start</span> <span class="pre">exodus-gw.target</span></code></p>
 </td>
