@@ -7,6 +7,8 @@ Available APIs are grouped into the following categories:
   S3 compatible.
 - [publish](#tag/publish): atomically publish a set of blobs on the CDN under specified paths,
   making them accessible to end-users.
+- [deploy](#tag/deploy): deploy configuration influencing the behavior of the CDN.
+- [cdn](#tag/cdn): utilities for accessing the CDN.
 
 ## Overview of API usage
 
@@ -83,6 +85,8 @@ app = FastAPI(
         service.openapi_tag,
         upload.openapi_tag,
         publish.openapi_tag,
+        deploy.openapi_tag,
+        cdn.openapi_tag,
     ],
 )
 app.include_router(service.router)
