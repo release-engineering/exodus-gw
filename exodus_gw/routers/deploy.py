@@ -1,10 +1,4 @@
-"""APIs for adjusting data consumed by components of the CDN.
-
-## Deploy Config
-
-The deploy_config API deploys configuration/definition data to a
-DynamoDB table where it can be accessed via queries.
-"""
+"""APIs for adjusting configuration used by the CDN."""
 
 import logging
 from datetime import datetime, timezone
@@ -37,18 +31,37 @@ ALIAS_SCHEMA = {
     "items": {
         "type": "object",
         "properties": {
-            "src": {"type": "string", "pattern": PATH_PATTERN},
-            "dest": {"type": "string", "pattern": PATH_PATTERN},
+            "src": {
+                "type": "string",
+                "pattern": PATH_PATTERN,
+                "description": "Path being aliased from, relative to CDN root.",
+            },
+            "dest": {
+                "type": "string",
+                "pattern": PATH_PATTERN,
+                "description": "Target of the alias, relative to CDN root.",
+            },
         },
     },
     "uniqueItems": True,
 }
+
+
+def alias_schema(description):
+    out = ALIAS_SCHEMA.copy()
+    out["description"] = description
+    return out
+
 
 CONFIG_SCHEMA = {
     "type": "object",
     "properties": {
         "listing": {
             "type": "object",
+            "description": (
+                "A mapping from paths to a yum variable name & list of values, "
+                "used in generating 'listing' responses."
+            ),
             "patternProperties": {
                 PATH_PATTERN: {
                     "type": "object",
@@ -67,9 +80,11 @@ CONFIG_SCHEMA = {
             },
             "additionalProperties": False,
         },
-        "origin_alias": ALIAS_SCHEMA,
-        "releasever_alias": ALIAS_SCHEMA,
-        "rhui_alias": ALIAS_SCHEMA,
+        "origin_alias": alias_schema("Aliases relating to /origin."),
+        "releasever_alias": alias_schema(
+            "Aliases relating to $releasever variables."
+        ),
+        "rhui_alias": alias_schema("Aliases relating to RHUI."),
     },
     # All above properties are required by consumers of this data.
     "required": ["listing", "origin_alias", "releasever_alias", "rhui_alias"],
@@ -82,6 +97,20 @@ CONFIG_SCHEMA = {
     "/{env}/deploy-config",
     response_model=schemas.Task,
     dependencies=[auth.needs_role("config-deployer")],
+    responses={200: {"description": "Deployment enqueued"}},
+    openapi_extra={
+        "requestBody": {
+            "description": (
+                "Configuration data for the CDN. "
+                "Will replace the previously deployed configuration."
+            ),
+            "content": {
+                "application/json": {
+                    "schema": CONFIG_SCHEMA,
+                }
+            },
+        }
+    },
 )
 def deploy_config(
     config: Dict[str, Any] = Body(

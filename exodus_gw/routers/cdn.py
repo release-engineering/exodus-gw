@@ -1,10 +1,4 @@
-"""APIs for accessing the Exodus CDN via URL.
-
-## CDN Redirect
-
-The cdn_redirect API signs and redirects the given URL to the given
-environment's AWS CloudFront distribution.
-"""
+"""Utilities for accessing the Exodus CDN."""
 
 import base64
 import json
@@ -17,7 +11,7 @@ from botocore.utils import datetime2timestamp
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Path
 from fastapi.responses import Response
 
 from exodus_gw import schemas
@@ -91,14 +85,55 @@ def sign_url(url: str, timeout: int, env: Environment):
     return dest_url + separator + "&".join(params)
 
 
-@router.head("/{env}/cdn/{url:path}", response_model=schemas.BaseModel)
-@router.get("/{env}/cdn/{url:path}", response_model=schemas.BaseModel)
+Url = Path(
+    ...,
+    title="URL",
+    description="URL of a piece of content relative to CDN root",
+    example="content/dist/rhel8/8/x86_64/baseos/os/repodata/repomd.xml",
+)
+
+
+redirect_common = dict(
+    status_code=302,
+    response_model=schemas.EmptyResponse,
+    responses={
+        302: {
+            "description": "Redirect",
+            "headers": {
+                "location": {
+                    "description": "An absolute, signed, temporary URL of CDN content"
+                }
+            },
+        }
+    },
+)
+
+
+@router.head(
+    "/{env}/cdn/{url:path}",
+    summary="Redirect (HEAD)",
+    # overriding description here avoids repeating the main doc text
+    # under both GET and HEAD methods.
+    description="Identical to GET redirect, but for HEAD method.",
+    **redirect_common  # type: ignore
+)
+@router.get(
+    "/{env}/cdn/{url:path}", summary="Redirect (GET)", **redirect_common  # type: ignore
+)
 def cdn_redirect(
-    url: str, settings: Settings = deps.settings, env: Environment = deps.env
+    url: str = Url,
+    settings: Settings = deps.settings,
+    env: Environment = deps.env,
 ):
-    """Constructs a new URL from the given URL and the environment's CDN root
-    URL, signs it using private key and key ID pair, and returns a redirect
-    response to the signed URL.
+    """Redirects to a requested URL on the CDN.
+
+    The CDN requires a signature from an authorized signer in order to permit
+    requests. When using this endpoint, exodus-gw acts as an authorized signer
+    on the caller's behalf, thus allowing any exodus-gw client to access CDN
+    content without holding the signing keys.
+
+    The URL used in the redirect will become invalid after a server-defined
+    timeout, typically less than one hour.
     """
     signed_url = sign_url(url, settings.cdn_signature_timeout, env)
     return Response(
