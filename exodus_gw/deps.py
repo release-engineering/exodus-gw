@@ -5,6 +5,10 @@ from fastapi import Depends, Path, Request
 from .auth import call_context as get_call_context
 from .settings import Settings, get_environment
 
+# Because we cannot rename arguments to silence this pylint warning
+# without breaking the dependency injection system...
+# pylint: disable=redefined-outer-name
+
 
 async def get_db(request: Request):
     """DB session accessor for use with FastAPI's dependency injection system."""
@@ -20,7 +24,7 @@ async def get_environment_from_path(
         ...,
         title="environment",
         description="[Environment](#section/Environments) on which to operate.",
-    ),  # pylint: disable=redefined-outer-name
+    ),
     settings: Settings = Depends(get_settings),
 ):
     return get_environment(env, settings)
