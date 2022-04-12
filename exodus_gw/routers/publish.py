@@ -17,8 +17,8 @@ In practice, limitations in the storage backend mean that true atomicity
 is not achieved for all but the smallest publishes, so it is more accurate
 to refer to the commit operation as "near-atomic".
 
-Here are a few of the strategies used by exodus-gw in order to ensure the
-atomicity of commit:
+Here are a few of the strategies used by exodus-gw in order to achieve as
+close as possible to atomic behavior:
 
 - exodus-gw performs writes to the underlying database (DynamoDB) in batches,
   which themselves are committed atomically.
