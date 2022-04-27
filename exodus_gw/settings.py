@@ -169,6 +169,9 @@ class Settings(BaseSettings):
     cdn_signature_timeout: int = 60 * 30
     """Time (in seconds) signed URLs remain valid."""
 
+    s3_pool_size: int = 3
+    """Number of S3 clients to cache"""
+
     class Config:
         env_prefix = "exodus_gw_"
 

@@ -1,9 +1,12 @@
 """Functions intended for use with fastapi.Depends."""
 
+from asyncio import LifoQueue
+
 from fastapi import Depends, Path, Request
 
 from .auth import call_context as get_call_context
-from .settings import Settings, get_environment
+from .aws.client import S3ClientWrapper
+from .settings import Environment, Settings, get_environment
 
 # Because we cannot rename arguments to silence this pylint warning
 # without breaking the dependency injection system...
@@ -30,6 +33,49 @@ async def get_environment_from_path(
     return get_environment(env, settings)
 
 
+async def queue_for_profile(profile: str, maxsize: int):
+    # Create a queue of duplicate s3 clients for the given AWS profile.
+    # Client duplication is a procautionary measure against potential
+    # overwriting at runtime.
+
+    queue: LifoQueue[None] = LifoQueue(maxsize=maxsize)
+
+    while not queue.full():
+        client = await S3ClientWrapper(profile=profile).__aenter__()
+        queue.put_nowait(client)
+
+    return queue
+
+
+async def get_s3_client(
+    request: Request,
+    env: Environment = Depends(get_environment_from_path),
+    settings: Settings = Depends(get_settings),
+):
+    # Produce an active s3 client from the queue for the given environment.
+
+    profile = env.aws_profile
+    queue_size = settings.s3_pool_size
+    queues = request.app.state.s3_queues
+
+    if profile not in queues:
+        queues[profile] = await queue_for_profile(profile, queue_size)
+
+    queue = queues[profile]
+    client = await queue.get()
+
+    try:
+        yield client
+    except Exception as exc_info:
+        # When an exception is raised, assume the client broke.
+        # Close the client and replace it before raising.
+        client.__aexit__()
+        client = await S3ClientWrapper(profile=profile).__aenter__()
+        raise exc_info
+    finally:
+        await queue.put(client)
+
+
 # These are the preferred objects for use in endpoints,
 # e.g.
 #
@@ -39,3 +85,4 @@ db = Depends(get_db)
 call_context = Depends(get_call_context)
 env = Depends(get_environment_from_path)
 settings = Depends(get_settings)
+s3_client = Depends(get_s3_client)
