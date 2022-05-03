@@ -1,95 +1,52 @@
-import mock
 import pytest
+from fastapi.testclient import TestClient
 
-from exodus_gw.routers.upload import upload
-from exodus_gw.settings import get_environment
+from exodus_gw.main import app
 
 TEST_KEY = "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"
 
 
 @pytest.mark.asyncio
-async def test_full_upload(mock_aws_client, mock_request_reader):
+async def test_full_upload(mock_aws_client, mock_request_reader, auth_header):
     """Uploading a complete object is delegated correctly to S3."""
 
-    mock_aws_client.put_object.return_value = {
-        "ETag": "a1b2c3",
-    }
-
-    request = mock.Mock(
-        headers={
-            "Content-MD5": "9d0568469d206c1aedf1b71f12f474bc",
-            "Content-Length": "10",
-        }
-    )
     mock_request_reader.return_value = b"some bytes"
+    mock_aws_client.put_object.return_value = {"ETag": "a1b2c3"}
 
-    response = await upload(
-        request=request,
-        env=get_environment("test"),
-        key=TEST_KEY,
-        uploadId=None,
-        partNumber=None,
-    )
-
-    # It should delegate request to real S3
-    mock_aws_client.put_object.assert_called_once_with(
-        Bucket="my-bucket",
-        Key=TEST_KEY,
-        Body=b"some bytes",
-        ContentMD5="9d0568469d206c1aedf1b71f12f474bc",
-        ContentLength=10,
-    )
+    with TestClient(app) as client:
+        r = client.put(
+            "/upload/test/%s" % TEST_KEY,
+            headers=auth_header(roles=["test-blob-uploader"]),
+        )
 
     # It should succeed
-    assert response.status_code == 200
+    assert r.ok
 
     # It should return the ETag
-    assert response.headers["ETag"] == "a1b2c3"
+    assert r.headers["ETag"] == "a1b2c3"
 
     # It should have an empty body
-    assert response.body == b""
+    assert r.content == b""
 
 
 @pytest.mark.asyncio
-async def test_part_upload(mock_aws_client, mock_request_reader):
+async def test_part_upload(mock_aws_client, mock_request_reader, auth_header):
     """Uploading part of an object is delegated correctly to S3."""
 
-    mock_aws_client.upload_part.return_value = {
-        "ETag": "aabbcc",
-    }
-
-    request = mock.Mock(
-        headers={
-            "Content-MD5": "e8b7c279de413b7b15f44bf71a796f95",
-            "Content-Length": "10",
-        }
-    )
     mock_request_reader.return_value = b"best bytes"
+    mock_aws_client.upload_part.return_value = {"ETag": "aabbcc"}
 
-    response = await upload(
-        request=request,
-        env=get_environment("test"),
-        key=TEST_KEY,
-        uploadId="my-best-upload",
-        partNumber=88,
-    )
-
-    # It should delegate request to real S3
-    mock_aws_client.upload_part.assert_called_once_with(
-        Bucket="my-bucket",
-        Key=TEST_KEY,
-        Body=b"best bytes",
-        PartNumber=88,
-        UploadId="my-best-upload",
-        ContentMD5="e8b7c279de413b7b15f44bf71a796f95",
-        ContentLength=10,
-    )
+    with TestClient(app) as client:
+        r = client.put(
+            "/upload/test/%s?uploadId=my-upload&partNumber=88" % TEST_KEY,
+            headers=auth_header(roles=["test-blob-uploader"]),
+        )
 
     # It should succeed
-    assert response.status_code == 200
+    assert r.status_code == 200
 
     # It should return the ETag
-    assert response.headers["ETag"] == "aabbcc"
+    assert r.headers["ETag"] == "aabbcc"
 
     # It should have an empty body
-    assert response.body == b""
+    assert r.content == b""

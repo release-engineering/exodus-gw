@@ -139,8 +139,24 @@ def db_init() -> None:
     db_migrate(app.state.db_engine, app.state.settings)
 
 
+def db_shutdown() -> None:
+    app.state.db_engine.dispose()
+    del app.state.db_engine
+
+
 def settings_init() -> None:
     app.state.settings = load_settings()
+
+
+def s3_queues_init() -> None:
+    app.state.s3_queues = {}
+
+
+def s3_queues_shutdown() -> None:
+    for q in app.state.s3_queues.values():
+        while not q.empty():
+            client = q.get_nowait()
+            client.__aexit__()
 
 
 @app.on_event("startup")
@@ -148,12 +164,13 @@ def on_startup() -> None:
     settings_init()
     loggers_init()
     db_init()
+    s3_queues_init()
 
 
 @app.on_event("shutdown")
-def db_shutdown() -> None:
-    app.state.db_engine.dispose()
-    del app.state.db_engine
+def on_shutdown() -> None:
+    db_shutdown()
+    s3_queues_shutdown()
 
 
 def new_db_session(engine):
