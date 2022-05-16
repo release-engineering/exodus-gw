@@ -577,14 +577,34 @@ def test_commit_publish_prev_completed(mock_commit, fake_publish, db):
 def test_commit_publish_linked_items(mock_commit, fake_publish, db):
     """Ensure commit_publish correctly resolves links."""
 
-    # Add an item with link to an existing item.
-    ln_item = Item(
+    # Whole items
+    item1 = Item(
+        web_uri="/some/path",
+        object_key="1" * 64,
+        publish_id=fake_publish.id,
+    )
+    item2 = Item(
+        web_uri="/another/path",
+        object_key="2" * 64,
+        publish_id=fake_publish.id,
+    )
+    item3 = Item(
+        web_uri="/some/different/path",
+        object_key="3" * 64,
+        publish_id=fake_publish.id,
+    )
+    # Linked items
+    ln_item1 = Item(
         web_uri="/alternate/route/to/some/path",
-        object_key="",
         link_to="/some/path",
         publish_id=fake_publish.id,
     )
-    fake_publish.items.append(ln_item)
+    ln_item2 = Item(
+        web_uri="/alternate/route/to/another/path",
+        link_to="/another/path",
+        publish_id=fake_publish.id,
+    )
+    fake_publish.items.extend([item1, item2, item3, ln_item1, ln_item2])
 
     db.add(fake_publish)
     db.commit()
@@ -596,10 +616,10 @@ def test_commit_publish_linked_items(mock_commit, fake_publish, db):
         settings=Settings(),
     )
 
-    # Should've filled item's object_key with known value.
-    assert ln_item.object_key == (
-        "0bacfc5268f9994065dd858ece3359fd7a99d82af5be84202b8e84c2a5b07ffa"
-    )
+    # Should've filled ln_item1's object_key with that of item1.
+    assert ln_item1.object_key == "1" * 64
+    # Should've filled ln_item2's object_key with that of item2.
+    assert ln_item2.object_key == "2" * 64
     # Should've created and sent task.
     assert isinstance(publish_task, Task)
 
