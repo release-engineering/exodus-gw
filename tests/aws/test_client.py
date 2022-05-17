@@ -4,7 +4,6 @@ import pytest
 from exodus_gw.aws.client import S3ClientWrapper as s3_client
 
 
-@pytest.mark.asyncio
 async def test_client_retries_disabled():
     """Verify that created S3 clients have retries disabled in config."""
 
@@ -16,7 +15,6 @@ async def test_client_retries_disabled():
         assert config.retries == {"max_attempts": 1}
 
 
-@pytest.mark.asyncio
 async def test_client_redirects_disabled():
     """Verify that created S3 clients have disabled the implicit region redirect feature
     in boto library."""

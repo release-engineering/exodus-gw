@@ -10,14 +10,12 @@ from exodus_gw.auth import (
 )
 
 
-@pytest.mark.asyncio
 async def test_caller_roles_empty():
     """caller_roles returns an empty set for a default (empty) context."""
 
     assert (await caller_roles(CallContext())) == set()
 
 
-@pytest.mark.asyncio
 async def test_caller_roles_nonempty():
     """caller_roles returns all roles from the context when present."""
 
@@ -28,7 +26,6 @@ async def test_caller_roles_nonempty():
     assert (await caller_roles(ctx)) == set(["role1", "role2", "role3"])
 
 
-@pytest.mark.asyncio
 async def test_needs_role_success():
     """needs_role succeeds when needed role is present."""
 
@@ -38,7 +35,6 @@ async def test_needs_role_success():
     await fn(roles=set(["better-role"]))
 
 
-@pytest.mark.asyncio
 async def test_needs_role_fail():
     """needs_role raises meaningful error when needed role is absent."""
 
