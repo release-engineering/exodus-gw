@@ -6,7 +6,6 @@ from exodus_gw.main import app
 TEST_KEY = "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"
 
 
-@pytest.mark.asyncio
 async def test_full_upload(mock_aws_client, mock_request_reader, auth_header):
     """Uploading a complete object is delegated correctly to S3."""
 
@@ -29,7 +28,6 @@ async def test_full_upload(mock_aws_client, mock_request_reader, auth_header):
     assert r.content == b""
 
 
-@pytest.mark.asyncio
 async def test_part_upload(mock_aws_client, mock_request_reader, auth_header):
     """Uploading part of an object is delegated correctly to S3."""
 
