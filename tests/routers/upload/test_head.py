@@ -1,4 +1,3 @@
-import pytest
 from botocore.exceptions import ClientError
 from fastapi.testclient import TestClient
 
@@ -19,7 +18,7 @@ async def test_head(mock_aws_client, auth_header):
         )
 
     assert r.ok
-    assert r.headers == {"ETag": "a1b2c3"}
+    assert r.headers["etag"] == "a1b2c3"
 
 
 async def test_head_nonexistent_key(mock_aws_client, auth_header):
