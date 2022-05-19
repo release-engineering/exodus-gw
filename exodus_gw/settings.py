@@ -105,10 +105,13 @@ class Settings(BaseSettings):
     the target revision when migrating the DB.
     """
 
-    batch_size: int = 25
-    """Maximum number of items to write at one time"""
-    max_tries: int = 20
-    """Maximum attempts to write to DynamoDB table."""
+    item_yield_size: int = 5000
+    """Number of publish items to load from the service DB at one time."""
+
+    write_batch_size: int = 25
+    """Maximum number of items to write to the DynamoDB table at one time."""
+    write_max_tries: int = 20
+    """Maximum write attempts to the DynamoDB table."""
 
     publish_timeout: int = 24
     """Maximum amount of time (in hours) between updates to a pending publish before

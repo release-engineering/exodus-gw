@@ -21,7 +21,7 @@ LOG = logging.getLogger("exodus-gw")
 @backoff.on_predicate(
     wait_gen=backoff.expo,
     predicate=lambda response: response["UnprocessedItems"],
-    max_tries=Settings().max_tries,
+    max_tries=Settings().write_max_tries,
 )
 def batch_write(env_obj: Environment, request: Dict[str, Any]):
     """Wrapper for batch_write_item with retries and item count validation.
@@ -65,15 +65,13 @@ def query_definitions(env_obj: Environment, from_date: str):
 
 
 def create_request(
-    env_obj: Environment,
+    table_name: str,
     items: List[models.Item],
     from_date: str,
     definitions: Optional[Dict[str, List[Any]]] = None,
     delete: bool = False,
 ):
     """Create the dictionary structure expected by batch_write_item."""
-
-    table_name = env_obj.table
 
     request: Dict[str, List[Any]] = {table_name: []}
     definitions = definitions or {}
@@ -118,16 +116,17 @@ def write_batches(
     settings = Settings()
 
     it = iter(items)
-    batches = list(iter(lambda: tuple(islice(it, settings.batch_size)), ()))
+    batches = list(
+        iter(lambda: tuple(islice(it, settings.write_batch_size)), ())
+    )
     unprocessed_items = []
     definitions = query_definitions(env_obj, from_date)
 
     for batch in batches:
-        request = create_request(
-            env_obj, list(batch), from_date, definitions, delete
-        )
-
         try:
+            request = create_request(
+                env_obj.table, list(batch), from_date, definitions, delete
+            )
             response = batch_write(env_obj, request)
         except Exception:
             LOG.exception(
@@ -138,15 +137,14 @@ def write_batches(
             )
             raise
 
-        # Abort immediately for put requests.
-        # Collect and log unprocessed items for delete requests.
+        # Raise immediately for put requests.
+        # Collect unprocessed items for delete requests and resume deleting.
         if response["UnprocessedItems"]:
             if delete:
                 unprocessed_items.append(response["UnprocessedItems"])
                 continue
 
-            LOG.info("One or more writes were unsuccessful")
-            return False
+            raise RuntimeError("One or more writes were unsuccessful")
 
     if unprocessed_items:
         LOG.error(
@@ -156,4 +154,3 @@ def write_batches(
         raise RuntimeError("Deletion failed\nSee error log for details")
 
     LOG.info("Items successfully %s", "deleted" if delete else "written")
-    return True
