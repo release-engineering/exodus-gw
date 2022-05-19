@@ -1,5 +1,6 @@
 """Functions intended for use with fastapi.Depends."""
 
+import logging
 import sys
 from asyncio import LifoQueue
 
@@ -8,6 +9,8 @@ from fastapi import Depends, Path, Request
 from .auth import call_context as get_call_context
 from .aws.client import S3ClientWrapper
 from .settings import Environment, Settings, get_environment
+
+LOG = logging.getLogger("exodus-gw")
 
 # Because we cannot rename arguments to silence this pylint warning
 # without breaking the dependency injection system...
@@ -66,6 +69,9 @@ async def get_s3_client(
     client = await queue.get()
 
     try:
+        LOG.debug(
+            "Request %s using S3 client %s", request.scope.get("path"), client
+        )
         yield client
     except Exception:
         # When an exception is raised, assume the client broke.
