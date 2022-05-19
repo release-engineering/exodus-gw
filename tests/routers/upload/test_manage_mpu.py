@@ -58,22 +58,25 @@ async def test_complete_mpu(mock_aws_client):
     settings = load_settings()
 
     # Need some valid request body to complete an MPU
-    request = mock.AsyncMock()
-    request.body.return_value = textwrap.dedent(
-        """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <CompleteMultipartUpload xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-                <Part>
-                    <ETag>tagA</ETag>
-                    <PartNumber>1</PartNumber>
-                </Part>
-                <Part>
-                    <ETag>tagB</ETag>
-                    <PartNumber>2</PartNumber>
-                </Part>
-            </CompleteMultipartUpload>
-        """
-    ).strip()
+    async def fake_body():
+        return textwrap.dedent(
+            """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <CompleteMultipartUpload xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+                    <Part>
+                        <ETag>tagA</ETag>
+                        <PartNumber>1</PartNumber>
+                    </Part>
+                    <Part>
+                        <ETag>tagB</ETag>
+                        <PartNumber>2</PartNumber>
+                    </Part>
+                </CompleteMultipartUpload>
+            """
+        ).strip()
+
+    request = mock.Mock()
+    request.body = fake_body
     request.app.state.settings = settings
     request.app.state.s3_queues = {}
 
