@@ -2,9 +2,9 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import HTTPException
-from sqlalchemy import Column, DateTime, ForeignKey, String, event
+from sqlalchemy import Column, DateTime, ForeignKey, String, event, inspect
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Bundle, relationship
 
 from .base import Base
 
@@ -26,16 +26,19 @@ class Publish(Base):
     )
 
     def resolve_links(self):
-        ok_items = {}
-        ln_items = []
-        for item in self.items:
-            if item.object_key:
-                ok_items[item.web_uri] = item.object_key
-            else:
-                ln_items.append(item)
+        db = inspect(self).session
+        ln_items = db.query(Item).filter(Item.link_to != None).all()
+        ln_item_paths = [item.link_to for item in ln_items]
+
+        # Store only necessary fields from matching items to conserve memory.
+        match = Bundle("match", Item.web_uri, Item.object_key)
+        matches = {
+            row.match["web_uri"]: row.match["object_key"]
+            for row in db.query(match).filter(Item.web_uri.in_(ln_item_paths))
+        }
 
         for ln_item in ln_items:
-            ln_item.object_key = ok_items.get(ln_item.link_to)
+            ln_item.object_key = matches.get(ln_item.link_to)
             if not ln_item.object_key:
                 raise HTTPException(
                     status_code=400,

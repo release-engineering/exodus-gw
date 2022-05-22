@@ -13,7 +13,6 @@ from exodus_gw.settings import load_settings
 TEST_KEY = "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"
 
 
-@pytest.mark.asyncio
 async def test_create_mpu(mock_aws_client, auth_header):
     """Creating a multipart upload is delegated correctly to S3."""
 
@@ -45,7 +44,6 @@ async def test_create_mpu(mock_aws_client, auth_header):
     assert r.content == expected
 
 
-@pytest.mark.asyncio
 async def test_complete_mpu(mock_aws_client):
     """Completing a multipart upload is delegated correctly to S3."""
 
@@ -122,7 +120,6 @@ async def test_complete_mpu(mock_aws_client):
     assert response.body == expected
 
 
-@pytest.mark.asyncio
 async def test_bad_mpu_call(auth_header):
     """Mixing uploadId and uploads arguments gives a validation error."""
 
@@ -143,7 +140,6 @@ async def test_bad_mpu_call(auth_header):
     )
 
 
-@pytest.mark.asyncio
 async def test_abort_mpu(mock_aws_client, auth_header):
     """Aborting a multipart upload is correctly delegated to S3."""
 

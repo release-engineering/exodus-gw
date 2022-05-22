@@ -152,11 +152,11 @@ def s3_queues_init() -> None:
     app.state.s3_queues = {}
 
 
-def s3_queues_shutdown() -> None:
+async def s3_queues_shutdown() -> None:
     for q in app.state.s3_queues.values():
         while not q.empty():
             client = q.get_nowait()
-            client.__aexit__()
+            await client.__aexit__(None, None, None)
 
 
 @app.on_event("startup")
@@ -168,9 +168,9 @@ def on_startup() -> None:
 
 
 @app.on_event("shutdown")
-def on_shutdown() -> None:
+async def on_shutdown() -> None:
     db_shutdown()
-    s3_queues_shutdown()
+    await s3_queues_shutdown()
 
 
 def new_db_session(engine):

@@ -1,5 +1,6 @@
 """Functions intended for use with fastapi.Depends."""
 
+import sys
 from asyncio import LifoQueue
 
 from fastapi import Depends, Path, Request
@@ -66,12 +67,12 @@ async def get_s3_client(
 
     try:
         yield client
-    except Exception as exc_info:
+    except Exception:
         # When an exception is raised, assume the client broke.
         # Close the client and replace it before raising.
-        client.__aexit__()
+        await client.__aexit__(*sys.exc_info())
         client = await S3ClientWrapper(profile=profile).__aenter__()
-        raise exc_info
+        raise
     finally:
         await queue.put(client)
 

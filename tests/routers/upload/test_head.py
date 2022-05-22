@@ -1,4 +1,3 @@
-import pytest
 from botocore.exceptions import ClientError
 from fastapi.testclient import TestClient
 
@@ -7,7 +6,6 @@ from exodus_gw.main import app
 TEST_KEY = "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"
 
 
-@pytest.mark.asyncio
 async def test_head(mock_aws_client, auth_header):
     """Head request is delegated correctly to S3."""
 
@@ -20,10 +18,9 @@ async def test_head(mock_aws_client, auth_header):
         )
 
     assert r.ok
-    assert r.headers == {"ETag": "a1b2c3"}
+    assert r.headers["etag"] == "a1b2c3"
 
 
-@pytest.mark.asyncio
 async def test_head_nonexistent_key(mock_aws_client, auth_header):
     """Head handles 404 responses correctly."""
 
@@ -41,7 +38,6 @@ async def test_head_nonexistent_key(mock_aws_client, auth_header):
     assert r.status_code == 404
 
 
-@pytest.mark.asyncio
 async def test_head_logs_error(mock_aws_client, auth_header, caplog):
     """Head logs unexpected errors correctly."""
 

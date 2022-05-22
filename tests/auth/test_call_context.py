@@ -9,7 +9,6 @@ from exodus_gw.auth import call_context
 from exodus_gw.settings import Settings
 
 
-@pytest.mark.asyncio
 async def test_no_context():
     """Unauthenticated requests return a default context."""
 
@@ -29,7 +28,6 @@ async def test_no_context():
     assert not ctx.user.authenticated
 
 
-@pytest.mark.asyncio
 async def test_decode_context():
     """A context can be decoded from a valid header."""
 
@@ -63,7 +61,6 @@ async def test_decode_context():
     assert ctx.user.internalUsername == "greatUser"
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "header_value",
     [

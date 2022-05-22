@@ -16,11 +16,16 @@ from exodus_gw.dramatiq import Broker
 from .async_utils import BlockDetector
 
 
+async def fake_aexit_instancemethod(self, exc_type, exc_val, exc_tb):
+    pass
+
+
 @pytest.fixture(autouse=True)
 def mock_aws_client():
     with mock.patch("aioboto3.Session") as mock_session:
         aws_client = mock.AsyncMock()
         aws_client.__aenter__.return_value = aws_client
+        aws_client.__aexit__ = fake_aexit_instancemethod
         # This sub-object uses regular methods, not async
         aws_client.meta = mock.MagicMock()
         mock_session().client.return_value = aws_client

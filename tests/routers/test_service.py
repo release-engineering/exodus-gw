@@ -9,7 +9,6 @@ from exodus_gw.models import DramatiqConsumer
 from exodus_gw.routers import service
 
 
-@pytest.mark.asyncio
 async def test_healthcheck():
     assert (await service.healthcheck()) == {"detail": "exodus-gw is running"}
 
@@ -50,7 +49,6 @@ def test_healthcheck_worker_unhealthy(db):
         assert r.json() == {"detail": "background workers unavailable"}
 
 
-@pytest.mark.asyncio
 async def test_whoami():
     # All work is done by fastapi deserialization, so this doesn't actually
     # do anything except return the passed object.

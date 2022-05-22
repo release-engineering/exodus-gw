@@ -27,11 +27,11 @@ def test_cdn_redirect_(monkeypatch, dummy_private_key):
 
     assert get_r.ok
     assert get_r.status_code == 302
-    assert get_r.headers == {"location": expected_url}
+    assert get_r.headers["location"] == expected_url
 
     assert head_r.ok
     assert head_r.status_code == 302
-    assert head_r.headers == {"location": expected_url}
+    assert head_r.headers["location"] == expected_url
 
 
 @freeze_time("2022-02-16")

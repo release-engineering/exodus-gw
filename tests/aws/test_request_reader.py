@@ -12,7 +12,6 @@ class FakeRequest:
             yield chunk
 
 
-@pytest.mark.asyncio
 async def test_iterate_stream():
     request = FakeRequest([b"first ", b"second ", b"third"])
 
