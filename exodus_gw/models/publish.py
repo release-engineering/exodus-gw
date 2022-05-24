@@ -27,7 +27,13 @@ class Publish(Base):
 
     def resolve_links(self):
         db = inspect(self).session
-        ln_items = db.query(Item).filter(Item.link_to != None).all()
+        # Store only publish items with link targets.
+        ln_items = (
+            db.query(Item)
+            .filter(Item.publish_id == self.id, Item.link_to != None)
+            .all()
+        )
+        # Collect link targets of linked items for finding matches.
         ln_item_paths = [item.link_to for item in ln_items]
 
         # Store only necessary fields from matching items to conserve memory.
