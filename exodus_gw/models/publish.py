@@ -2,7 +2,15 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import HTTPException
-from sqlalchemy import Column, DateTime, ForeignKey, String, event, inspect
+from sqlalchemy import (
+    Column,
+    DateTime,
+    ForeignKey,
+    String,
+    event,
+    func,
+    inspect,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Bundle, relationship
 
@@ -30,7 +38,8 @@ class Publish(Base):
         # Store only publish items with link targets.
         ln_items = (
             db.query(Item)
-            .filter(Item.publish_id == self.id, Item.link_to != None)
+            .filter(Item.publish_id == self.id)
+            .filter(func.coalesce(Item.link_to, "") != "")
             .all()
         )
         # Collect link targets of linked items for finding matches.
