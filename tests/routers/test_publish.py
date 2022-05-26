@@ -582,11 +582,13 @@ def test_commit_publish_linked_items(mock_commit, fake_publish, db):
         web_uri="/some/path",
         object_key="1" * 64,
         publish_id=fake_publish.id,
+        link_to=None,  # It should be able to handle None/NULL link_to values...
     )
     item2 = Item(
         web_uri="/another/path",
         object_key="2" * 64,
         publish_id=fake_publish.id,
+        link_to="",  # ...and empty string link_to values...
     )
     item3 = Item(
         web_uri="/some/different/path",
