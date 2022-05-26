@@ -99,7 +99,7 @@ def test_batch_write(
     env = get_environment("test")
 
     request = dynamodb.create_request(
-        env, fake_publish.items, NOW_UTC, delete=delete
+        env.table, fake_publish.items, NOW_UTC, delete=delete
     )
 
     # Represent successful write/delete of all items to the table.
@@ -117,7 +117,7 @@ def test_batch_write_item_limit(mock_boto3_client, fake_publish, caplog):
     items = fake_publish.items * 9
     env = get_environment("test")
 
-    request = dynamodb.create_request(env, items, NOW_UTC)
+    request = dynamodb.create_request(env.table, items, NOW_UTC)
 
     with pytest.raises(ValueError) as exc_info:
         dynamodb.batch_write(env, request)
@@ -137,10 +137,7 @@ def test_write_batches(delete, mock_boto3_client, fake_publish, caplog):
 
     expected_msg = "Items successfully %s" % "deleted" if delete else "written"
 
-    assert (
-        dynamodb.write_batches("test", fake_publish.items, NOW_UTC, delete)
-        is True
-    )
+    dynamodb.write_batches("test", fake_publish.items, NOW_UTC, delete)
 
     assert expected_msg in caplog.text
 
@@ -156,9 +153,9 @@ def test_write_batches_put_fail(mock_batch_write, fake_publish, caplog):
         }
     }
 
-    assert dynamodb.write_batches("test", fake_publish.items, NOW_UTC) is False
-
-    assert "One or more writes were unsuccessful" in caplog.text
+    with pytest.raises(RuntimeError) as exc_info:
+        dynamodb.write_batches("test", fake_publish.items, NOW_UTC)
+        assert "One or more writes were unsuccessful" in str(exc_info)
 
 
 @mock.patch("exodus_gw.aws.dynamodb.batch_write")
