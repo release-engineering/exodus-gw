@@ -21,5 +21,14 @@ ExecStart=sscg \
   --subject-alt-name localhost \
   --force
 
+ExecStartPost=cp \
+  %S/exodus-gw-dev/service-key.pem \
+  %S/exodus-gw-dev/db-service-key.pem
+
+# private key file must be owned by the database user or root
+# set postgres(999) as owner of the private key file
+ExecStartPost=/usr/bin/podman unshare \
+  chown 999:999 %S/exodus-gw-dev/db-service-key.pem
+
 [Install]
 WantedBy=exodus-gw.target

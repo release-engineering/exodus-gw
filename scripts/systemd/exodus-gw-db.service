@@ -28,10 +28,17 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/%n-pid --cidfile %t/%n-cid --c
   --network host\
   --log-driver journald\
   -v %S/exodus-gw-dev/postgresql:/var/lib/postgresql:z\
+  -v %S/exodus-gw-dev/service.pem:/var/lib/postgresql/service.pem:ro\
+  -v %S/exodus-gw-dev/db-service-key.pem:/var/lib/postgresql/db-service-key.pem:ro\
   -e POSTGRES_PASSWORD=exodus-gw\
   -e POSTGRES_USER=exodus-gw\
   -e PGPORT=${EXODUS_GW_DB_SERVICE_PORT}\
-  ${EXODUS_GW_POSTGRES_IMAGE}
+  ${EXODUS_GW_POSTGRES_IMAGE}\
+  postgres\
+  -c ssl=on\
+  -c ssl_cert_file=/var/lib/postgresql/service.pem\
+  -c ssl_key_file=/var/lib/postgresql/db-service-key.pem
+
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/%n-cid -t 10
 ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %t/%n-cid
 PIDFile=%t/%n-pid
