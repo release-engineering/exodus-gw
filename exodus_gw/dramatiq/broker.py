@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from exodus_gw.database import db_engine
 from exodus_gw.dramatiq.consumer import Consumer
 from exodus_gw.dramatiq.middleware import (
+    DatabaseReadyMiddleware,
     LocalNotifyMiddleware,
     PostgresNotifyMiddleware,
     SchedulerMiddleware,
@@ -43,6 +44,9 @@ class Broker(dramatiq.Broker):  # pylint: disable=abstract-method
         )
 
         self.add_middleware(LocalNotifyMiddleware())
+
+        # Enable Database readycheck when booting up a worker.
+        self.add_middleware(DatabaseReadyMiddleware(self.__db_engine))
 
         # This is postgres-specific, so...
         if "postgresql" in str(self.__db_engine.url):
