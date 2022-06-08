@@ -42,7 +42,8 @@ async def queue_for_profile(profile: str, maxsize: int):
     # Client duplication is a procautionary measure against potential
     # overwriting at runtime.
 
-    queue: LifoQueue[None] = LifoQueue(maxsize=maxsize)
+    # mypy and pylint have trouble agreeing on how to handle LifoQueue type...
+    queue = LifoQueue(maxsize=maxsize)  # type: ignore
 
     while not queue.full():
         client = await S3ClientWrapper(profile=profile).__aenter__()

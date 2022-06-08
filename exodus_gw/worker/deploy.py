@@ -66,7 +66,7 @@ def deploy_config(config: Dict[str, Any], env: str, from_date: str):
         }
         LOG.info("Task %s writing config from %s", task.id, from_date)
         batch_write(env_obj, request)
-    except Exception:
+    except Exception:  # pylint: disable=broad-except
         LOG.exception("Task %s encountered an error", task.id)
 
         task.state = schemas.TaskStates.failed
