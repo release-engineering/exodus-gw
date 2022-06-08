@@ -1,10 +1,10 @@
 
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
     <title>Deployment Guide &#8212; exodus-gw  documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
@@ -13,6 +13,7 @@
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
     <script src="_static/jquery.js"></script>
     <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -35,9 +36,9 @@
           <div class="body" role="main">
             
   <section id="deployment-guide">
-<span id="deploy-guide"></span><h1>Deployment Guide<a class="headerlink" href="#deployment-guide" title="Permalink to this headline">¶</a></h1>
+<span id="deploy-guide"></span><h1>Deployment Guide<a class="headerlink" href="#deployment-guide" title="Permalink to this heading">¶</a></h1>
 <section id="target-platform">
-<h2>Target platform<a class="headerlink" href="#target-platform" title="Permalink to this headline">¶</a></h2>
+<h2>Target platform<a class="headerlink" href="#target-platform" title="Permalink to this heading">¶</a></h2>
 <p>exodus-gw is an ASGI application which may be deployed using any ASGI-compliant
 web server. The development team’s recommended setup is summarized as:</p>
 <ul>
@@ -53,7 +54,7 @@ authentication according to your organization’s needs (see next section).</p><
 </ul>
 </section>
 <section id="authentication-authorization">
-<h2>Authentication &amp; Authorization<a class="headerlink" href="#authentication-authorization" title="Permalink to this headline">¶</a></h2>
+<h2>Authentication &amp; Authorization<a class="headerlink" href="#authentication-authorization" title="Permalink to this heading">¶</a></h2>
 <p>The exodus-gw service does not implement any authentication mechanism. It is instead
 designed to integrate with a reverse-proxy implementing any desired mechanism.</p>
 <div class="admonition warning">
@@ -87,7 +88,7 @@ internal documentation for information on this component. In other contexts, any
 proxy may be used as long as it produces headers according to the scheme documented above.</p>
 </section>
 <section id="database-migrations">
-<h2>Database Migrations<a class="headerlink" href="#database-migrations" title="Permalink to this headline">¶</a></h2>
+<h2>Database Migrations<a class="headerlink" href="#database-migrations" title="Permalink to this heading">¶</a></h2>
 <p>The exodus-gw service uses a postgres database.</p>
 <p>On startup, the service will run database migrations to ensure the DB implements the
 required schema.</p>
@@ -99,7 +100,7 @@ service. However, as exodus-gw is designed not to store any permanent state, dro
 and recreating the exodus-gw database is a viable option if needed.</p>
 </section>
 <section id="settings">
-<h2>Settings<a class="headerlink" href="#settings" title="Permalink to this headline">¶</a></h2>
+<h2>Settings<a class="headerlink" href="#settings" title="Permalink to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">exodus_gw.settings.</span></span><span class="sig-name descname"><span class="pre">Settings</span></span><a class="reference internal" href="_modules/exodus_gw/settings.html#Settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#exodus_gw.settings.Settings" title="Permalink to this definition">¶</a></dt>
@@ -115,7 +116,7 @@ and authorization).</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.log_config">
-<span class="sig-name descname"><span class="pre">log_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#exodus_gw.settings.Settings.log_config" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">log_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.10)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.10)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#exodus_gw.settings.Settings.log_config" title="Permalink to this definition">¶</a></dt>
 <dd><p>Logging configuration in dictConfig schema.</p>
 </dd></dl>
 
@@ -145,7 +146,7 @@ and authorization).</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.db_url">
-<span class="sig-name descname"><span class="pre">db_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_url" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">db_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Optional" title="(in Python v3.10)"><span class="pre">Optional</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_url" title="Permalink to this definition">¶</a></dt>
 <dd><p>Connection string for database. If set, overrides the <code class="docutils literal notranslate"><span class="pre">db_service_*</span></code> settings.</p>
 </dd></dl>
 
@@ -158,7 +159,7 @@ and authorization).</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.db_migration_mode">
-<span class="sig-name descname"><span class="pre">db_migration_mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">exodus_gw.settings.MigrationMode</span></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_migration_mode" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">db_migration_mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MigrationMode</span></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_migration_mode" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adjusts the DB migration behavior when the exodus-gw service starts.</p>
 <p>Valid values are:</p>
 <blockquote>
@@ -227,7 +228,7 @@ passed. Defaults to two weeks.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.entry_point_files">
-<span class="sig-name descname"><span class="pre">entry_point_files</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#exodus_gw.settings.Settings.entry_point_files" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">entry_point_files</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.10)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.10)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#exodus_gw.settings.Settings.entry_point_files" title="Permalink to this definition">¶</a></dt>
 <dd><p>List of file names that should be saved for last when publishing.</p>
 </dd></dl>
 
@@ -373,7 +374,7 @@ users may specify a logger name and the level at which to set said logger.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
 
 
 
@@ -390,7 +391,7 @@ users may specify a logger name and the level at which to set said logger.</p>
       &copy;2020, Red Hat.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.5.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.0</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
