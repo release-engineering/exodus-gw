@@ -161,7 +161,7 @@ def commit(publish_id: str, env: str, from_date: str) -> None:
         commit_obj.task.state = TaskStates.complete
         commit_obj.publish.state = PublishStates.committed
         commit_obj.db.commit()
-    except Exception as exc_info:
+    except Exception as exc_info:  # pylint: disable=broad-except
         LOG.exception("Task %s encountered an error", commit_obj.task.id)
         commit_obj.rollback_publish_items(exc_info)
         commit_obj.task.state = TaskStates.failed
