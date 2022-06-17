@@ -17,8 +17,9 @@ from exodus_gw.dramatiq.middleware import (
     PostgresNotifyMiddleware,
     SchedulerMiddleware,
 )
+from exodus_gw.logging import loggers_init
 from exodus_gw.models import DramatiqMessage
-from exodus_gw.settings import Settings
+from exodus_gw.settings import load_settings
 
 LOG = logging.getLogger("exodus-gw")
 
@@ -29,11 +30,13 @@ class Broker(dramatiq.Broker):  # pylint: disable=abstract-method
     def __init__(self, middleware=None, settings=None):
         super().__init__(middleware=middleware)
 
-        self.__settings = settings or Settings()
+        self.__settings = settings or load_settings()
         self.__db_engine = db_engine(self.__settings)
         self.__shared_session = ContextVar("shared_session")
         self.__broker_id = uuid.uuid4()
         self.__queue_events = defaultdict(Event)
+
+        loggers_init(self.__settings)
 
         # We have some actors using this, so it's always enabled.
         self.add_middleware(CurrentMessage())
