@@ -3,6 +3,7 @@ from .local_notify import LocalNotifyMiddleware
 from .log_actor import LogActorMiddleware
 from .pg_notify import PostgresNotifyMiddleware
 from .scheduler import SchedulerMiddleware
+from .settings import SettingsMiddleware
 
 __all__ = [
     "LocalNotifyMiddleware",
@@ -10,4 +11,5 @@ __all__ = [
     "SchedulerMiddleware",
     "LogActorMiddleware",
     "DatabaseReadyMiddleware",
+    "SettingsMiddleware",
 ]

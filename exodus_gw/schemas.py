@@ -8,6 +8,8 @@ from uuid import UUID
 from fastapi import Path
 from pydantic import BaseModel, Field, root_validator
 
+from .settings import Settings
+
 PathPublishId = Path(
     ...,
     title="publish ID",
@@ -91,6 +93,14 @@ class ItemBase(BaseModel):
             )
             if not re.match(pattern, content_type):
                 raise ValueError("Invalid content type: %s" % values)
+
+        autoindex_filename = Settings().autoindex_filename
+        if (
+            web_uri
+            and autoindex_filename
+            and web_uri.split("/")[-1] == autoindex_filename
+        ):
+            raise ValueError(f"Invalid URI {web_uri}: filename is reserved")
 
         return values
 

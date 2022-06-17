@@ -215,6 +215,8 @@ def commit_publish(
 
     Committing a publish has the following effects:
 
+    - If enabled by server settings, static HTML indexes will be generated and added
+      onto the publish for certain content types such as yum repositories.
     - All URIs contained within the publish become accessible from the CDN,
       pointing at their corresponding objects.
       - This occurs with all-or-nothing semantics; see [Atomicity](#section/Atomicity).

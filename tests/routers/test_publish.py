@@ -313,6 +313,43 @@ def test_update_publish_items_invalid_item(db, auth_header):
     }
 
 
+def test_update_publish_items_rejects_autoindex(db, auth_header):
+    """PUTting an item explicitly using the autoindex filename fails validation."""
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(
+        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
+    )
+
+    with TestClient(app) as client:
+        # ensure a publish object exists
+        db.add(publish)
+        db.commit()
+
+        # Try to add an item to it
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json=[
+                {
+                    "web_uri": "/foo/bar/.__exodus_autoindex",
+                    "object_key": "1" * 64,
+                }
+            ],
+            headers=auth_header(roles=["test-publisher"]),
+        )
+
+    # It should have failed with 400
+    assert r.status_code == 400
+
+    # It should tell the reason why
+    assert r.json() == {
+        "detail": [
+            "Invalid URI /foo/bar/.__exodus_autoindex: filename is reserved"
+        ]
+    }
+
+
 def test_update_publish_items_link_and_key(db, auth_header):
     """PUTting an item with both link_to and object_key fails validation."""
 

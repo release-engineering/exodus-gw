@@ -7,6 +7,7 @@ After=network-online.target exodus-gw-db.service
 EnvironmentFile=-%S/exodus-gw-dev/.env
 Environment=EXODUS_GW_SRC_PATH=%h/src/exodus-gw
 Environment=EXODUS_GW_DB_URL=postgresql://exodus-gw:exodus-gw@localhost:3355/exodus-gw?sslmode=verify-full&sslrootcert=%S/exodus-gw-dev/ca.crt
+Environment=EXODUS_GW_S3_ENDPOINT_URL=https://localhost:3377
 Environment=EXODUS_GW_DYNAMODB_ENDPOINT_URL=https://localhost:3377
 Environment=REQUESTS_CA_BUNDLE=/etc/pki/tls/certs/ca-bundle.crt
 Restart=on-failure

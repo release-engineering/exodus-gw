@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from datetime import datetime, timezone
 from os.path import basename
@@ -16,15 +17,22 @@ from exodus_gw.settings import Settings
 
 LOG = logging.getLogger("exodus-gw")
 
+from .autoindex import AutoindexEnricher
+
 
 class Commit:
     def __init__(
-        self, publish_id: str, env: str, from_date: str, actor_msg_id: str
+        self,
+        publish_id: str,
+        env: str,
+        from_date: str,
+        actor_msg_id: str,
+        settings: Settings,
     ):
         self.env = env
         self.from_date = from_date
         self.rollback_item_ids: List[str] = []
-        self.settings = Settings()
+        self.settings = settings
         self.db = Session(bind=db_engine(self.settings))
         self.task = self._query_task(actor_msg_id)
         self.publish = self._query_publish(publish_id)
@@ -155,17 +163,29 @@ class Commit:
                 del_items = self.db.query(Item).filter(Item.id.in_(item_ids))
                 write_batches(self.env, del_items, self.from_date, delete=True)
 
+    def autoindex(self):
+        enricher = AutoindexEnricher(self.publish, self.env, self.settings)
+        asyncio.run(enricher.run())
+
 
 @dramatiq.actor(time_limit=Settings().actor_time_limit)
-def commit(publish_id: str, env: str, from_date: str) -> None:
+def commit(
+    publish_id: str, env: str, from_date: str, settings: Settings
+) -> None:
     actor_msg_id = CurrentMessage.get_current_message().message_id
-    commit_obj = Commit(publish_id, env, from_date, actor_msg_id)
+    commit_obj = Commit(publish_id, env, from_date, actor_msg_id, settings)
 
     if not commit_obj.should_write():
         return
 
     commit_obj.task.state = TaskStates.in_progress
     commit_obj.db.commit()
+
+    # If any index files should be automatically generated for this publish,
+    # generate and add them now.
+    # No DynamoDB writes happen here, so this doesn't need to be covered by
+    # the rollback handler.
+    commit_obj.autoindex()
 
     try:
         commit_obj.write_publish_items()
