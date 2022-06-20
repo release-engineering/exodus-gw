@@ -58,8 +58,6 @@ If you are a client looking to make use of exodus-gw, consult your organization'
 internal documentation for advice on which environment(s) you should be using.
 """
 
-import logging.config
-
 import dramatiq
 from fastapi import FastAPI, Request
 from fastapi.exception_handlers import http_exception_handler
@@ -71,6 +69,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .aws.util import xml_response
 from .database import db_engine
+from .logging import loggers_init
 from .migrate import db_migrate
 from .routers import cdn, deploy, publish, service, upload
 from .settings import load_settings
@@ -119,21 +118,6 @@ async def custom_http_exception_handler(request, exc):
     return await http_exception_handler(request, exc)
 
 
-def loggers_init(settings=None):
-    settings = settings or app.state.settings
-    logging.config.dictConfig(settings.log_config)
-
-    root = logging.getLogger()
-    if not root.hasHandlers():
-        fmtr = logging.Formatter(
-            fmt="[%(asctime)s] [%(process)s] [%(levelname)s] %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S %z",
-        )
-        hdlr = logging.StreamHandler()
-        hdlr.setFormatter(fmtr)
-        root.addHandler(hdlr)
-
-
 def db_init() -> None:
     app.state.db_engine = db_engine(app.state.settings)
     db_migrate(app.state.db_engine, app.state.settings)
@@ -162,7 +146,7 @@ async def s3_queues_shutdown() -> None:
 @app.on_event("startup")
 def on_startup() -> None:
     settings_init()
-    loggers_init()
+    loggers_init(app.state.settings)
     db_init()
     s3_queues_init()
 

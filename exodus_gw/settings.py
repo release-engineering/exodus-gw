@@ -56,6 +56,9 @@ class Settings(BaseSettings):
     }
     """Logging configuration in dictConfig schema."""
 
+    ini_path: Optional[str] = None
+    """Path to an exodus-gw.ini config file with additional settings."""
+
     environments: List[Environment] = []
     # List of environment objects derived from exodus-gw.ini.
 
@@ -191,12 +194,20 @@ def load_settings() -> Settings:
     settings = Settings()
     config = configparser.ConfigParser()
 
-    config.read(
-        [
-            os.path.join(os.path.dirname(__file__), "../exodus-gw.ini"),
-            "/opt/app/config/exodus-gw.ini",
-        ]
-    )
+    # Try to find config here by default...
+    filenames = [
+        os.path.join(os.path.dirname(__file__), "../exodus-gw.ini"),
+        "/opt/app/config/exodus-gw.ini",
+    ]
+
+    # ...but also allow pointing at a specific config file if this path
+    # has been set. Note that putting this at the end gives it the highest
+    # precedence, as the behavior is to load all the existing files in
+    # order with each one potentially overriding settings from the prior.
+    if settings.ini_path:
+        filenames.append(settings.ini_path)
+
+    config.read(filenames)
 
     for logger in config["loglevels"] if "loglevels" in config else []:
         settings.log_config.setdefault("loggers", {})
