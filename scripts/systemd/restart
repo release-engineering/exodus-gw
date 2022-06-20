@@ -16,6 +16,10 @@ run(){
     systemctl --user stop exodus-gw-sidecar.service
   fi
 
+  if have_unit exodus-fakefront.service; then
+    systemctl --user stop exodus-fakefront.service
+  fi
+
   systemctl --user start exodus-gw.target
   echo "exodus-gw units are restarted!"
 }
