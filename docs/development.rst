@@ -179,12 +179,12 @@ the development environment.
        defined in the repo's ``exodus-gw.ini``. Check the other ``localstack-*-init``
        scripts if you need to create buckets/tables with other names.
 
-   * - ``aws --endpoint-url=https://localhost:3377 s3 ls s3://my-bucket``
+   * - ``env AWS_PROFILE=test aws --endpoint-url=https://localhost:3377 s3 ls s3://my-bucket``
      - List files in localstack s3 bucket.
 
        Can be used to check the outcome of an upload.
 
-   * - ``aws --endpoint-url=https://localhost:3377 dynamodb scan --table-name my-table``
+   * - ``env AWS_PROFILE=test aws --endpoint-url=https://localhost:3377 dynamodb scan --table-name my-table``
      - Dump all content of a dynamodb table in localstack.
 
        Can be used to check the outcome of a publish.
