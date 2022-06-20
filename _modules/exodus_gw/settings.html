@@ -91,6 +91,9 @@
     <span class="p">}</span>
     <span class="sd">&quot;&quot;&quot;Logging configuration in dictConfig schema.&quot;&quot;&quot;</span>
 
+    <span class="n">ini_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="sd">&quot;&quot;&quot;Path to an exodus-gw.ini config file with additional settings.&quot;&quot;&quot;</span>
+
     <span class="n">environments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Environment</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="c1"># List of environment objects derived from exodus-gw.ini.</span>
 
@@ -226,12 +229,20 @@
     <span class="n">settings</span> <span class="o">=</span> <span class="n">Settings</span><span class="p">()</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">configparser</span><span class="o">.</span><span class="n">ConfigParser</span><span class="p">()</span>
 
-    <span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">(</span>
-        <span class="p">[</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;../exodus-gw.ini&quot;</span><span class="p">),</span>
-            <span class="s2">&quot;/opt/app/config/exodus-gw.ini&quot;</span><span class="p">,</span>
-        <span class="p">]</span>
-    <span class="p">)</span>
+    <span class="c1"># Try to find config here by default...</span>
+    <span class="n">filenames</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;../exodus-gw.ini&quot;</span><span class="p">),</span>
+        <span class="s2">&quot;/opt/app/config/exodus-gw.ini&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="c1"># ...but also allow pointing at a specific config file if this path</span>
+    <span class="c1"># has been set. Note that putting this at the end gives it the highest</span>
+    <span class="c1"># precedence, as the behavior is to load all the existing files in</span>
+    <span class="c1"># order with each one potentially overriding settings from the prior.</span>
+    <span class="k">if</span> <span class="n">settings</span><span class="o">.</span><span class="n">ini_path</span><span class="p">:</span>
+        <span class="n">filenames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">ini_path</span><span class="p">)</span>
+
+    <span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">filenames</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">logger</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;loglevels&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;loglevels&quot;</span> <span class="ow">in</span> <span class="n">config</span> <span class="k">else</span> <span class="p">[]:</span>
         <span class="n">settings</span><span class="o">.</span><span class="n">log_config</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;loggers&quot;</span><span class="p">,</span> <span class="p">{})</span>
@@ -351,7 +362,7 @@
       &copy;2020, Red Hat.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
     </div>

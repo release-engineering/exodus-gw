@@ -181,12 +181,12 @@ defined in the repo’s <code class="docutils literal notranslate"><span class="
 scripts if you need to create buckets/tables with other names.</p>
 </td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">aws</span> <span class="pre">--endpoint-url=https://localhost:3377</span> <span class="pre">s3</span> <span class="pre">ls</span> <span class="pre">s3://my-bucket</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">env</span> <span class="pre">AWS_PROFILE=test</span> <span class="pre">aws</span> <span class="pre">--endpoint-url=https://localhost:3377</span> <span class="pre">s3</span> <span class="pre">ls</span> <span class="pre">s3://my-bucket</span></code></p></td>
 <td><p>List files in localstack s3 bucket.</p>
 <p>Can be used to check the outcome of an upload.</p>
 </td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">aws</span> <span class="pre">--endpoint-url=https://localhost:3377</span> <span class="pre">dynamodb</span> <span class="pre">scan</span> <span class="pre">--table-name</span> <span class="pre">my-table</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">env</span> <span class="pre">AWS_PROFILE=test</span> <span class="pre">aws</span> <span class="pre">--endpoint-url=https://localhost:3377</span> <span class="pre">dynamodb</span> <span class="pre">scan</span> <span class="pre">--table-name</span> <span class="pre">my-table</span></code></p></td>
 <td><p>Dump all content of a dynamodb table in localstack.</p>
 <p>Can be used to check the outcome of a publish.</p>
 </td>
@@ -358,7 +358,7 @@ sqlalchemy model changes.</p>
       &copy;2020, Red Hat.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.0</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.0.1</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
       
       |
