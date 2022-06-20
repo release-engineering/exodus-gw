@@ -117,7 +117,7 @@ Suggested commands:
   curl http://localhost:8000/healthcheck-worker
 
   # Create a test bucket in localstack
-  aws --endpoint-url=http://localhost:3377 s3api create-bucket --bucket test
+  env AWS_PROFILE=test aws --endpoint-url=http://localhost:3377 s3api create-bucket --bucket test
 
   # Install CA certificate to system bundle
   sudo cp $CONFIG_DIR/ca.crt /etc/pki/ca-trust/source/anchors/exodus-gw-dev.crt
