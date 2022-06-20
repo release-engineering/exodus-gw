@@ -42,10 +42,11 @@ a complete instance of the service in Kubernetes/OpenShift.
 This development environment includes:
 
 - exodus-gw uvicorn server (http)
-- sidecar proxy container (https)
+- sidecar proxy container (https) (optional)
 - exodus-gw dramatiq worker, for background tasks
 - postgres container
 - localstack container
+- exodus-lambda fakefront server (optional)
 - helpers for managing development certs
 
 Note: the sidecar proxy is only enabled when you instantiate the environment
@@ -60,6 +61,9 @@ Prerequisites
 - Your login sessions must make use of a systemd user manager.
 - You may need to install some packages. If so, the install script will list the needed
   packages for you.
+- If you want exodus-lambda fakefront to be enabled, you must have a copy of the
+  `exodus-lambda sources <https://github.com/release-engineering/exodus-lambda>`_
+  checked out as a sibling of the exodus-gw repository.
 
 
 Installation
@@ -132,7 +136,7 @@ the development environment.
    * - ``systemctl --user start exodus-gw.target``
      - Start all development services
 
-   * - ``journalctl --user '--unit=exodus-gw-*' -f``
+   * - ``journalctl --user '--unit=exodus-*' -f``
      - Watch logs of all services
 
    * - ``sudo cp ~/.config/exodus-gw-dev/ca.crt /etc/pki/ca-trust/source/anchors/exodus-gw-dev.crt``
@@ -165,6 +169,10 @@ the development environment.
 
    * - ``curl https://localhost:3377``
      - Sanity check for localstack
+
+   * - ``curl -I http://localhost:8049/_/cookie/test``
+     - Sanity check for fakefront; should give a 302 response, and does not require any
+       content to be loaded in the environment.
 
    * - ``scripts/localstack-init``
 
