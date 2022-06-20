@@ -11,6 +11,11 @@ use_sidecar(){
   host images.paas.redhat.com &>/dev/null
 }
 
+use_fakefront(){
+  # can exodus-lambda sources be found as a sibling to this repo?
+  test -f ../../../exodus-lambda/tox.ini
+}
+
 check_prereqs(){
   failed=0
   for cmd in podman sscg tox host hostname postgres; do
@@ -40,6 +45,12 @@ enable_units(){
   else
     echo "WARNING: sidecar image appears to be unavailable, cannot use HTTPS." 1>&2
   fi
+
+  if use_fakefront; then
+    systemctl --user enable $PWD/exodus-fakefront.service
+  else
+    echo "WARNING: exodus-lambda sources not found, fakefront was not enabled." 1>&2
+  fi
 }
 
 create_env_file(){
@@ -64,8 +75,11 @@ EXODUS_GW_SRC_PATH=$(realpath -L ../..)
 #EXODUS_GW_HTTP_PORT=8000
 #EXODUS_GW_HTTPS_PORT=8010
 
-# You'll have to change this too if you change the localstack port.
+# You'll have to change these too if you change the localstack port.
+# For exodus-gw:
 #EXODUS_GW_S3_ENDPOINT_URL=https://localhost:3377
+# For fakefront:
+#EXODUS_AWS_ENDPOINT_URL=https://localhost:3377
 
 # Dummy private key, enabling CDN redirect API.
 EXODUS_GW_CDN_PRIVATE_KEY_TEST="-----BEGIN RSA PRIVATE KEY-----
@@ -108,7 +122,7 @@ Suggested commands:
   systemctl --user start exodus-gw.target
 
   # Observe server logs
-  journalctl --user '--unit=exodus-gw-*' -f
+  journalctl --user '--unit=exodus-*' -f
 
   # Verify http server is working
   curl http://localhost:8000/healthcheck
@@ -129,6 +143,14 @@ END
 
   # Verify https server is working
   curl https://localhost:8010/healthcheck
+END
+  fi
+
+  if use_fakefront; then
+    cat <<END
+
+  # Verify fakefront is working
+  curl -I http://localhost:8049/_/cookie/test
 END
   fi
 }
