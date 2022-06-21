@@ -17,12 +17,11 @@ def test_cdn_redirect_(monkeypatch, dummy_private_key):
         head_r = client.head("/test/cdn/some/url", allow_redirects=False)
 
     expected_url = (
-        "https://test.cloudfront.net/some/url"
-        "?Expires=1644971400"
-        "&Signature=G0WMe3Eogdl9MWPAWY3hliw0~HPK-vM5ZBF6MdCLpPXUEeipUA"
-        "RcPyQks4xroU8esCqVPl-LTeM6x9yUXu~-xKgnm7OQj7Yo11IhFT0zgZMm-LJ"
-        "DMl2ghI2khJwFdPcLhB32tEpaESSnWeZBKzTQeASjGIqCe~q8NH4bzvof0Jg_"
-        "&Key-Pair-Id=XXXXXXXXXXXXXX"
+        "http://localhost:8049/_/cookie/some/url?Expires=1644971400&"
+        "Signature=QXdMBQNyDLYeIsJzV7bKHnqYQSErcz9OYdJTuIYKVHCDaDiqP"
+        "OUjqkSXX4fm7A-Fi2roZSlWhyd4emrlC8hvNdPLZb3-7LHMVqau1QK9qFlh"
+        "Zz~aP1i4~Zud-kTot4JO4ewE8LdCkQL1pda-on~wVTXhiAtB7EaX8aR3dnB"
+        "ZmYo_&Key-Pair-Id=XXXXXXXXXXXXXX"
     )
 
     assert get_r.ok
@@ -43,12 +42,11 @@ def test_sign_url_with_query(monkeypatch, dummy_private_key):
     # URL-parameter separator should be "&" when a query string is given.
     signed_url = cdn.sign_url("?cdest=some-file&ckey=a1bc3d4", 60, env)
     expected_url = (
-        "https://test.cloudfront.net/?cdest=some-file&ckey=a1bc3d4"
-        "&Expires=1644969660"
-        "&Signature=Me7zBg4~P-0i3R46S9zW1QkRDNSpAxVXa1tjWThcaAOO262UJV"
-        "YQoszT5j4~p~cozcVK3qahaFe9~~lW5ODaGLLR6NXflaKzLDiDF9ITfmn8V8S"
-        "yGEhYynPZ7aFjxgPZalIWBu0nBMTn~MZwWyOraQVLIgJEpjfdNrGD7908V6I_"
-        "&Key-Pair-Id=XXXXXXXXXXXXXX"
+        "http://localhost:8049/_/cookie/?cdest=some-file&ckey=a1bc3d4&"
+        "Expires=1644969660&Signature=G1abxXXex82KUjdKSB3Pf6v~3GNnu-tU"
+        "KRiLq5QgowWwC13AkRcy92olUC6kMy1NTtnqzK4b4Fzs8pAOYtWVJil3bMqv6"
+        "omweBJ7LSsW0KTv4XlWwPYeV5aD8nQ26HRGspkmmoVibmFgvRtWgf06v70ynK"
+        "aE4wZexdMvbT9RCis_&Key-Pair-Id=XXXXXXXXXXXXXX"
     )
 
     assert signed_url == expected_url
