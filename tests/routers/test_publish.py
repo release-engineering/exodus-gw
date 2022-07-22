@@ -520,30 +520,66 @@ def test_update_publish_items_invalid_content_type(db, auth_header):
     assert r.json() == {"detail": ["Invalid content type: %s" % expected_item]}
 
 
-@mock.patch("exodus_gw.worker.commit")
-def test_commit_publish(mock_commit, fake_publish, db):
-    """Ensure commit_publish delegates to worker correctly and creates task."""
+@pytest.mark.parametrize(
+    "deadline",
+    [None, "2022-07-25T15:47:47Z"],
+    ids=["typical", "with deadline"],
+)
+def test_commit_publish(deadline, auth_header, db):
+    """Ensure commit_publish delegates to worker and creates task."""
 
-    db.add(fake_publish)
-    db.commit()
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
 
-    publish_task = routers.publish.commit_publish(
-        env=get_environment("test"),
-        publish_id=fake_publish.id,
-        db=db,
-        settings=Settings(),
+    publish = Publish(
+        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
     )
 
-    assert isinstance(publish_task, Task)
+    url = "/test/publish/11224567-e89b-12d3-a456-426614174000/commit"
+    if deadline:
+        url += "?deadline=%s" % deadline
 
-    mock_commit.assert_has_calls(
-        calls=[
-            mock.call.send(
-                publish_id="123e4567-e89b-12d3-a456-426614174000",
-                env="test",
-                from_date=mock.ANY,
-            )
-        ],
+    with TestClient(app) as client:
+        # ensure a publish object exists
+        db.add(publish)
+        db.commit()
+
+        # Try to commit it
+        r = client.post(url, headers=auth_header(roles=["test-publisher"]))
+
+    # It should have succeeded
+    assert r.ok
+
+    # It should return an appropriate task object
+    json_r = r.json()
+    assert json_r["links"]["self"] == "/task/%s" % json_r["id"]
+    assert json_r["publish_id"] == "11224567-e89b-12d3-a456-426614174000"
+    if deadline:
+        # 'Z' suffix is dropped when stored as datetime in the database
+        assert json_r["deadline"] == "2022-07-25T15:47:47"
+
+
+def test_commit_publish_bad_deadline(auth_header, db):
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(
+        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
+    )
+
+    url = "/test/publish/11224567-e89b-12d3-a456-426614174000/commit"
+    url += "?deadline=07/25/2022 3:47:47 PM"
+
+    with TestClient(app) as client:
+        # ensure a publish object exists
+        db.add(publish)
+        db.commit()
+
+        # Try to commit it
+        r = client.post(url, headers=auth_header(roles=["test-publisher"]))
+
+    assert r.status_code == 400
+    assert r.json()["detail"] == (
+        "ValueError(\"time data '07/25/2022 3:47:47 PM' does not match "
+        "format '%Y-%m-%dT%H:%M:%SZ'\")"
     )
 
 

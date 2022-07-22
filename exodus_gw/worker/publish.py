@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 from os.path import basename
 from typing import List
 
@@ -31,10 +32,20 @@ class Commit:
     @property
     def task_ready(self) -> bool:
         task = self.task
-        if task.state in (TaskStates.not_started, TaskStates.in_progress):
-            return True
-        LOG.warning("Task %s in unexpected state, '%s'", task.id, task.state)
-        return False
+        now = datetime.now(timezone.utc)
+        if task.state in (TaskStates.complete, TaskStates.failed):
+            LOG.warning(
+                "Task %s in unexpected state, '%s'", task.id, task.state
+            )
+            return False
+        if task.deadline and (task.deadline.timestamp() < now.timestamp()):
+            LOG.warning("Task %s expired at %s", task.id, task.deadline)
+            # Fail expired task and associated publish
+            self.task.state = TaskStates.failed
+            self.publish.state = PublishStates.failed
+            self.db.commit()
+            return False
+        return True
 
     @property
     def publish_ready(self) -> bool:

@@ -14,6 +14,7 @@ class Task(Base):
     publish_id = Column(UUID(as_uuid=True))
     state = Column(String, nullable=False)
     updated = Column(DateTime(timezone=True))
+    deadline = Column(DateTime(timezone=True))
 
 
 @event.listens_for(Task, "before_update")

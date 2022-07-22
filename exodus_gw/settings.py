@@ -127,6 +127,11 @@ class Settings(BaseSettings):
     passed. Defaults to two weeks.
     """
 
+    task_deadline: int = 2
+    """Maximum amount of time (in hours) a task should remain viable. Defaults to two
+    hours.
+    """
+
     actor_time_limit: int = 30 * 60000
     """Maximum amount of time (in milliseconds) actors may run."""
 

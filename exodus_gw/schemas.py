@@ -170,6 +170,9 @@ class Task(BaseModel):
         None,
         description="DateTime of last update to this task. None if never updated.",
     )
+    deadline: datetime = Field(
+        None, description="DateTime at which this task should be abandoned."
+    )
     links: Dict[str, str] = Field(
         {}, description="""URL links related to this task."""
     )
