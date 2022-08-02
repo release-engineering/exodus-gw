@@ -53,17 +53,29 @@ the semantics of a publish from the CDN client's point of view.
 Publish objects should be treated as ephemeral; they are not persisted indefinitely.
 
 - All publish objects which have reached a terminal state (failed or committed) will be
-  deleted after some server-defined timeout, typically one week.
+  deleted after some server-defined timeout, defaulting to two weeks.
 - Publish objects which have been created but not committed within a server-defined timeout,
   typically one day, will be marked as failed.
+
+
+## Expiry of task objects
+
+Like publish objects, task objects created when publishes are committed are not persisted
+indefinitely.
+
+- All task objects which have reached a terminal state (failed or complete) will be
+  deleted after some server-defined timeout, defaulting to two weeks.
+- Task objects not picked up by a worker within a server-defined time limit, defaulting
+  to two hours, will be marked as failed along with the associated publish object. This
+  prevents system overload in the event of a worker outage.
 """
 
 import logging
-from datetime import datetime, timezone
-from typing import Dict, List
+from datetime import datetime, timedelta, timezone
+from typing import Dict, List, Union
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Body, HTTPException
+from fastapi import APIRouter, Body, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from .. import auth, deps, models, schemas, worker
@@ -193,6 +205,9 @@ def commit_publish(
     env: Environment = deps.env,
     db: Session = deps.db,
     settings: Settings = deps.settings,
+    deadline: Union[str, None] = Query(
+        default=None, example="2022-07-25T15:47:47Z"
+    ),
 ) -> models.Task:
     """Commit an existing publish object.
 
@@ -214,6 +229,18 @@ def commit_publish(
     objects from any of those publishes.
     """
 
+    now = datetime.now(timezone.utc)
+
+    if isinstance(deadline, str):
+        try:
+            deadline_obj = datetime.strptime(deadline, "%Y-%m-%dT%H:%M:%SZ")
+        except Exception as exc_info:
+            raise HTTPException(
+                status_code=400, detail=repr(exc_info)
+            ) from exc_info
+    else:
+        deadline_obj = now + timedelta(hours=settings.task_deadline)
+
     db_publish = (
         db.query(models.Publish)
         .with_for_update()
@@ -233,7 +260,7 @@ def commit_publish(
     msg = worker.commit.send(
         publish_id=str(db_publish.id),
         env=env.name,
-        from_date=str(datetime.now(timezone.utc)),
+        from_date=str(now),
     )
 
     LOG.info("Enqueued commit for '%s'", msg.kwargs["publish_id"])
@@ -243,6 +270,7 @@ def commit_publish(
         id=msg.message_id,
         publish_id=msg.kwargs["publish_id"],
         state="NOT_STARTED",
+        deadline=deadline_obj,
     )
     db.add(task)
 
