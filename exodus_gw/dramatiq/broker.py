@@ -14,6 +14,7 @@ from exodus_gw.dramatiq.consumer import Consumer
 from exodus_gw.dramatiq.middleware import (
     DatabaseReadyMiddleware,
     LocalNotifyMiddleware,
+    LogActorMiddleware,
     PostgresNotifyMiddleware,
     SchedulerMiddleware,
 )
@@ -45,6 +46,10 @@ class Broker(dramatiq.Broker):  # pylint: disable=abstract-method
         self.add_middleware(
             SchedulerMiddleware(self.__settings, self.__db_engine)
         )
+
+        # Enable automatic prefixing of log messages with actor names/identity
+        # such as "[commit <publish-id>] the log message..."
+        self.add_middleware(LogActorMiddleware())
 
         self.add_middleware(LocalNotifyMiddleware())
 
