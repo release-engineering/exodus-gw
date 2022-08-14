@@ -1,5 +1,6 @@
 """These tests do system testing of our broker & consumer by running a real worker."""
 
+import logging
 import os
 import threading
 import time
@@ -52,6 +53,7 @@ class Actors:
             self.succeeds_on_retry, broker=broker, max_backoff=0.001
         )
         self.blocking_fn = dramatiq.actor(self.blocking_fn, broker=broker)
+        self.log_warning = dramatiq.actor(self.log_warning, broker=broker)
 
     def record_call(self, name):
         self.actor_calls.append(name)
@@ -84,6 +86,12 @@ class Actors:
         self.record_call("blocking_fn start")
         self.blocking_sem.acquire()
         self.record_call("blocking_fn end")
+
+    def log_warning(self, task_id, value):
+        self.record_call("log_warning")
+        logging.getLogger("any-logger").warning(
+            "warning from actor: %s", value
+        )
 
 
 # start/stop of worker is relatively slow, hence why we use module-scoped
@@ -239,6 +247,23 @@ def test_mixed_queues(actors, db):
 
     assert_soon(lambda: len(actors.actor_calls) == 2)
     assert sorted(actors.actor_calls) == ["basic", "basic_other_queue"]
+
+
+def test_logs_prefixed(actors, caplog):
+    """Log messages generated within an actor are prefixed."""
+
+    actors.log_warning.send(task_id="task-abc123", value="some value")
+
+    # Ensure actor is invoked
+    assert_soon(lambda: len(actors.actor_calls) == 1)
+    assert sorted(actors.actor_calls) == ["log_warning"]
+
+    # When the warning was logged, it should have automatically embedded
+    # both the actor name and the task id
+    assert (
+        "[log_warning task-abc123] warning from actor: some value"
+        in caplog.text
+    )
 
 
 def test_queue_backlog(actors, db):
