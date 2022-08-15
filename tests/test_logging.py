@@ -7,6 +7,7 @@ from exodus_gw.settings import load_settings
 def test_log_levels():
     """Ensure loggers are configured according to exodus-gw.ini."""
 
+    logging.getLogger().setLevel("INFO")
     logging.getLogger("old-logger").setLevel("DEBUG")
 
     loggers_init(load_settings())
@@ -15,8 +16,8 @@ def test_log_levels():
     assert logging.getLogger("old-logger").level == logging.DEBUG
 
     # Should set level of new loggers according to exodus-gw.ini.
-    assert logging.getLogger().level == logging.INFO
-    assert logging.getLogger("exodus-gw").level == logging.WARN
+    assert logging.getLogger().level == logging.WARN
+    assert logging.getLogger("exodus-gw").level == logging.INFO
     assert logging.getLogger("s3").level == logging.DEBUG
 
 
