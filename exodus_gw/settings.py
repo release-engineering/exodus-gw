@@ -142,6 +142,12 @@ class Settings(BaseSettings):
     ]
     """List of file names that should be saved for last when publishing."""
 
+    autoindex_filename: str = ".__exodus_autoindex"
+    """Filename for indexes automatically generated during publish.
+
+    Can be set to an empty string to disable generation of indexes.
+    """
+
     config_cache_ttl: int = 2
     """Time (in minutes) config is expected to live in components that consume it.
 
