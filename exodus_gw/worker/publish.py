@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from os.path import basename
 from typing import List
 
@@ -40,7 +40,7 @@ class Commit:
     @property
     def task_ready(self) -> bool:
         task = self.task
-        now = datetime.now(timezone.utc)
+        now = datetime.utcnow()
         if task.state in (TaskStates.complete, TaskStates.failed):
             LOG.warning(
                 "Task %s in unexpected state, '%s'", task.id, task.state

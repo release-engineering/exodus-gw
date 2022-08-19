@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 
 from fastapi import HTTPException
 from sqlalchemy import (
@@ -28,7 +28,7 @@ class Publish(Base):
     )
     env = Column(String, nullable=False)
     state = Column(String, nullable=False)
-    updated = Column(DateTime(timezone=True))
+    updated = Column(DateTime())
     items = relationship(
         "Item", back_populates="publish", cascade="all, delete-orphan"
     )
@@ -67,7 +67,7 @@ class Publish(Base):
 
 @event.listens_for(Publish, "before_update")
 def publish_before_update(_mapper, _connection, publish):
-    publish.updated = datetime.now(timezone.utc)
+    publish.updated = datetime.utcnow()
 
 
 class Item(Base):

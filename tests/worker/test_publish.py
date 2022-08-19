@@ -1,12 +1,12 @@
 import logging
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 import mock
 
 from exodus_gw import models, worker
 
-NOW_UTC = datetime.now(timezone.utc)
+NOW_UTC = datetime.utcnow()
 
 
 def _task(publish_id):
