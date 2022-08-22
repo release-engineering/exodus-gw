@@ -71,7 +71,7 @@ indefinitely.
 """
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Dict, List, Union
 from uuid import UUID, uuid4
 
@@ -231,7 +231,7 @@ def commit_publish(
     objects from any of those publishes.
     """
 
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
 
     if isinstance(deadline, str):
         try:
