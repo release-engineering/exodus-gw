@@ -18,6 +18,7 @@ depends_on = None
 
 
 def upgrade():
+    op.execute("DELETE FROM items")
     op.execute("DELETE FROM tasks")
     op.execute("DELETE FROM publishes")
 
