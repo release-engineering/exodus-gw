@@ -46,15 +46,25 @@ class Publish(Base):
         ln_item_paths = [item.link_to for item in ln_items]
 
         # Store only necessary fields from matching items to conserve memory.
-        match = Bundle("match", Item.web_uri, Item.object_key)
+        match = Bundle(
+            "match", Item.web_uri, Item.object_key, Item.content_type
+        )
         matches = {
-            row.match["web_uri"]: row.match["object_key"]
+            row.match["web_uri"]: {
+                "object_key": row.match["object_key"],
+                "content_type": row.match["content_type"],
+            }
             for row in db.query(match).filter(Item.web_uri.in_(ln_item_paths))
         }
 
         for ln_item in ln_items:
-            ln_item.object_key = matches.get(ln_item.link_to)
-            if not ln_item.object_key:
+            match = matches.get(ln_item.link_to)
+
+            if (
+                not match
+                or not match.get("object_key")
+                or not match.get("content_type")
+            ):
                 raise HTTPException(
                     status_code=400,
                     detail=(
@@ -63,6 +73,9 @@ class Publish(Base):
                     )
                     % (ln_item.web_uri, ln_item.link_to),
                 )
+
+            ln_item.object_key = match.get("object_key")
+            ln_item.content_type = match.get("content_type")
 
 
 @event.listens_for(Publish, "before_update")

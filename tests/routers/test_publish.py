@@ -656,12 +656,14 @@ def test_commit_publish_linked_items(mock_commit, fake_publish, db):
         object_key="1" * 64,
         publish_id=fake_publish.id,
         link_to=None,  # It should be able to handle None/NULL link_to values...
+        content_type="some type",
     )
     item2 = Item(
         web_uri="/another/path",
         object_key="2" * 64,
         publish_id=fake_publish.id,
         link_to="",  # ...and empty string link_to values...
+        content_type="another type",
     )
     item3 = Item(
         web_uri="/some/different/path",
@@ -695,6 +697,12 @@ def test_commit_publish_linked_items(mock_commit, fake_publish, db):
     assert ln_item1.object_key == "1" * 64
     # Should've filled ln_item2's object_key with that of item2.
     assert ln_item2.object_key == "2" * 64
+
+    # Should've filled ln_item1's content_type with that of item1.
+    assert ln_item1.content_type == "some type"
+    # Should've filled ln_item2's content_type with that of item2.
+    assert ln_item2.content_type == "another type"
+
     # Should've created and sent task.
     assert isinstance(publish_task, Task)
 
