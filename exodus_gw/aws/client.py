@@ -88,22 +88,18 @@ class DynamoDBClientWrapper:
     """
 
     def __init__(self, profile: str):
-        """Prepare a client for the given profile. This object must be used
-        via 'with' in order to obtain access to the client.
-
+        """Prepare a client for the given profile.
         Note: Session creation will fail if provided profile cannot be found.
         """
 
         session = boto3.session.Session(profile_name=profile)
 
-        self._client_context = session.client(
+        self._client = session.client(
             "dynamodb",
             endpoint_url=os.environ.get("EXODUS_GW_DYNAMODB_ENDPOINT_URL")
             or None,
         )
 
-    def __enter__(self):
-        return self._client_context
-
-    def __exit__(self, exc_type, exc, tb):
-        return
+    @property
+    def client(self):
+        return self._client

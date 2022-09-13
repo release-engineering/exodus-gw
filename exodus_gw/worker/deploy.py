@@ -1,4 +1,3 @@
-import json
 import logging
 from typing import Any, Dict
 
@@ -7,9 +6,9 @@ from dramatiq.middleware import CurrentMessage
 from sqlalchemy.orm import Session
 
 from exodus_gw import models, schemas
-from exodus_gw.aws.dynamodb import batch_write
+from exodus_gw.aws.dynamodb import DynamoDB
 from exodus_gw.database import db_engine
-from exodus_gw.settings import Settings, get_environment
+from exodus_gw.settings import Settings
 
 LOG = logging.getLogger("exodus-gw")
 
@@ -32,10 +31,9 @@ def complete_deploy_config_task(task_id: str):
 
 @dramatiq.actor(time_limit=Settings().actor_time_limit)
 def deploy_config(config: Dict[str, Any], env: str, from_date: str):
-    env_obj = get_environment(env)
-
     settings = Settings()
     db = Session(bind=db_engine(settings))
+    ddb = DynamoDB(env, settings, from_date)
     current_message_id = CurrentMessage.get_current_message().message_id
     task = (
         db.query(models.Task)
@@ -51,21 +49,9 @@ def deploy_config(config: Dict[str, Any], env: str, from_date: str):
     db.commit()
 
     try:
-        request = {
-            env_obj.config_table: [
-                {
-                    "PutRequest": {
-                        "Item": {
-                            "from_date": {"S": from_date},
-                            "config_id": {"S": "exodus-config"},
-                            "config": {"S": json.dumps(config)},
-                        }
-                    }
-                },
-            ]
-        }
         LOG.info("Task %s writing config from %s", task.id, from_date)
-        batch_write(env_obj, request)
+        ddb.write_config(config)
+
     except Exception:  # pylint: disable=broad-except
         LOG.exception("Task %s encountered an error", task.id)
 
