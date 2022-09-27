@@ -151,6 +151,8 @@
     <span class="sd">&quot;&quot;&quot;Maximum number of items to write to the DynamoDB table at one time.&quot;&quot;&quot;</span>
     <span class="n">write_max_tries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span>
     <span class="sd">&quot;&quot;&quot;Maximum write attempts to the DynamoDB table.&quot;&quot;&quot;</span>
+    <span class="n">write_max_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="sd">&quot;&quot;&quot;Maximum number of worker threads used in the DynamoDB batch writes.&quot;&quot;&quot;</span>
 
     <span class="n">publish_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">24</span>
     <span class="sd">&quot;&quot;&quot;Maximum amount of time (in hours) between updates to a pending publish before</span>
