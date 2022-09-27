@@ -6,151 +6,184 @@ from typing import Any, Dict, List, Optional
 import backoff
 
 from .. import models
-from ..aws.client import DynamoDBClientWrapper as ddb_client
+from ..aws.client import DynamoDBClientWrapper
 from ..aws.util import uri_alias
 from ..settings import Environment, Settings, get_environment
 
 LOG = logging.getLogger("exodus-gw")
 
-# TODO: this module is using some settings evaluated at import time.
-# This means changing settings (e.g. during tests) won't have the desired
-# effect. As this code should be executed from the dramatiq workers, is
-# there a way to tie Settings lifecycle to the lifecycle of the worker?
 
+class DynamoDB:
+    def __init__(
+        self,
+        env: str,
+        settings: Settings,
+        from_date: str,
+        env_obj: Optional[Environment] = None,
+    ):
+        self.env = env
+        self.env_obj = env_obj or get_environment(env)
+        self.settings = settings
+        self.from_date = from_date
+        self._client = None
+        self._definitions = None
 
-@backoff.on_predicate(
-    wait_gen=backoff.expo,
-    predicate=lambda response: response["UnprocessedItems"],
-    max_tries=Settings().write_max_tries,
-)
-def batch_write(env_obj: Environment, request: Dict[str, Any]):
-    """Wrapper for batch_write_item with retries and item count validation.
+    @property
+    def client(self):
+        """A DynamoDB client."""
+        if self._client is None:
+            self._client = DynamoDBClientWrapper(
+                self.env_obj.aws_profile
+            ).client
+        return self._client
 
-    Item limit of 25 is, at this time, imposed by AWS's boto3 library.
-    """
+    @property
+    def definitions(self):
+        if self._definitions is None:
+            self._definitions = self.query_definitions()
+        return self._definitions
 
-    item_count = len(request.get(env_obj.table, []))
+    def query_definitions(self):
+        """Query the definitions in the config_table. If definitions are found, return them. Otherwise,
+        return an empty dictionary."""
 
-    if item_count > 25:
-        LOG.error("Cannot process more than 25 items per request")
-        raise ValueError("Request contains too many items (%s)" % item_count)
+        # Return an empty dict if a query result is not found
+        out: Dict[str, Any] = {}
 
-    with ddb_client(profile=env_obj.aws_profile) as ddb:
-        response = ddb.batch_write_item(RequestItems=request)
-
-    return response
-
-
-def query_definitions(env_obj: Environment, from_date: str):
-    out: Dict[str, Any] = {}
-
-    table = env_obj.config_table
-    aws_profile = env_obj.aws_profile
-
-    with ddb_client(profile=aws_profile) as ddb:
-        query_result = ddb.query(
-            TableName=table,
+        query_result = self.client.query(
+            TableName=self.env_obj.config_table,
             Limit=1,
             ScanIndexForward=False,
             KeyConditionExpression="config_id = :id and from_date <= :d",
             ExpressionAttributeValues={
                 ":id": {"S": "exodus-config"},
-                ":d": {"S": from_date},
+                ":d": {"S": self.from_date},
             },
         )
-        if query_result["Items"]:
+        if query_result.get("Items"):
             item = query_result["Items"][0]
             out = json.loads(item["config"]["S"])
-    return out
+        return out
 
+    def create_request(
+        self,
+        items: List[models.Item],
+        delete: bool = False,
+    ):
+        """Create the dictionary structure expected by batch_write_item."""
+        table_name = self.env_obj.table
+        request: Dict[str, List[Any]] = {table_name: []}
 
-def create_request(
-    table_name: str,
-    items: List[models.Item],
-    from_date: str,
-    definitions: Optional[Dict[str, List[Any]]] = None,
-    delete: bool = False,
-):
-    """Create the dictionary structure expected by batch_write_item."""
+        for item in items:
+            # Resolve aliases relating to origin, e.g. content/origin <=> origin
+            web_uri = uri_alias(
+                item.web_uri, self.definitions.get("origin_alias")
+            )
 
-    request: Dict[str, List[Any]] = {table_name: []}
-    definitions = definitions or {}
-
-    for item in items:
-        # Resolve aliases relating to origin, e.g. content/origin <=> origin
-        web_uri = uri_alias(item.web_uri, definitions.get("origin_alias"))
-
-        if delete:
-            request[table_name].append(
-                {
-                    "DeleteRequest": {
-                        "Key": {
-                            "from_date": {"S": from_date},
-                            "web_uri": {"S": web_uri},
+            if delete:
+                request[table_name].append(
+                    {
+                        "DeleteRequest": {
+                            "Key": {
+                                "from_date": {"S": self.from_date},
+                                "web_uri": {"S": web_uri},
+                            }
                         }
                     }
-                }
-            )
-        else:
-            request[table_name].append(
+                )
+            else:
+                request[table_name].append(
+                    {
+                        "PutRequest": {
+                            "Item": {
+                                "from_date": {"S": self.from_date},
+                                "web_uri": {"S": web_uri},
+                                "object_key": {"S": item.object_key},
+                                "content_type": {"S": item.content_type},
+                            }
+                        }
+                    }
+                )
+        return request
+
+    def create_config_request(self, config):
+        request = {
+            self.env_obj.config_table: [
                 {
                     "PutRequest": {
                         "Item": {
-                            "from_date": {"S": from_date},
-                            "web_uri": {"S": web_uri},
-                            "object_key": {"S": item.object_key},
-                            "content_type": {"S": item.content_type},
+                            "from_date": {"S": self.from_date},
+                            "config_id": {"S": "exodus-config"},
+                            "config": {"S": json.dumps(config)},
                         }
                     }
-                }
+                },
+            ]
+        }
+        return request
+
+    def batch_write(self, request: Dict[str, Any]):
+        """Wrapper for batch_write_item with retries and item count validation.
+
+        Item limit of 25 is, at this time, imposed by AWS's boto3 library.
+        """
+
+        @backoff.on_predicate(
+            wait_gen=backoff.expo,
+            predicate=lambda response: response["UnprocessedItems"],
+            max_tries=self.settings.write_max_tries,
+        )
+        def _batch_write(req):
+            response = self.client.batch_write_item(RequestItems=req)
+            return response
+
+        item_count = len(request.get(self.env_obj.table, []))
+
+        if item_count > 25:
+            LOG.error("Cannot process more than 25 items per request")
+            raise ValueError(
+                "Request contains too many items (%s)" % item_count
             )
-    return request
 
+        return _batch_write(request)
 
-def write_batches(
-    env: str, items: List[models.Item], from_date: str, delete: bool = False
-):
-    """Submit batches of given items for writing via batch_write."""
+    def get_batches(self, items: List[models.Item]):
+        """Divide the publish items into batches of size 'write_batch_size'."""
+        it = iter(items)
+        batches = list(
+            iter(lambda: tuple(islice(it, self.settings.write_batch_size)), ())
+        )
+        return batches
 
-    env_obj = get_environment(env)
-    settings = Settings()
+    def write_batch(self, items: List[models.Item], delete: bool = False):
+        """Submit a batch of given items for writing via batch_write."""
 
-    it = iter(items)
-    batches = list(
-        iter(lambda: tuple(islice(it, settings.write_batch_size)), ())
-    )
-    unprocessed_items = []
-    definitions = query_definitions(env_obj, from_date)
-
-    for batch in batches:
+        request = self.create_request(list(items), delete)
         try:
-            request = create_request(
-                env_obj.table, list(batch), from_date, definitions, delete
-            )
-            response = batch_write(env_obj, request)
+            response = self.batch_write(request)
         except Exception:
             LOG.exception(
-                "Exception while %s %s items on table '%s'",
+                "Exception while %s items on table '%s'",
                 ("deleting" if delete else "writing"),
-                len(batch),
-                env_obj.table,
+                self.env_obj.table,
             )
             raise
-
         # Raise immediately for put requests.
         # Collect unprocessed items for delete requests and resume deleting.
         if response["UnprocessedItems"]:
             if delete:
-                unprocessed_items.append(response["UnprocessedItems"])
-                continue
+                LOG.error(
+                    "Unprocessed items:\n\t%s",
+                    (response["UnprocessedItems"]),
+                )
+                raise RuntimeError(
+                    "Deletion failed\nSee error log for details"
+                )
 
             raise RuntimeError("One or more writes were unsuccessful")
 
-    if unprocessed_items:
-        LOG.error(
-            "Unprocessed items:\n\t%s",
-            ("\n\t".join([str(item) for item in unprocessed_items])),
-        )
-        raise RuntimeError("Deletion failed\nSee error log for details")
+        LOG.info("Items successfully %s", "deleted" if delete else "written")
 
-    LOG.info("Items successfully %s", "deleted" if delete else "written")
+    def write_config(self, config):
+        request = self.create_config_request(config)
+        self.batch_write(self.env_obj, request)

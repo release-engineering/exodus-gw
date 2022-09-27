@@ -5,7 +5,7 @@ import mock
 import pytest
 
 from exodus_gw.aws import dynamodb
-from exodus_gw.settings import get_environment
+from exodus_gw.settings import Environment, Settings, get_environment
 
 NOW_UTC = str(datetime.now(timezone.utc))
 
@@ -96,16 +96,14 @@ NOW_UTC = str(datetime.now(timezone.utc))
 def test_batch_write(
     mock_boto3_client, fake_publish, delete, expected_request
 ):
-    env = get_environment("test")
+    ddb = dynamodb.DynamoDB("test", Settings(), NOW_UTC)
 
-    request = dynamodb.create_request(
-        env.table, fake_publish.items, NOW_UTC, delete=delete
-    )
+    request = ddb.create_request(fake_publish.items, delete=delete)
 
     # Represent successful write/delete of all items to the table.
     mock_boto3_client.batch_write_item.return_value = {"UnprocessedItems": {}}
 
-    dynamodb.batch_write(env, request)
+    ddb.batch_write(request)
 
     # Should've requested write of all items.
     mock_boto3_client.batch_write_item.assert_called_once_with(
@@ -115,19 +113,19 @@ def test_batch_write(
 
 def test_batch_write_item_limit(mock_boto3_client, fake_publish, caplog):
     items = fake_publish.items * 9
-    env = get_environment("test")
+    ddb = dynamodb.DynamoDB("test", Settings(), NOW_UTC)
 
-    request = dynamodb.create_request(env.table, items, NOW_UTC)
+    request = ddb.create_request(items)
 
     with pytest.raises(ValueError) as exc_info:
-        dynamodb.batch_write(env, request)
+        ddb.batch_write(request)
 
     assert "Cannot process more than 25 items per request" in caplog.text
     assert str(exc_info.value) == "Request contains too many items (27)"
 
 
 @pytest.mark.parametrize("delete", [False, True], ids=["Put", "Delete"])
-def test_write_batches(delete, mock_boto3_client, fake_publish, caplog):
+def test_write_batch(delete, mock_boto3_client, fake_publish, caplog):
     caplog.set_level(logging.INFO, logger="exodus-gw")
 
     mock_boto3_client.batch_write_item.return_value = {"UnprocessedItems": {}}
@@ -137,13 +135,14 @@ def test_write_batches(delete, mock_boto3_client, fake_publish, caplog):
 
     expected_msg = "Items successfully %s" % "deleted" if delete else "written"
 
-    dynamodb.write_batches("test", fake_publish.items, NOW_UTC, delete)
+    ddb = dynamodb.DynamoDB("test", Settings(), NOW_UTC)
+    ddb.write_batch(fake_publish.items, delete)
 
     assert expected_msg in caplog.text
 
 
-@mock.patch("exodus_gw.aws.dynamodb.batch_write")
-def test_write_batches_put_fail(mock_batch_write, fake_publish, caplog):
+@mock.patch("exodus_gw.aws.dynamodb.DynamoDB.batch_write")
+def test_write_batch_put_fail(mock_batch_write, fake_publish, caplog):
     caplog.set_level(logging.INFO, logger="exodus-gw")
     mock_batch_write.return_value = {
         "UnprocessedItems": {
@@ -153,13 +152,14 @@ def test_write_batches_put_fail(mock_batch_write, fake_publish, caplog):
         }
     }
 
+    ddb = dynamodb.DynamoDB("test", Settings(), NOW_UTC)
     with pytest.raises(RuntimeError) as exc_info:
-        dynamodb.write_batches("test", fake_publish.items, NOW_UTC)
+        ddb.write_batch(fake_publish.items)
         assert "One or more writes were unsuccessful" in str(exc_info)
 
 
-@mock.patch("exodus_gw.aws.dynamodb.batch_write")
-def test_write_batches_delete_fail(mock_batch_write, fake_publish, caplog):
+@mock.patch("exodus_gw.aws.dynamodb.DynamoDB.batch_write")
+def test_write_batch_delete_fail(mock_batch_write, fake_publish, caplog):
     mock_batch_write.return_value = {
         "UnprocessedItems": {
             "my-table": [
@@ -169,9 +169,8 @@ def test_write_batches_delete_fail(mock_batch_write, fake_publish, caplog):
     }
 
     with pytest.raises(RuntimeError) as exc_info:
-        dynamodb.write_batches(
-            "test", fake_publish.items, NOW_UTC, delete=True
-        )
+        ddb = dynamodb.DynamoDB("test", Settings(), NOW_UTC)
+        ddb.write_batch(fake_publish.items, delete=True)
 
     assert (
         "Unprocessed items:\n\t%s"
@@ -188,12 +187,13 @@ def test_write_batches_delete_fail(mock_batch_write, fake_publish, caplog):
 
 
 @pytest.mark.parametrize("delete", [False, True], ids=["Put", "Delete"])
-def test_write_batches_excs(mock_boto3_client, fake_publish, delete, caplog):
+def test_write_batch_excs(mock_boto3_client, fake_publish, delete, caplog):
     mock_boto3_client.batch_write_item.side_effect = ValueError()
 
     expected_msg = "Exception while %s" % "deleting" if delete else "writing"
 
     with pytest.raises(ValueError):
-        dynamodb.write_batches("test", fake_publish.items, NOW_UTC, delete)
+        ddb = dynamodb.DynamoDB("test", Settings(), NOW_UTC)
+        ddb.write_batch(fake_publish.items, delete)
 
     assert expected_msg in caplog.text

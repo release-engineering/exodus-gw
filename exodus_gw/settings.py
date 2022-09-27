@@ -115,6 +115,8 @@ class Settings(BaseSettings):
     """Maximum number of items to write to the DynamoDB table at one time."""
     write_max_tries: int = 20
     """Maximum write attempts to the DynamoDB table."""
+    write_max_workers: int = 10
+    """Maximum number of worker threads used in the DynamoDB batch writes."""
 
     publish_timeout: int = 24
     """Maximum amount of time (in hours) between updates to a pending publish before
