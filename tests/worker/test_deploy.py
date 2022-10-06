@@ -18,7 +18,7 @@ def _task():
 
 
 @mock.patch("exodus_gw.worker.deploy.CurrentMessage.get_current_message")
-@mock.patch("exodus_gw.worker.deploy.DynamoDB.batch_write")
+@mock.patch("exodus_gw.worker.deploy.batch_write")
 def test_deploy_config(
     mock_batch_write, mock_get_message, db, fake_config, caplog
 ):
@@ -85,7 +85,7 @@ def test_deploy_config(
 
 
 @mock.patch("exodus_gw.worker.deploy.CurrentMessage.get_current_message")
-@mock.patch("exodus_gw.worker.deploy.DynamoDB.batch_write")
+@mock.patch("exodus_gw.worker.deploy.batch_write")
 def test_deploy_config_exception(
     mock_batch_write, mock_get_message, db, fake_config, caplog
 ):
@@ -114,7 +114,7 @@ def test_deploy_config_exception(
 
 
 @mock.patch("exodus_gw.worker.deploy.CurrentMessage.get_current_message")
-@mock.patch("exodus_gw.worker.deploy.DynamoDB.batch_write")
+@mock.patch("exodus_gw.worker.deploy.batch_write")
 def test_deploy_config_bad_state(
     mock_batch_write, mock_get_message, db, fake_config, caplog
 ):

@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from os.path import basename
 from typing import List
@@ -10,11 +9,11 @@ from dramatiq.middleware import CurrentMessage
 from sqlalchemy import select
 from sqlalchemy.orm import Session, lazyload
 
-from exodus_gw.aws.dynamodb import DynamoDB
+from exodus_gw.aws.dynamodb import write_batches
 from exodus_gw.database import db_engine
 from exodus_gw.models import Item, Publish, Task
 from exodus_gw.schemas import PublishStates, TaskStates
-from exodus_gw.settings import Settings, get_environment
+from exodus_gw.settings import Settings
 
 LOG = logging.getLogger("exodus-gw")
 
@@ -37,16 +36,6 @@ class Commit:
         self.db = Session(bind=db_engine(self.settings))
         self.task = self._query_task(actor_msg_id)
         self.publish = self._query_publish(publish_id)
-        self.env_obj = get_environment(env)
-        self._dynamodb = None
-
-    @property
-    def dynamodb(self):
-        if self._dynamodb is None:
-            self._dynamodb = DynamoDB(
-                self.env, self.settings, self.from_date, self.env_obj
-            )
-        return self._dynamodb
 
     @property
     def task_ready(self) -> bool:
@@ -120,19 +109,6 @@ class Commit:
             return False
         return True
 
-    def batch_write_wrapper(self, executor, items, delete=False):
-        futures = []
-        batches = self.dynamodb.get_batches(items)
-        for batch in batches:
-            # Submit write requests for this chunk of items.
-            futures.append(
-                executor.submit(
-                    self.dynamodb.write_batch, list(batch), delete=delete
-                )
-            )
-        for future in as_completed(futures):
-            future.result()
-
     def write_publish_items(self) -> None:
         """Query for publish items, batching and yielding them to
         conserve memory, and submit batch write requests."""
@@ -146,35 +122,27 @@ class Commit:
             .execution_options(yield_per=self.settings.item_yield_size)
         )
         partitions = self.db.execute(statement).partitions()
+        for partition in partitions:
+            items: List[Item] = []
 
-        with ThreadPoolExecutor(
-            max_workers=self.settings.write_max_workers
-        ) as executor:
-            for partition in partitions:
-                items: List[Item] = []
+            # Flatten partition and extract any entry point items.
+            for row in partition:
+                item = row.Item
+                if basename(item.web_uri) in self.settings.entry_point_files:
+                    final_items.append(item)
+                else:
+                    items.append(item)
 
-                # Flatten partition and extract any entry point items.
-                for row in partition:
-                    item = row.Item
-                    if (
-                        basename(item.web_uri)
-                        in self.settings.entry_point_files
-                    ):
-                        final_items.append(item)
-                    else:
-                        items.append(item)
+            # Save IDs of this chunk of items in case rollback is needed.
+            self.rollback_item_ids.extend([item.id for item in items])
+            # Submit write requests for this chunk of items.
+            write_batches(self.env, items, self.from_date)
 
-                # Save IDs of this chunk of items in case rollback is needed.
-                self.rollback_item_ids.extend([item.id for item in items])
-                self.batch_write_wrapper(executor, items)
-
-            if final_items:
-                # Save entry point item IDs in case rollback is needed.
-                self.rollback_item_ids.extend(
-                    [item.id for item in final_items]
-                )
-                # Submit write requests for entry point items.
-                self.batch_write_wrapper(executor, final_items)
+        if final_items:
+            # Save entry point item IDs in case rollback is needed.
+            self.rollback_item_ids.extend([item.id for item in final_items])
+            # Submit write requests for entry point items.
+            write_batches(self.env, final_items, self.from_date)
 
     def rollback_publish_items(self, exception: Exception) -> None:
         """Breaks the list of item IDs into chunks and iterates over
@@ -193,10 +161,7 @@ class Commit:
             item_ids = self.rollback_item_ids[index : index + chunk_size]
             if item_ids:
                 del_items = self.db.query(Item).filter(Item.id.in_(item_ids))
-                with ThreadPoolExecutor(
-                    max_workers=self.settings.write_max_workers
-                ) as executor:
-                    self.batch_write_wrapper(executor, del_items, delete=True)
+                write_batches(self.env, del_items, self.from_date, delete=True)
 
     def autoindex(self):
         enricher = AutoindexEnricher(self.publish, self.env, self.settings)
