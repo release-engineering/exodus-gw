@@ -28,6 +28,16 @@ def normalize_path(path: str):
     return path
 
 
+SHA256SUM_PATTERN = re.compile(r"[0-9a-f]{64}")
+
+# TYPE/SUBTYPE[+SUFFIX][;PARAMETER=VALUE]
+MIMETYPE_PATTERN = re.compile(r"^[-\w]+/[-.\w]+(\+[-\w]*)?(;[-\w]+=[-\w]+)?")
+
+# Note: it would be preferable if we could reuse a settings object loaded by the
+# app, however we need this value from within a @classmethod validator.
+AUTOINDEX_FILENAME = Settings().autoindex_filename
+
+
 class ItemBase(BaseModel):
     web_uri: str = Field(
         ...,
@@ -71,14 +81,13 @@ class ItemBase(BaseModel):
         if link_to:
             values["link_to"] = normalize_path(link_to)
         elif object_key:
-            pattern = re.compile(r"[0-9a-f]{64}")
             if object_key == "absent":
                 if content_type:
                     raise ValueError(
                         "Cannot set content type when object_key is 'absent': %s"
                         % values
                     )
-            elif not re.match(pattern, object_key):
+            elif not re.match(SHA256SUM_PATTERN, object_key):
                 raise ValueError(
                     "Invalid object key; must be sha256sum: %s" % values
                 )
@@ -87,18 +96,13 @@ class ItemBase(BaseModel):
 
         if content_type:
             # Enforce MIME type structure
-            # TYPE/SUBTYPE[+SUFFIX][;PARAMETER=VALUE]
-            pattern = re.compile(
-                r"^[-\w]+/[-.\w]+(\+[-\w]*)?(;[-\w]+=[-\w]+)?"
-            )
-            if not re.match(pattern, content_type):
+            if not re.match(MIMETYPE_PATTERN, content_type):
                 raise ValueError("Invalid content type: %s" % values)
 
-        autoindex_filename = Settings().autoindex_filename
         if (
             web_uri
-            and autoindex_filename
-            and web_uri.split("/")[-1] == autoindex_filename
+            and AUTOINDEX_FILENAME
+            and web_uri.split("/")[-1] == AUTOINDEX_FILENAME
         ):
             raise ValueError(f"Invalid URI {web_uri}: filename is reserved")
 
