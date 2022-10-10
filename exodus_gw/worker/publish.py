@@ -1,9 +1,10 @@
 import asyncio
+import itertools
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from os.path import basename
-from typing import List
+from typing import Any, List
 
 import dramatiq
 from dramatiq.middleware import CurrentMessage
@@ -120,7 +121,7 @@ class Commit:
             return False
         return True
 
-    def batch_write_wrapper(self, executor, items, delete=False):
+    def batch_write_wrapper(self, executor, items, delete=False) -> List[Any]:
         futures = []
         batches = self.dynamodb.get_batches(items)
         for batch in batches:
@@ -130,8 +131,8 @@ class Commit:
                     self.dynamodb.write_batch, list(batch), delete=delete
                 )
             )
-        for future in as_completed(futures):
-            future.result()
+
+        return futures
 
     def write_publish_items(self) -> None:
         """Query for publish items, batching and yielding them to
@@ -150,23 +151,37 @@ class Commit:
         with ThreadPoolExecutor(
             max_workers=self.settings.write_max_workers
         ) as executor:
-            for partition in partitions:
-                items: List[Item] = []
+            while True:
+                futures: List[Any] = []
 
-                # Flatten partition and extract any entry point items.
-                for row in partition:
-                    item = row.Item
-                    if (
-                        basename(item.web_uri)
-                        in self.settings.entry_point_files
-                    ):
-                        final_items.append(item)
-                    else:
-                        items.append(item)
+                # Set up to start work on multiple partitions simultaneously to
+                # avoid blocking on a single chunk of items.
+                working_size = self.settings.write_max_partitions
+                working = list(itertools.islice(partitions, working_size))
+                # Exit the loop if there are no partitions left to work on.
+                if not working:
+                    break
 
-                # Save IDs of this chunk of items in case rollback is needed.
-                self.rollback_item_ids.extend([item.id for item in items])
-                self.batch_write_wrapper(executor, items)
+                for partition in working:
+                    items: List[Item] = []
+
+                    # Flatten partition and extract any entry point items.
+                    for row in partition:
+                        item = row.Item
+                        if (
+                            basename(item.web_uri)
+                            in self.settings.entry_point_files
+                        ):
+                            final_items.append(item)
+                        else:
+                            items.append(item)
+
+                    # Save IDs of this chunk of items in case rollback is needed.
+                    self.rollback_item_ids.extend([item.id for item in items])
+                    futures.extend(self.batch_write_wrapper(executor, items))
+
+                for future in as_completed(futures):
+                    future.result()
 
             if final_items:
                 # Save entry point item IDs in case rollback is needed.
@@ -174,7 +189,9 @@ class Commit:
                     [item.id for item in final_items]
                 )
                 # Submit write requests for entry point items.
-                self.batch_write_wrapper(executor, final_items)
+                futures = self.batch_write_wrapper(executor, final_items)
+                for future in as_completed(futures):
+                    future.result()
 
     def rollback_publish_items(self, exception: Exception) -> None:
         """Breaks the list of item IDs into chunks and iterates over
@@ -196,7 +213,11 @@ class Commit:
                 with ThreadPoolExecutor(
                     max_workers=self.settings.write_max_workers
                 ) as executor:
-                    self.batch_write_wrapper(executor, del_items, delete=True)
+                    futures = self.batch_write_wrapper(
+                        executor, del_items, delete=True
+                    )
+                    for future in as_completed(futures):
+                        future.result()
 
     def autoindex(self):
         enricher = AutoindexEnricher(self.publish, self.env, self.settings)
