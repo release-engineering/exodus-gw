@@ -181,6 +181,11 @@ def update_publish_items(
         .first()
     )
 
+    if db_publish is None:
+        raise HTTPException(
+            status_code=404, detail="No publish found for ID %s" % publish_id
+        )
+
     if db_publish.state != "PENDING":
         raise HTTPException(
             status_code=409,
@@ -249,6 +254,11 @@ def commit_publish(
         .filter(models.Publish.id == publish_id)
         .first()
     )
+
+    if not db_publish:
+        raise HTTPException(
+            status_code=404, detail="No publish found for ID %s" % publish_id
+        )
 
     if db_publish.state != "PENDING":
         raise HTTPException(
