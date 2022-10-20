@@ -426,7 +426,6 @@ def test_update_publish_items_link_content_type(db, auth_header):
         "content_type": "application/octet-stream",
         "link_to": "/uri1",
     }
-
     # It should have failed with 400
     assert r.status_code == 400
     assert r.json() == {
@@ -555,6 +554,26 @@ def test_update_publish_items_invalid_content_type(db, auth_header):
     # It should have failed with 400
     assert r.status_code == 400
     assert r.json() == {"detail": ["Invalid content type: %s" % expected_item]}
+
+
+def test_update_publish_items_no_publish(auth_header):
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+    with TestClient(app) as client:
+        # Try to add an item to non-existent publish
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json=[
+                {
+                    "web_uri": "/uri2",
+                    "object_key": "1" * 64,
+                    "content_type": "text/plain",
+                },
+            ],
+            headers=auth_header(roles=["test-publisher"]),
+        )
+
+    assert r.status_code == 404
+    assert r.json() == {"detail": "No publish found for ID %s" % publish_id}
 
 
 @pytest.mark.parametrize(
@@ -749,3 +768,14 @@ def test_commit_publish_unresolved_links(mock_commit, fake_publish, db):
     )
 
     mock_commit.assert_not_called()
+
+
+def test_commit_no_publish(auth_header):
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+    url = "/test/publish/%s/commit" % publish_id
+    with TestClient(app) as client:
+        # Try to commit non-existent publish
+        r = client.post(url, headers=auth_header(roles=["test-publisher"]))
+
+    assert r.status_code == 404
+    assert r.json() == {"detail": "No publish found for ID %s" % publish_id}
