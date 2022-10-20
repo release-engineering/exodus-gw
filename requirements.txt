@@ -762,9 +762,9 @@ pyyaml==6.0 \
     --hash=sha256:e61ceaab6f49fb8bdfaa0f92c4b57bcfbea54c09277b1b4f7ac376bfb7a7c174 \
     --hash=sha256:f84fbc98b019fef2ee9a1cb3ce93e3187a6df0b2538a651bfb890254ba9f90b5
     # via uvicorn
-repo-autoindex==1.0.1 \
-    --hash=sha256:051dfa3f5b54b38e2158cbf00ddccca579b60c0b5437a2ac3ac7af78c6abbebe \
-    --hash=sha256:3b9dbe0cfdec30043ec2902a56128b65575189bdff34924371cc633175a6f2e9
+repo-autoindex==1.0.2 \
+    --hash=sha256:8747270220f1c3a29db17cb436dddc744d9659dc7bc72d4fc3735c107c83f353 \
+    --hash=sha256:fa6345a1c97f12326c89e7ed9acb4c809067979915749d1d607481dbf49a5648
     # via -r requirements.in
 s3transfer==0.6.0 \
     --hash=sha256:06176b74f3a15f61f1b4f25a1fc29a4429040b7647133a463da8fa5bd28d5ecd \
