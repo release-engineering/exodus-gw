@@ -117,7 +117,12 @@ class Settings(BaseSettings):
     """Maximum write attempts to the DynamoDB table."""
     write_max_workers: int = 10
     """Maximum number of worker threads used in the DynamoDB batch writes."""
-
+    write_queue_size: int = 1000
+    """Maximum number of items the queue can hold at one time."""
+    write_queue_timeout: int = 60 * 10
+    """Maximum amount of time (in seconds) to wait for queue items.
+    Defaults to 10 minutes.
+    """
     publish_timeout: int = 24
     """Maximum amount of time (in hours) between updates to a pending publish before
     it will be considered abandoned. Defaults to one day.

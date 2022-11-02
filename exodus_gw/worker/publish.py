@@ -1,9 +1,10 @@
 import asyncio
 import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from os.path import basename
-from typing import List
+from queue import Empty, Full, Queue
+from threading import Thread
+from typing import Any, List
 
 import dramatiq
 from dramatiq.middleware import CurrentMessage
@@ -16,9 +17,106 @@ from exodus_gw.models import Item, Publish, Task
 from exodus_gw.schemas import PublishStates, TaskStates
 from exodus_gw.settings import Settings, get_environment
 
+from .autoindex import AutoindexEnricher
+
 LOG = logging.getLogger("exodus-gw")
 
-from .autoindex import AutoindexEnricher
+
+class _BatchWriter:
+    """Use as context manager recommended. Otherwise, the threads must
+    be cleaned up manually.
+    """
+
+    def __init__(
+        self,
+        dynamodb: DynamoDB,
+        settings: Settings,
+        delete: bool = False,
+    ):
+        self.dynamodb = dynamodb
+        self.settings = settings
+        self.delete = delete
+        self.queue: Any = Queue(self.settings.write_queue_size)
+        self.sentinel = object()
+        self.threads: List[Thread] = []
+        self.errors: List[Exception] = []
+
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stop()
+
+    def start(self):
+        for _ in range(self.settings.write_max_workers):
+            thread = Thread(target=self.write_batches, daemon=True)
+            thread.start()
+            self.threads.append(thread)
+
+    def stop(self):
+        for _ in range(len(self.threads)):
+            # A sentinel for each worker to get from the shared queue.
+            try:
+                self.queue.put(
+                    self.sentinel,
+                    timeout=self.settings.write_queue_timeout,
+                )
+            except Full as err:
+                self.append_error(err)
+
+        for thread in self.threads:
+            thread.join()
+
+        if self.queue.qsize() > 0:
+            # Don't warn for excess sentinels.
+            if not self.queue.get_nowait() is self.sentinel:
+                self.append_error(
+                    RuntimeError("Commit incomplete, queue not empty")
+                )
+
+        if self.errors:
+            raise self.errors[0]
+
+    def append_error(self, err: Exception):
+        LOG.error("Exception while submitting batch write(s)", exc_info=err)
+        self.errors.append(err)
+
+    def queue_batches(self, items: List[Item]) -> List[str]:
+        batches = self.dynamodb.get_batches(items)
+        timeout = self.settings.write_queue_timeout
+        queued_item_ids: List[str] = []
+
+        for batch in batches:
+            # Don't attempt to put more items on the queue if error(s)
+            # already encountered.
+            if not self.errors:
+                try:
+                    self.queue.put(batch, timeout=timeout)
+                    queued_item_ids.extend(
+                        [str(item.id) for item in list(batch)]
+                    )
+                except Full as err:
+                    self.append_error(err)
+
+        return queued_item_ids
+
+    def write_batches(self):
+        """Will either submit batch write or delete requests based on
+        the 'delete' attribute.
+        """
+        while not self.errors:
+            # Don't attempt to write more batches if error(s) already
+            # encountered by other thread(s).
+            try:
+                got = self.queue.get(timeout=self.settings.write_queue_timeout)
+                if got is self.sentinel:
+                    break
+                self.dynamodb.write_batch(got, delete=self.delete)
+            except (RuntimeError, ValueError, Empty) as err:
+                if err is not Empty:
+                    self.append_error(err)
+                break
 
 
 class Commit:
@@ -120,25 +218,11 @@ class Commit:
             return False
         return True
 
-    def batch_write_wrapper(self, executor, items, delete=False):
-        futures = []
-        batches = self.dynamodb.get_batches(items)
-        for batch in batches:
-            # Submit write requests for this chunk of items.
-            futures.append(
-                executor.submit(
-                    self.dynamodb.write_batch, list(batch), delete=delete
-                )
-            )
-        for future in as_completed(futures):
-            future.result()
-
     def write_publish_items(self) -> None:
         """Query for publish items, batching and yielding them to
-        conserve memory, and submit batch write requests."""
-
-        # Save any entry point items to publish last.
-        final_items: List[Item] = []
+        conserve memory, and submit batch write requests via
+        _BatchWriter.
+        """
 
         statement = (
             select(Item)
@@ -147,9 +231,13 @@ class Commit:
         )
         partitions = self.db.execute(statement).partitions()
 
-        with ThreadPoolExecutor(
-            max_workers=self.settings.write_max_workers
-        ) as executor:
+        # Save any entry point items to publish last.
+        final_items: List[Item] = []
+
+        # The queue is empty at this point but we want to write batches
+        # as they're put rather than wait until they're all queued.
+        with _BatchWriter(self.dynamodb, self.settings) as bw:
+            # Being queuing item batches.
             for partition in partitions:
                 items: List[Item] = []
 
@@ -164,17 +252,17 @@ class Commit:
                     else:
                         items.append(item)
 
-                # Save IDs of this chunk of items in case rollback is needed.
-                self.rollback_item_ids.extend([item.id for item in items])
-                self.batch_write_wrapper(executor, items)
+                # Submit items to be batched and queued, saving item
+                # IDs in case rollback is needed.
+                self.rollback_item_ids.extend(bw.queue_batches(items))
 
+        # Start a new context manager to raise any errors from previous
+        # and skip additional write attempts.
+        with _BatchWriter(self.dynamodb, self.settings) as bw:
             if final_items:
-                # Save entry point item IDs in case rollback is needed.
-                self.rollback_item_ids.extend(
-                    [item.id for item in final_items]
-                )
-                # Submit write requests for entry point items.
-                self.batch_write_wrapper(executor, final_items)
+                # Submit items to be batched and queued, saving item
+                # IDs in case rollback is needed.
+                self.rollback_item_ids.extend(bw.queue_batches(final_items))
 
     def rollback_publish_items(self, exception: Exception) -> None:
         """Breaks the list of item IDs into chunks and iterates over
@@ -192,11 +280,11 @@ class Commit:
         for index in range(0, len(self.rollback_item_ids), chunk_size):
             item_ids = self.rollback_item_ids[index : index + chunk_size]
             if item_ids:
-                del_items = self.db.query(Item).filter(Item.id.in_(item_ids))
-                with ThreadPoolExecutor(
-                    max_workers=self.settings.write_max_workers
-                ) as executor:
-                    self.batch_write_wrapper(executor, del_items, delete=True)
+                with _BatchWriter(
+                    self.dynamodb, self.settings, delete=True
+                ) as bw:
+                    items = self.db.query(Item).filter(Item.id.in_(item_ids))
+                    bw.queue_batches(items)
 
     def autoindex(self):
         enricher = AutoindexEnricher(self.publish, self.env, self.settings)
@@ -229,8 +317,10 @@ def commit(
         commit_obj.db.commit()
     except Exception as exc_info:  # pylint: disable=broad-except
         LOG.exception("Task %s encountered an error", commit_obj.task.id)
-        commit_obj.rollback_publish_items(exc_info)
-        commit_obj.task.state = TaskStates.failed
-        commit_obj.publish.state = PublishStates.failed
-        commit_obj.db.commit()
+        try:
+            commit_obj.rollback_publish_items(exc_info)
+        finally:
+            commit_obj.task.state = TaskStates.failed
+            commit_obj.publish.state = PublishStates.failed
+            commit_obj.db.commit()
         return

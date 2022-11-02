@@ -5,7 +5,10 @@ from exodus_gw.dramatiq import Broker
 dramatiq.set_broker(Broker())
 
 # Imports must occur after the broker is set.
-# flake8 complains about that, hence the noqa.
+# flake8 and pylint complain about that, hence the noqa
+# and following disabled error.
+#
+# pylint: disable=wrong-import-position
 
 from .deploy import deploy_config  # noqa
 from .publish import commit  # noqa
