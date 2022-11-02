@@ -153,7 +153,12 @@
     <span class="sd">&quot;&quot;&quot;Maximum write attempts to the DynamoDB table.&quot;&quot;&quot;</span>
     <span class="n">write_max_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
     <span class="sd">&quot;&quot;&quot;Maximum number of worker threads used in the DynamoDB batch writes.&quot;&quot;&quot;</span>
-
+    <span class="n">write_queue_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span>
+    <span class="sd">&quot;&quot;&quot;Maximum number of items the queue can hold at one time.&quot;&quot;&quot;</span>
+    <span class="n">write_queue_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">10</span>
+    <span class="sd">&quot;&quot;&quot;Maximum amount of time (in seconds) to wait for queue items.</span>
+<span class="sd">    Defaults to 10 minutes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">publish_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">24</span>
     <span class="sd">&quot;&quot;&quot;Maximum amount of time (in hours) between updates to a pending publish before</span>
 <span class="sd">    it will be considered abandoned. Defaults to one day.</span>
