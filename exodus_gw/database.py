@@ -17,4 +17,4 @@ def db_url(settings: Settings):
 
 
 def db_engine(settings: Settings):
-    return create_engine(db_url(settings))
+    return create_engine(db_url(settings), pool_pre_ping=True)
