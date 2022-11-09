@@ -3,6 +3,7 @@ import uuid
 import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 
 from exodus_gw import deps
@@ -25,6 +26,13 @@ def make_publish(mode: str = None, db: Session = deps.db):
         db.commit()
     elif mode == "raise":
         raise HTTPException(500)
+    elif mode == "raise-db":
+        raise DBAPIError("err", "params", "orig")
+    elif mode == "raise-db-and-resolve":
+        make_publish.call_count += 1
+        if make_publish.call_count == 1:
+            raise DBAPIError("err", "params", "orig")
+        db.commit()
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -97,3 +105,42 @@ def test_db_rollback_on_raise(db):
     # Should not have committed anything since exception was raised
     publishes = db.query(Publish).filter(Publish.id == TEST_UUID)
     assert publishes.count() == 0
+
+
+def test_db_rollback_on_raise_db(db):
+    """A deliberate rollback occurs if an endpoint raises a DBAPIError exception.
+    If the DBAPIError exception is not resolved within the defined number of tries,
+    the DBAPIError exception will be raised, and the endpoint will fail."""
+
+    make_publish.call_count = 0
+    # The request will eventually raise the DBAPI error after exceeding the
+    # configured number of retries.
+    with pytest.raises(DBAPIError):
+        with TestClient(app) as client:
+            r = client.post("/test_db_session/make_publish?mode=raise-db")
+
+        # Should fail since an exception was raised
+        assert not r.ok
+
+        # Should not have committed anything since exception was raised
+        publishes = db.query(Publish).filter(Publish.id == TEST_UUID)
+        assert publishes.count() == 0
+
+
+def test_db_raise_error_and_resolve(db):
+    """If an endpoint raises a DBAPIError exception, the request is retried. If
+    the exception is resolved within the defined number of tries, the endpoint
+    should work as expected."""
+
+    make_publish.call_count = 0
+    with TestClient(app) as client:
+        r = client.post(
+            "/test_db_session/make_publish?mode=raise-db-and-resolve"
+        )
+
+    # Should not fail since exception was retried and resolved
+    assert r.ok
+
+    # Should have committed something since exception was retried and resolved
+    publishes = db.query(Publish).filter(Publish.id == TEST_UUID)
+    assert publishes.count() == 1

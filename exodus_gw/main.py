@@ -58,11 +58,13 @@ If you are a client looking to make use of exodus-gw, consult your organization'
 internal documentation for advice on which environment(s) you should be using.
 """
 
+import backoff
 import dramatiq
 from fastapi import FastAPI, Request
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -165,26 +167,36 @@ def new_db_session(engine):
 
 
 @app.middleware("http")
-async def db_session(request: Request, call_next):
+def db_session(request: Request, call_next):
     """Maintain a DB session around each request, which is also shared
     with the dramatiq broker.
 
     An implicit commit occurs if and only if the request succeeds.
     """
 
-    request.state.db = new_db_session(app.state.db_engine)
+    max_tries = app.state.settings.db_session_max_tries
 
-    # Any dramatiq operations should also make use of this session.
-    broker = dramatiq.get_broker()
-    broker.set_session(request.state.db)
+    @backoff.on_exception(backoff.expo, DBAPIError, max_tries=max_tries)
+    async def db_session_wrap():
+        request.state.db = new_db_session(app.state.db_engine)
 
-    try:
-        response = await call_next(request)
-        if response.status_code >= 200 and response.status_code < 300:
-            await run_in_threadpool(request.state.db.commit)
-    finally:
-        broker.set_session(None)
-        await run_in_threadpool(request.state.db.close)
-        request.state.db = None
+        # Any dramatiq operations should also make use of this session.
+        broker = dramatiq.get_broker()
+        broker.set_session(request.state.db)
 
-    return response
+        try:
+            response = await call_next(request)
+        except DBAPIError:
+            await run_in_threadpool(request.state.db.rollback)
+            raise
+        else:
+            if response.status_code >= 200 and response.status_code < 300:
+                await run_in_threadpool(request.state.db.commit)
+        finally:
+            broker.set_session(None)
+            await run_in_threadpool(request.state.db.close)
+            request.state.db = None
+
+        return response
+
+    return db_session_wrap()
