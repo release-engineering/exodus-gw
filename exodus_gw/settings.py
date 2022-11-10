@@ -49,6 +49,11 @@ class Settings(BaseSettings):
     and authorization).
     """
 
+    upload_meta_fields: Dict[str, str] = {}
+    """Permitted metadata field names for s3 uploads and their regex
+    for validation. E.g., "exodus-migration-md5": "^[0-9a-f]{32}$"
+    """
+
     log_config: Dict[str, Any] = {
         "version": 1,
         "incremental": True,
