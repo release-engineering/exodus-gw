@@ -144,6 +144,9 @@
 <span class="sd">    the target revision when migrating the DB.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">db_session_max_tries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="sd">&quot;&quot;&quot;The maximum number of attempts to recreate a DB session within a request.&quot;&quot;&quot;</span>
+
     <span class="n">item_yield_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5000</span>
     <span class="sd">&quot;&quot;&quot;Number of publish items to load from the service DB at one time.&quot;&quot;&quot;</span>
 
