@@ -108,6 +108,9 @@ class Settings(BaseSettings):
     the target revision when migrating the DB.
     """
 
+    db_session_max_tries: int = 3
+    """The maximum number of attempts to recreate a DB session within a request."""
+
     item_yield_size: int = 5000
     """Number of publish items to load from the service DB at one time."""
 
