@@ -261,7 +261,7 @@ def load_settings() -> Settings:
     return settings
 
 
-def get_environment(env: str, settings: Settings = None):
+def get_environment(env: str, settings: Optional[Settings] = None):
     """Return the corresponding environment object for the given environment
     name.
     """

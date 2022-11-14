@@ -1,7 +1,8 @@
 import uuid
+from typing import Optional
 
 import pytest
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from fastapi.testclient import TestClient
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
@@ -16,7 +17,9 @@ TEST_UUID = uuid.UUID("{12345678-1234-5678-1234-567812345678}")
 
 # A testing endpoint which will create an object and then commit,
 # rollback or raise based on params
-def make_publish(mode: str = None, db: Session = deps.db):
+def make_publish(
+    request: Request, mode: Optional[str] = None, db: Session = deps.db
+):
     p = Publish(id=TEST_UUID, env="test", state="PENDING")
     db.add(p)
 
@@ -29,8 +32,10 @@ def make_publish(mode: str = None, db: Session = deps.db):
     elif mode == "raise-db":
         raise DBAPIError("err", "params", "orig")
     elif mode == "raise-db-and-resolve":
-        make_publish.call_count += 1
-        if make_publish.call_count == 1:
+        request.state.make_publish_count = (
+            getattr(request.state, "make_publish_count", 0) + 1
+        )
+        if request.state.make_publish_count == 1:
             raise DBAPIError("err", "params", "orig")
         db.commit()
 
@@ -112,7 +117,6 @@ def test_db_rollback_on_raise_db(db):
     If the DBAPIError exception is not resolved within the defined number of tries,
     the DBAPIError exception will be raised, and the endpoint will fail."""
 
-    make_publish.call_count = 0
     # The request will eventually raise the DBAPI error after exceeding the
     # configured number of retries.
     with pytest.raises(DBAPIError):
@@ -132,7 +136,6 @@ def test_db_raise_error_and_resolve(db):
     the exception is resolved within the defined number of tries, the endpoint
     should work as expected."""
 
-    make_publish.call_count = 0
     with TestClient(app) as client:
         r = client.post(
             "/test_db_session/make_publish?mode=raise-db-and-resolve"
