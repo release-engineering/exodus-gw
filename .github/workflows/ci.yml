@@ -28,6 +28,9 @@ jobs:
         docker --version
         docker build . -f openshift/containers/exodus-gw/Dockerfile
 
+    - name: Run bandit test
+      run: tox -e bandit-test
+
     - name: Run auto-tests
       env:
         GITHUB_TOKEN: ${{ github.token }}

@@ -39,7 +39,7 @@ def rsa_signer(private_key: str, policy: bytes):
     loaded_key = serialization.load_pem_private_key(
         bytes_key, password=None, backend=default_backend()
     )
-    return loaded_key.sign(policy, padding.PKCS1v15(), hashes.SHA1())  # type: ignore
+    return loaded_key.sign(policy, padding.PKCS1v15(), hashes.SHA1())  # type: ignore # nosec
 
 
 def encode_signature(data: bytes):
