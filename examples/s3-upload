@@ -27,6 +27,7 @@ import sys
 
 import boto3
 from botocore.config import Config
+from botocore.exceptions import ClientError
 
 
 def get_object_key(filename):
@@ -58,6 +59,11 @@ def main():
         default=os.path.expandvars("${HOME}/certs/${USER}.key"),
         help="Private key for HTTPS authentication with exodus-gw (must match --cert)",
     )
+    parser.add_argument(
+        "--meta",
+        action="append",
+        help="key=value pairs for additional metadata on uploaded object(s)",
+    )
 
     parser.add_argument("--env", default="dev")
     parser.add_argument("files", nargs="+")
@@ -79,9 +85,45 @@ def main():
         "[default]" if not args.endpoint_url else args.endpoint_url,
     )
 
+    metadata = {}
+    for kv in args.meta or []:
+        if "=" not in kv:
+            # default if user didn't pass a value
+            kv = kv + "=1"
+
+        (k, v) = kv.split("=", 1)
+        metadata[k] = v
+
+    uploaded = {}
     for filename in args.files:
-        bucket.upload_file(filename, get_object_key(filename))
-        print("Uploaded:", filename)
+        uploaded[filename] = get_object_key(filename)
+
+        # Check current state of object before upload.
+        obj = bucket.Object(uploaded[filename])
+        try:
+            obj.load()
+            print("Before upload:", filename, obj, obj.metadata)
+        except ClientError as exc:
+            if exc.response["Error"]["Code"] == "404":
+                # Nothing wrong, it's just not uploaded yet.
+                print("Not currently in bucket:", filename)
+            else:
+                # Anything else wrong, just re-raise.
+                raise
+
+        bucket.upload_file(
+            filename,
+            uploaded[filename],
+            ExtraArgs=dict(Metadata=metadata),
+        )
+        print("Uploaded:", filename, uploaded[filename])
+
+    # For everything we uploaded, try to get it back to verify that
+    # the object really exists (and check the resulting metadata).
+    for key in uploaded.values():
+        obj = bucket.Object(key)
+        obj.load()
+        print("Verified:", obj, obj.metadata)
 
 
 if __name__ == "__main__":
