@@ -29,7 +29,10 @@ jobs:
         docker build . -f openshift/containers/exodus-gw/Dockerfile
 
     - name: Run bandit test
-      run: tox -e bandit-test
+      run: tox -e bandit
+
+    - name: Run safety dependency scan
+      run: tox -e safety
 
     - name: Run auto-tests
       env:
