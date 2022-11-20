@@ -39,6 +39,18 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/%n-pid --cidfile %t/%n-cid --c
   -c ssl_cert_file=/var/lib/postgresql/service.pem\
   -c ssl_key_file=/var/lib/postgresql/db-service-key.pem
 
+# Try to ensure the systemd unit doesn't become active until the expected TCP port
+# has really been opened.
+#
+# This is to prevent subsequent services starting up before the DB is ready.
+#
+# Note if the timeout elapses, we'll proceed with startup anyway, as it's hard to
+# be sure that this logic is going to work everywhere.
+ExecStartPost=-/usr/bin/timeout 30 \
+  /bin/bash -c '\
+  while ! head -n0 </dev/tcp/localhost/${EXODUS_GW_DB_SERVICE_PORT}; do sleep 1; done \
+  '
+
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/%n-cid -t 10
 ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %t/%n-cid
 PIDFile=%t/%n-pid
