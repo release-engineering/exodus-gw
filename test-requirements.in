@@ -10,3 +10,4 @@ pytest
 sphinx
 freezegun
 bandit
+safety
