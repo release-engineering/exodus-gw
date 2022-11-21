@@ -116,6 +116,13 @@ and authorization).</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="exodus_gw.settings.Settings.upload_meta_fields">
+<span class="sig-name descname"><span class="pre">upload_meta_fields</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.11)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#exodus_gw.settings.Settings.upload_meta_fields" title="Permalink to this definition">¶</a></dt>
+<dd><p>Permitted metadata field names for s3 uploads and their regex
+for validation. E.g., “exodus-migration-md5”: “^[0-9a-f]{32}$”</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.log_config">
 <span class="sig-name descname"><span class="pre">log_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.11)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.11)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#exodus_gw.settings.Settings.log_config" title="Permalink to this definition">¶</a></dt>
 <dd><p>Logging configuration in dictConfig schema.</p>

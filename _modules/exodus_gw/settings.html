@@ -85,6 +85,11 @@
 <span class="sd">    and authorization).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">upload_meta_fields</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="sd">&quot;&quot;&quot;Permitted metadata field names for s3 uploads and their regex</span>
+<span class="sd">    for validation. E.g., &quot;exodus-migration-md5&quot;: &quot;^[0-9a-f]{32}$&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">log_config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
         <span class="s2">&quot;incremental&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
