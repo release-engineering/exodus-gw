@@ -1,7 +1,6 @@
 import textwrap
 
 import mock
-import pytest
 from fastapi.testclient import TestClient
 
 from exodus_gw.aws.util import xml_response

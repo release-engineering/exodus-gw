@@ -1,13 +1,45 @@
 import io
 import logging
 import re
-from typing import AnyStr
+from typing import AnyStr, Dict
 from xml.etree.ElementTree import Element, ElementTree, SubElement
 
 from defusedxml.ElementTree import fromstring
-from fastapi import HTTPException, Response
+from fastapi import HTTPException, Request, Response
+
+from ..settings import Settings
 
 LOG = logging.getLogger("exodus-gw")
+
+
+def extract_request_metadata(request: Request, settings: Settings):
+    # Any headers prefixed with "x-amz-meta-" will be picked out as
+    # metadata for s3 upload.
+    #
+    # https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingMetadata.html
+    metadata = {}
+    for k, v in request.headers.items():
+        if k.startswith("x-amz-meta-"):
+            metadata[k.replace("x-amz-meta-", "", 1)] = v
+
+    validate_metadata(metadata, settings)
+
+    return metadata
+
+
+def validate_metadata(metadata: Dict[str, str], settings: Settings):
+    valid_meta_fields = settings.upload_meta_fields
+    for k, v in metadata.items():
+        if k not in valid_meta_fields.keys():
+            raise HTTPException(400, detail="Invalid metadata field, '%s'" % k)
+
+        pattern = re.compile(valid_meta_fields[k])
+
+        if not re.match(pattern, v):
+            raise HTTPException(
+                400,
+                detail="Invalid value for metadata field '%s', '%s'" % (k, v),
+            )
 
 
 def validate_object_key(key: str):
