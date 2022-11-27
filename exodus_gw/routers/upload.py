@@ -13,7 +13,7 @@ Differences from the AWS S3 API include:
 
 - Most optional arguments are not supported.
 
-- All `x-amz-*` headers are omitted from responses.
+- All `x-amz-*` headers, other than `x-amz-meta-*`, are omitted from responses.
 
 - The usual AWS authentication mechanism is unused; request signatures are ignored.
   Authentication is expected to be performed by other means.
@@ -63,7 +63,7 @@ bucket.upload_file('/tmp/hello.txt',
 """
 import logging
 import textwrap
-from typing import Optional
+from typing import Dict, Optional
 
 from botocore.exceptions import ClientError
 from fastapi import APIRouter, HTTPException, Path, Query, Request, Response
@@ -74,10 +74,11 @@ from ..aws.util import (
     RequestReader,
     content_md5,
     extract_mpu_parts,
+    extract_request_metadata,
     validate_object_key,
     xml_response,
 )
-from ..settings import Environment
+from ..settings import Environment, Settings
 
 LOG = logging.getLogger("s3")
 
@@ -119,6 +120,7 @@ async def multipart_upload(
             Must not be passed together with ``uploadId``."""
         ),
     ),
+    settings: Settings = deps.settings,
 ):
     """Create or complete a multi-part upload.
 
@@ -136,7 +138,8 @@ async def multipart_upload(
 
     if uploads == "" and uploadId is None:
         # Means a new upload is requested
-        return await create_multipart_upload(s3, env, key)
+        metadata = extract_request_metadata(request, settings)
+        return await create_multipart_upload(s3, env, key, metadata)
 
     if uploads is None and uploadId:
         # Given an existing upload to complete
@@ -167,6 +170,7 @@ async def upload(
     partNumber: Optional[int] = Query(
         None, description="Part number, where multi-part upload is used."
     ),
+    settings: Settings = deps.settings,
 ):
     """Write to an object, either as a standalone operation or within a multi-part upload.
 
@@ -186,7 +190,8 @@ async def upload(
 
     if uploadId is None and partNumber is None:
         # Single-part upload
-        return await object_put(s3, env, key, request)
+        metadata = extract_request_metadata(request, settings)
+        return await object_put(s3, env, key, request, metadata)
 
     # If either is set, both must be set.
     assert uploadId and partNumber
@@ -196,7 +201,11 @@ async def upload(
 
 
 async def object_put(
-    s3: S3ClientWrapper, env: Environment, key: str, request: Request
+    s3: S3ClientWrapper,
+    env: Environment,
+    key: str,
+    request: Request,
+    metadata: Dict[str, str],
 ):
     # Single-part upload handler: entire object is written via one PUT.
     reader = RequestReader.get_reader(request)
@@ -209,6 +218,7 @@ async def object_put(
         Body=reader,
         ContentMD5=content_md5(request),
         ContentLength=int(request.headers["Content-Length"]),
+        Metadata=metadata,
     )
 
     return Response(headers={"ETag": response["ETag"]})
@@ -246,11 +256,14 @@ async def complete_multipart_upload(
 
 
 async def create_multipart_upload(
-    s3: S3ClientWrapper, env: Environment, key: str
+    s3: S3ClientWrapper,
+    env: Environment,
+    key: str,
+    metadata: Dict[str, str],
 ):
     validate_object_key(key)
 
-    response = await s3.create_multipart_upload(Bucket=env.bucket, Key=key)  # type: ignore
+    response = await s3.create_multipart_upload(Bucket=env.bucket, Key=key, Metadata=metadata)  # type: ignore
 
     return xml_response(
         "CreateMultipartUploadOutput",
@@ -362,4 +375,7 @@ async def head(
 
         return Response(status_code=code)
 
-    return Response(headers={"ETag": response["ETag"]})
+    headers = {"ETag": response["ETag"]}
+    for k, v in response["Metadata"].items():
+        headers["x-amz-meta-%s" % k] = v
+    return Response(headers=headers)
