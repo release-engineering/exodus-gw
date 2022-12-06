@@ -13,7 +13,7 @@ def test_deploy_config_typical(fake_config, auth_header):
         )
 
     # It should have succeeded and returned a task object
-    assert r.ok
+    assert r.status_code == 200
 
     task_id = r.json()["id"]
     assert r.json()["links"] == {"self": "/task/%s" % task_id}

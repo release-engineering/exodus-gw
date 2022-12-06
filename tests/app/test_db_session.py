@@ -63,7 +63,7 @@ def test_db_implicit_commit(db):
         r = client.post("/test_db_session/make_publish")
 
     # Should succeed
-    assert r.ok
+    assert r.status_code == 200
 
     # Should have committed, even though we didn't explicitly request it
     publishes = db.query(Publish).filter(Publish.id == TEST_UUID)
@@ -77,7 +77,7 @@ def test_db_explicit_commit(db):
         r = client.post("/test_db_session/make_publish?mode=commit")
 
     # Should succeed
-    assert r.ok
+    assert r.status_code == 200
 
     # Should have committed, as requested
     publishes = db.query(Publish).filter(Publish.id == TEST_UUID)
@@ -91,7 +91,7 @@ def test_db_rollback(db):
         r = client.post("/test_db_session/make_publish?mode=rollback")
 
     # Should succeed
-    assert r.ok
+    assert r.status_code == 200
 
     # Should not have committed anything since we explicitly rolled back
     publishes = db.query(Publish).filter(Publish.id == TEST_UUID)
@@ -105,7 +105,7 @@ def test_db_rollback_on_raise(db):
         r = client.post("/test_db_session/make_publish?mode=raise")
 
     # Should fail since an exception was raised
-    assert not r.ok
+    assert r.status_code == 500
 
     # Should not have committed anything since exception was raised
     publishes = db.query(Publish).filter(Publish.id == TEST_UUID)
@@ -124,7 +124,7 @@ def test_db_rollback_on_raise_db(db):
             r = client.post("/test_db_session/make_publish?mode=raise-db")
 
         # Should fail since an exception was raised
-        assert not r.ok
+        assert r.status_code == 500
 
         # Should not have committed anything since exception was raised
         publishes = db.query(Publish).filter(Publish.id == TEST_UUID)
@@ -142,7 +142,7 @@ def test_db_raise_error_and_resolve(db):
         )
 
     # Should not fail since exception was retried and resolved
-    assert r.ok
+    assert r.status_code == 200
 
     # Should have committed something since exception was retried and resolved
     publishes = db.query(Publish).filter(Publish.id == TEST_UUID)

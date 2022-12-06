@@ -24,7 +24,7 @@ def test_healthcheck_worker_healthy(db):
         r = client.get("/healthcheck-worker")
 
         # It should succeed
-        assert r.ok
+        assert r.status_code == 200
 
         # Should give a generic message
         assert r.json() == {"detail": "background worker is running"}
@@ -83,5 +83,5 @@ def test_get_task(db):
         resp = client.get("/task/%s" % task_id)
 
     # Last request should have succeeded and returned the correct object.
-    assert resp.ok
+    assert resp.status_code == 200
     assert resp.json()["publish_id"] == publish_id

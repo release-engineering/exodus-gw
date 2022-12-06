@@ -1,4 +1,5 @@
 fastapi
+starlette>=0.21.0
 pydantic
 aioboto3
 defusedxml

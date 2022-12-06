@@ -27,7 +27,7 @@ def test_publish_env_exists(env, db, auth_header):
         )
 
     # Should succeed
-    assert r.ok
+    assert r.status_code == 200
 
     # Should have returned a publish object
     publish_id = r.json()["id"]
@@ -112,7 +112,7 @@ def test_update_publish_items_typical(db, auth_header):
         )
 
     # It should have succeeded
-    assert r.ok
+    assert r.status_code == 200
 
     # Publish object should now have matching items
     db.refresh(publish)
@@ -182,7 +182,7 @@ def test_update_publish_items_path_normalization(db, auth_header):
         )
 
     # It should have succeeded
-    assert r.ok
+    assert r.status_code == 200
 
     # Publish object should now have matching items
     db.refresh(publish)
@@ -603,7 +603,7 @@ def test_commit_publish(deadline, auth_header, db):
         r = client.post(url, headers=auth_header(roles=["test-publisher"]))
 
     # It should have succeeded
-    assert r.ok
+    assert r.status_code == 200
 
     # It should return an appropriate task object
     json_r = r.json()
