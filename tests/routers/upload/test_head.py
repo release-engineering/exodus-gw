@@ -37,7 +37,7 @@ async def test_head(mock_aws_client, auth_header, monkeypatch):
             headers=auth_header(roles=["test-blob-uploader"]),
         )
 
-    assert r.ok
+    assert r.status_code == 200
     assert r.headers == {
         "etag": "a1b2c3",
         "x-amz-meta-exodus-migration-md5": "94e19d5d30b26306167e9e7bae6b28fd",

@@ -42,7 +42,7 @@ async def test_full_upload(
     )
 
     # It should succeed
-    assert r.ok
+    assert r.status_code == 200
 
     # It should return the correct headers
     assert r.headers == {"etag": "a1b2c3", "content-length": "0"}
@@ -64,7 +64,7 @@ async def test_part_upload(mock_aws_client, mock_request_reader, auth_header):
         )
 
     # It should succeed
-    assert r.ok
+    assert r.status_code == 200
 
     # It should return the correct headers
     assert r.headers == {"etag": "a1b2c3", "content-length": "0"}

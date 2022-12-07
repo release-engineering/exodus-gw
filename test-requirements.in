@@ -11,3 +11,4 @@ sphinx
 freezegun
 bandit
 safety
+httpx
