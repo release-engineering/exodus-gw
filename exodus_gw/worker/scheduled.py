@@ -2,10 +2,10 @@ import logging
 from datetime import datetime, timedelta
 
 import dramatiq
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, noload
 
 from exodus_gw.database import db_engine
-from exodus_gw.models import Publish, Task
+from exodus_gw.models import Item, Publish, Task
 from exodus_gw.schemas import PublishStates, TaskStates
 from exodus_gw.settings import Settings
 
@@ -34,7 +34,11 @@ class Janitor:
         # updated timestamp on a particular object, we'll just
         # pretend it was updated right now.
         for klass in [Task, Publish]:
-            for instance in self.db.query(klass).filter(klass.updated == None):
+            for instance in (
+                self.db.query(klass)
+                .options(noload("*"))
+                .filter(klass.updated == None)
+            ):
                 LOG.warning(
                     "%s %s: setting updated",
                     klass.__name__,
@@ -59,11 +63,15 @@ class Janitor:
         threshold = self.now - timedelta(hours=hours)
 
         for klass, states in [(Task, TaskStates), (Publish, PublishStates)]:
-            for instance in self.db.query(klass).filter(
-                # Anything old enough...
-                klass.updated < threshold,
-                # And also not in a terminal state...
-                ~klass.state.in_(states.terminal()),
+            for instance in (
+                self.db.query(klass)
+                .options(noload("*"))
+                .filter(
+                    # Anything old enough...
+                    klass.updated < threshold,
+                    # And also not in a terminal state...
+                    ~klass.state.in_(states.terminal()),
+                )
             ):
                 LOG.warning(
                     "%s %s: marking as failed (last updated: %s)",
@@ -83,11 +91,15 @@ class Janitor:
         threshold = self.now - timedelta(hours=hours)
 
         for klass, states in [(Task, TaskStates), (Publish, PublishStates)]:
-            for instance in self.db.query(klass).filter(
-                # Anything old enough...
-                klass.updated < threshold,
-                # And also in a terminal state so there will be no further updates...
-                klass.state.in_(states.terminal()),
+            for instance in (
+                self.db.query(klass)
+                .options(noload("*"))
+                .filter(
+                    # Anything old enough...
+                    klass.updated < threshold,
+                    # And also in a terminal state so there will be no further updates...
+                    klass.state.in_(states.terminal()),
+                )
             ):
                 LOG.info(
                     "%s %s: cleaning old data (last updated: %s)",
@@ -96,6 +108,13 @@ class Janitor:
                     instance.updated,
                 )
                 self.db.delete(instance)
+
+                if isinstance(instance, Publish):
+                    # Because publish items aren't loaded, they won't automatically be deleted.
+                    # Batch delete all items associated with the publish deleted above.
+                    self.db.query(Item).filter(
+                        Item.publish_id == instance.id
+                    ).delete()
 
 
 @dramatiq.actor(scheduled=True)

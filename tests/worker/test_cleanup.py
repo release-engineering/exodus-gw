@@ -40,7 +40,7 @@ def test_cleanup_mixed(caplog, db):
     half_day_ago = now - timedelta(hours=12)
     two_days_ago = now - timedelta(days=2)
     eight_days_ago = now - timedelta(days=8)
-    twenty_days_ago = now - timedelta(days=30)
+    thirty_days_ago = now - timedelta(days=30)
 
     # Some objects with missing timestamps.
     p1_missing_ts = Publish(
@@ -74,7 +74,7 @@ def test_cleanup_mixed(caplog, db):
         id=uuid.uuid4(),
         env="test",
         state=PublishStates.committing,
-        updated=twenty_days_ago,
+        updated=thirty_days_ago,
     )
     t1_abandoned = Task(
         id=uuid.uuid4(),
@@ -88,7 +88,7 @@ def test_cleanup_mixed(caplog, db):
         id=uuid.uuid4(),
         env="test2",
         state=PublishStates.committed,
-        updated=twenty_days_ago,
+        updated=thirty_days_ago,
         items=[
             Item(web_uri="/1", object_key="abc", link_to=""),
             Item(web_uri="/2", object_key="aabbcc", link_to=""),
@@ -98,18 +98,19 @@ def test_cleanup_mixed(caplog, db):
         id=uuid.uuid4(),
         env="test3",
         state=PublishStates.failed,
-        updated=twenty_days_ago,
+        updated=thirty_days_ago,
     )
     t1_old = Task(
         id=uuid.uuid4(),
         publish_id=p1_old.id,
         state=TaskStates.failed,
-        updated=twenty_days_ago,
+        updated=thirty_days_ago,
     )
     # (Because these objects will be deleted, we need to keep their ids separately.)
     p1_old_id = p1_old.id
     p2_old_id = p2_old.id
     t1_old_id = t1_old.id
+    p1_old_items = p1_old.items
 
     # And finally some recent objects which should not be touched at all.
     p1_recent = Publish(
@@ -124,9 +125,6 @@ def test_cleanup_mixed(caplog, db):
         state=TaskStates.complete,
         updated=two_days_ago,
     )
-
-    # self.fix_abandoned_publishes()
-    # self.clean_old_data()
 
     db.add_all(
         [
@@ -170,6 +168,10 @@ def test_cleanup_mixed(caplog, db):
     with pytest.raises(ObjectDeletedError):
         t1_old.id
 
+    for item in p1_old_items:
+        with pytest.raises(ObjectDeletedError):
+            item.id
+
     # Other objects should still exist as they were.
     assert p1_recent.state == PublishStates.pending
     assert t1_recent.state == TaskStates.complete
@@ -189,15 +191,15 @@ def test_cleanup_mixed(caplog, db):
             "Publish %s: marking as failed (last updated: %s)"
             % (p1_abandoned.id, eight_days_ago),
             "Publish %s: marking as failed (last updated: %s)"
-            % (p2_abandoned.id, twenty_days_ago),
+            % (p2_abandoned.id, thirty_days_ago),
             ####################################################
             # Deleted old stuff
             "Task %s: cleaning old data (last updated: %s)"
-            % (t1_old_id, twenty_days_ago),
+            % (t1_old_id, thirty_days_ago),
             "Publish %s: cleaning old data (last updated: %s)"
-            % (p1_old_id, twenty_days_ago),
+            % (p1_old_id, thirty_days_ago),
             "Publish %s: cleaning old data (last updated: %s)"
-            % (p2_old_id, twenty_days_ago),
+            % (p2_old_id, thirty_days_ago),
             ####################################################
             # Completed cleanup
             "Scheduled cleanup has completed",
