@@ -1,0 +1,13 @@
+security:
+    ignore-cvss-severity-below: 4
+    ignore-cvss-unknown-severity: False
+    ignore-vulnerabilities:
+      51668:
+            # PVE-2022-51668, sqlalchemy str(engine.URL()) can leak password.
+            reason: >-
+              Our own code does not currently trigger any leaks.
+              We *should* fix the issue, but there is no stable release of
+              sqlalchemy 2 at time of writing.
+              See RHELDST-15252. 
+            expires: '2023-03-01'
+    continue-on-vulnerability-error: False
