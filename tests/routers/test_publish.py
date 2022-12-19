@@ -779,3 +779,70 @@ def test_commit_no_publish(auth_header):
 
     assert r.status_code == 404
     assert r.json() == {"detail": "No publish found for ID %s" % publish_id}
+
+
+def test_get_publish_typical(auth_header, db):
+    """GETing an existing publish returns a publish with no items."""
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(
+        id=publish_id,
+        env="test",
+        state="PENDING",
+        items=[
+            Item(
+                web_uri="/some/path",
+                object_key="1" * 64,
+                publish_id=publish_id,
+            ),
+            Item(
+                web_uri="/another/path",
+                object_key="2" * 64,
+                publish_id=publish_id,
+            ),
+        ],
+    )
+
+    with TestClient(app) as client:
+        # Ensure a publish object exists
+        db.add(publish)
+        db.commit()
+
+        # Try to add some items to it
+        r = client.get(
+            "/test/publish/%s" % publish_id,
+            headers=auth_header(roles=["test-publisher"]),
+        )
+
+    # It should have succeeded
+    assert r.status_code == 200
+
+    # Returned publish does not contain items
+    assert r.json() == {
+        "id": "11224567-e89b-12d3-a456-426614174000",
+        "env": "test",
+        "state": "PENDING",
+        "updated": None,
+        "links": {
+            "self": "/test/publish/11224567-e89b-12d3-a456-426614174000",
+            "commit": "/test/publish/11224567-e89b-12d3-a456-426614174000/commit",
+        },
+        "items": [],
+    }
+
+
+def test_get_publish_not_found(auth_header, fake_publish):
+    """GETing a non-existent publish returns an appropriate error message."""
+
+    with TestClient(app) as client:
+        r = client.get(
+            "/test/publish/%s" % fake_publish.id,
+            headers=auth_header(roles=["test-publisher"]),
+        )
+
+    # It should have failed
+    assert r.status_code == 404
+    assert r.json() == {
+        "detail": "No publish found for ID %s" % fake_publish.id
+    }

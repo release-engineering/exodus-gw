@@ -76,7 +76,7 @@ from typing import Dict, List, Union
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Body, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, noload
 
 from .. import auth, deps, models, schemas, worker
 from ..settings import Environment, Settings
@@ -287,3 +287,62 @@ def commit_publish(
     db.add(task)
 
     return task
+
+
+@router.get(
+    "/{env}/publish/{publish_id}",
+    response_model=schemas.Publish,
+    status_code=200,
+    responses={
+        200: {
+            "description": "Publish found",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "id": "497f6eca-6276-4993-bfeb-53cbbbba6f08",
+                        "env": "live",
+                        "links": {
+                            "self": "/live/publish/497f6eca-6276-4993-bfeb-53cbbbba6f08",
+                            "commit": "/live/publish/497f6eca-6276-4993-bfeb-53cbbbba6f08/commit",
+                        },
+                        "items": [],
+                    }
+                }
+            },
+        },
+        404: {
+            "description": "Publish not found",
+            "content": "No publish found for ID 497f6eca-6276-4993-bfeb-53cbbbba6f08",
+        },
+    },
+    dependencies=[auth.needs_role("publisher")],
+)
+async def get_publish(
+    publish_id: UUID = schemas.PathPublishId,
+    env: Environment = deps.env,
+    db: Session = deps.db,
+):
+    """Return existing publish object from database using given publish ID.
+
+    Because we don't have a use case for them and implementation would
+    be non-trivial, items belonging to the publish are not loaded/returned.
+    This is achieved using the noload() query option.
+    """
+
+    db_publish = (
+        db.query(models.Publish)
+        .options(noload("items"))
+        .filter(
+            # Since sub-environments share some resources, filter for env as well.
+            models.Publish.id == publish_id,
+            models.Publish.env == env.name,
+        )
+        .first()
+    )
+
+    if not db_publish:
+        raise HTTPException(
+            status_code=404, detail="No publish found for ID %s" % publish_id
+        )
+
+    return db_publish
