@@ -111,9 +111,9 @@ aiosignal==1.3.1 \
     --hash=sha256:54cd96e15e1649b75d6c87526a6ff0b6c1b0dd3459f43d9ca11d48c339b68cfc \
     --hash=sha256:f8376fb07dd1e86a584e4fcdec80b36b7f81aac666ebc724e2c090300dd83b17
     # via aiohttp
-alembic==1.8.1 \
-    --hash=sha256:0a024d7f2de88d738d7395ff866997314c837be6104e90c5724350313dee4da4 \
-    --hash=sha256:cd0b5e45b14b706426b833f06369b9a6d5ee03f826ec3238723ce8caaf6e5ffa
+alembic==1.9.0 \
+    --hash=sha256:6af6792fe699730b27480382701b16028ebbaac6bc5cd4f06daf5fa3e4690364 \
+    --hash=sha256:e8ce855f731d92cfdbf9a71d148401fcc420399927817c6e2c0b6a5f31db745d
     # via -r requirements.in
 anyio==3.6.2 \
     --hash=sha256:25ea0d673ae30af41a0c442f81cf3b38c7e79fdc7b60335a4c14e05eb0947421 \
@@ -1193,9 +1193,9 @@ zipp==3.11.0 \
     # via
     #   importlib-metadata
     #   importlib-resources
-zope-event==4.5.0 \
-    --hash=sha256:2666401939cdaa5f4e0c08cf7f20c9b21423b95e88f4675b1443973bdb080c42 \
-    --hash=sha256:5e76517f5b9b119acf37ca8819781db6c16ea433f7e2062c4afc2b6fbedb1330
+zope-event==4.6 \
+    --hash=sha256:73d9e3ef750cca14816a9c322c7250b0d7c9dbc337df5d1b807ff8d3d0b9e97c \
+    --hash=sha256:81d98813046fc86cc4136e3698fee628a3282f9c320db18658c21749235fce80
     # via gevent
 zope-interface==5.5.2 \
     --hash=sha256:008b0b65c05993bb08912f644d140530e775cf1c62a072bf9340c2249e613c32 \
