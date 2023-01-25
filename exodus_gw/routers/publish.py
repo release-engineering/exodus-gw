@@ -261,6 +261,15 @@ def commit_publish(
         )
 
     if db_publish.state != "PENDING":
+        # Check if there is already an associated task and, if so, return it rather than raise.
+        task = (
+            db.query(models.Task)
+            .filter(models.Task.publish_id == publish_id)
+            .first()
+        )
+        if task:
+            return task
+
         raise HTTPException(
             status_code=409,
             detail="Publish %s in unexpected state, '%s'"
