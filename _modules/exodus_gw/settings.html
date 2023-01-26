@@ -10,9 +10,6 @@
     <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
     <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
     <script src="../../_static/doctools.js"></script>
     <script src="../../_static/sphinx_highlight.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -81,12 +78,12 @@
     <span class="c1"># for those (and not for other computed fields, like &#39;environments&#39;.)</span>
 
     <span class="n">call_context_header</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;X-RhApiPlatform-CallContext&quot;</span>
-    <span class="sd">&quot;&quot;&quot;Name of the header from which to extract call context (for authentication</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Name of the header from which to extract call context (for authentication</span>
 <span class="sd">    and authorization).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">upload_meta_fields</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="sd">&quot;&quot;&quot;Permitted metadata field names for s3 uploads and their regex</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Permitted metadata field names for s3 uploads and their regex</span>
 <span class="sd">    for validation. E.g., &quot;exodus-migration-md5&quot;: &quot;^[0-9a-f]{32}$&quot;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -95,34 +92,34 @@
         <span class="s2">&quot;incremental&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
         <span class="s2">&quot;disable_existing_loggers&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">}</span>
-    <span class="sd">&quot;&quot;&quot;Logging configuration in dictConfig schema.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Logging configuration in dictConfig schema.&quot;&quot;&quot;</span>
 
     <span class="n">ini_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="sd">&quot;&quot;&quot;Path to an exodus-gw.ini config file with additional settings.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Path to an exodus-gw.ini config file with additional settings.&quot;&quot;&quot;</span>
 
     <span class="n">environments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Environment</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="c1"># List of environment objects derived from exodus-gw.ini.</span>
 
     <span class="n">db_service_user</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;exodus-gw&quot;</span>
-    <span class="sd">&quot;&quot;&quot;db service user name&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;db service user name&quot;&quot;&quot;</span>
     <span class="n">db_service_pass</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;exodus-gw&quot;</span>
-    <span class="sd">&quot;&quot;&quot;db service user password&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;db service user password&quot;&quot;&quot;</span>
     <span class="n">db_service_host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;exodus-gw-db&quot;</span>
-    <span class="sd">&quot;&quot;&quot;db service host&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;db service host&quot;&quot;&quot;</span>
     <span class="n">db_service_port</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;5432&quot;</span>
-    <span class="sd">&quot;&quot;&quot;db service port&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;db service port&quot;&quot;&quot;</span>
 
     <span class="n">db_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="sd">&quot;&quot;&quot;Connection string for database. If set, overrides the ``db_service_*`` settings.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Connection string for database. If set, overrides the ``db_service_*`` settings.&quot;&quot;&quot;</span>
 
     <span class="n">db_reset</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="sd">&quot;&quot;&quot;If set to True, drop all DB tables during startup.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;If set to True, drop all DB tables during startup.</span>
 
 <span class="sd">    This setting is intended for use during development.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">db_migration_mode</span><span class="p">:</span> <span class="n">MigrationMode</span> <span class="o">=</span> <span class="n">MigrationMode</span><span class="o">.</span><span class="n">upgrade</span>
-    <span class="sd">&quot;&quot;&quot;Adjusts the DB migration behavior when the exodus-gw service starts.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adjusts the DB migration behavior when the exodus-gw service starts.</span>
 
 <span class="sd">    Valid values are:</span>
 
@@ -145,69 +142,69 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">db_migration_revision</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;head&quot;</span>
-    <span class="sd">&quot;&quot;&quot;If ``db_migration_mode`` is ``upgrade``, this setting can be used to override</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;If ``db_migration_mode`` is ``upgrade``, this setting can be used to override</span>
 <span class="sd">    the target revision when migrating the DB.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">db_session_max_tries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
-    <span class="sd">&quot;&quot;&quot;The maximum number of attempts to recreate a DB session within a request.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The maximum number of attempts to recreate a DB session within a request.&quot;&quot;&quot;</span>
 
     <span class="n">item_yield_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5000</span>
-    <span class="sd">&quot;&quot;&quot;Number of publish items to load from the service DB at one time.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Number of publish items to load from the service DB at one time.&quot;&quot;&quot;</span>
 
     <span class="n">write_batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">25</span>
-    <span class="sd">&quot;&quot;&quot;Maximum number of items to write to the DynamoDB table at one time.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum number of items to write to the DynamoDB table at one time.&quot;&quot;&quot;</span>
     <span class="n">write_max_tries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span>
-    <span class="sd">&quot;&quot;&quot;Maximum write attempts to the DynamoDB table.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum write attempts to the DynamoDB table.&quot;&quot;&quot;</span>
     <span class="n">write_max_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
-    <span class="sd">&quot;&quot;&quot;Maximum number of worker threads used in the DynamoDB batch writes.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum number of worker threads used in the DynamoDB batch writes.&quot;&quot;&quot;</span>
     <span class="n">write_queue_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span>
-    <span class="sd">&quot;&quot;&quot;Maximum number of items the queue can hold at one time.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum number of items the queue can hold at one time.&quot;&quot;&quot;</span>
     <span class="n">write_queue_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">10</span>
-    <span class="sd">&quot;&quot;&quot;Maximum amount of time (in seconds) to wait for queue items.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum amount of time (in seconds) to wait for queue items.</span>
 <span class="sd">    Defaults to 10 minutes.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">publish_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">24</span>
-    <span class="sd">&quot;&quot;&quot;Maximum amount of time (in hours) between updates to a pending publish before</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum amount of time (in hours) between updates to a pending publish before</span>
 <span class="sd">    it will be considered abandoned. Defaults to one day.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">history_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">14</span>
-    <span class="sd">&quot;&quot;&quot;Maximum amount of time (in hours) to retain historical data for publishes and</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum amount of time (in hours) to retain historical data for publishes and</span>
 <span class="sd">    tasks. Publishes and tasks in a terminal state will be erased after this time has</span>
 <span class="sd">    passed. Defaults to two weeks.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">task_deadline</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>
-    <span class="sd">&quot;&quot;&quot;Maximum amount of time (in hours) a task should remain viable. Defaults to two</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum amount of time (in hours) a task should remain viable. Defaults to two</span>
 <span class="sd">    hours.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">actor_time_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span> <span class="o">*</span> <span class="mi">60000</span>
-    <span class="sd">&quot;&quot;&quot;Maximum amount of time (in milliseconds) actors may run.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum amount of time (in milliseconds) actors may run.&quot;&quot;&quot;</span>
 
     <span class="n">entry_point_files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s2">&quot;repomd.xml&quot;</span><span class="p">,</span>
         <span class="s2">&quot;repomd.xml.asc&quot;</span><span class="p">,</span>
         <span class="s2">&quot;PULP_MANIFEST&quot;</span><span class="p">,</span>
     <span class="p">]</span>
-    <span class="sd">&quot;&quot;&quot;List of file names that should be saved for last when publishing.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;List of file names that should be saved for last when publishing.&quot;&quot;&quot;</span>
 
     <span class="n">autoindex_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.__exodus_autoindex&quot;</span>
-    <span class="sd">&quot;&quot;&quot;Filename for indexes automatically generated during publish.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filename for indexes automatically generated during publish.</span>
 
 <span class="sd">    Can be set to an empty string to disable generation of indexes.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">config_cache_ttl</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>
-    <span class="sd">&quot;&quot;&quot;Time (in minutes) config is expected to live in components that consume it.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Time (in minutes) config is expected to live in components that consume it.</span>
 
 <span class="sd">    Determines the delay for deployment task completion to allow for</span>
 <span class="sd">    existing caches to expire and the newly deployed config to take effect.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">worker_keepalive_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">5</span>
-    <span class="sd">&quot;&quot;&quot;Background worker keepalive timeout, in seconds. If a worker fails to update its</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Background worker keepalive timeout, in seconds. If a worker fails to update its</span>
 <span class="sd">    status within this time period, it is assumed dead.</span>
 
 <span class="sd">    This setting affects how quickly the system can recover from issues such as a worker</span>
@@ -215,37 +212,37 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">worker_keepalive_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span>
-    <span class="sd">&quot;&quot;&quot;How often, in seconds, should background workers update their status.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;How often, in seconds, should background workers update their status.&quot;&quot;&quot;</span>
 
     <span class="n">cron_cleanup</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;0 */12 * * *&quot;</span>
-    <span class="sd">&quot;&quot;&quot;cron-style schedule for cleanup task.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;cron-style schedule for cleanup task.</span>
 
 <span class="sd">    exodus-gw will run a cleanup task approximately according to this schedule, removing old</span>
 <span class="sd">    data from the system.&quot;&quot;&quot;</span>
 
     <span class="n">scheduler_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">15</span>
-    <span class="sd">&quot;&quot;&quot;How often, in minutes, exodus-gw should check if a scheduled task is ready to run.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;How often, in minutes, exodus-gw should check if a scheduled task is ready to run.</span>
 
 <span class="sd">    Note that the cron rules applied to each scheduled task are only as accurate as this</span>
 <span class="sd">    interval allows, i.e. each rule may be triggered up to ``scheduler_interval`` minutes late.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">scheduler_delay</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
-    <span class="sd">&quot;&quot;&quot;Delay, in minutes, after exodus-gw workers start up before any scheduled tasks</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Delay, in minutes, after exodus-gw workers start up before any scheduled tasks</span>
 <span class="sd">    should run.&quot;&quot;&quot;</span>
 
     <span class="n">cdn_signature_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">30</span>
-    <span class="sd">&quot;&quot;&quot;Time (in seconds) signed URLs remain valid.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Time (in seconds) signed URLs remain valid.&quot;&quot;&quot;</span>
 
     <span class="n">s3_pool_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
-    <span class="sd">&quot;&quot;&quot;Number of S3 clients to cache&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Number of S3 clients to cache&quot;&quot;&quot;</span>
 
     <span class="k">class</span> <span class="nc">Config</span><span class="p">:</span>
         <span class="n">env_prefix</span> <span class="o">=</span> <span class="s2">&quot;exodus_gw_&quot;</span></div>
 
 
 <span class="k">def</span> <span class="nf">load_settings</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Settings</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Return the currently active settings for the server.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the currently active settings for the server.</span>
 
 <span class="sd">    This function will load settings from config files and environment</span>
 <span class="sd">    variables. It is intended to be called once at application startup.</span>
@@ -303,7 +300,7 @@
 
 
 <span class="k">def</span> <span class="nf">get_environment</span><span class="p">(</span><span class="n">env</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">settings</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Settings</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Return the corresponding environment object for the given environment</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the corresponding environment object for the given environment</span>
 <span class="sd">    name.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -389,8 +386,8 @@
       &copy;2020, Red Hat.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
-      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 6.1.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
     </div>
 
