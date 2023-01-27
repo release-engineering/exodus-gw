@@ -640,6 +640,38 @@ def test_commit_publish_bad_deadline(auth_header, db):
 
 
 @mock.patch("exodus_gw.worker.commit")
+def test_commit_publish_in_progress(mock_commit, fake_publish, db):
+    """Ensure commit_publish is idempotent."""
+
+    # Simulate that this publish was already committed, assigned to
+    # an in-progress task.
+    fake_publish.state = schemas.PublishStates.committing
+    task = Task(
+        id="8d8a4692-c89b-4b57-840f-b3f0166148d2",
+        publish_id=fake_publish.id,
+        state=schemas.TaskStates.in_progress,
+    )
+    db.add(fake_publish)
+    db.add(task)
+    db.commit()
+
+    publish_task = routers.publish.commit_publish(
+        env=get_environment("test"),
+        publish_id=fake_publish.id,
+        db=db,
+        settings=Settings(),
+    )
+
+    # It should have returned the task associated with the publish.
+    assert isinstance(publish_task, Task)
+    assert publish_task.id == task.id
+    assert publish_task.publish_id == fake_publish.id
+
+    # It should not have called worker.commit.
+    mock_commit.assert_not_called()
+
+
+@mock.patch("exodus_gw.worker.commit")
 def test_commit_publish_prev_completed(mock_commit, fake_publish, db):
     """Ensure commit_publish fails for publishes in invalid state."""
 
