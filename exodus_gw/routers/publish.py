@@ -76,6 +76,7 @@ from typing import Dict, List, Union
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Body, HTTPException, Query
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, noload
 
 from .. import auth, deps, models, schemas, worker
@@ -193,8 +194,24 @@ def update_publish_items(
             % (db_publish.id, db_publish.state),
         )
 
-    for item in items:
-        db.add(models.Item(**item.dict(), publish_id=db_publish.id))
+    # Convert the list into dict and update each dict with a publish_id.
+    items_data = [
+        {**item.dict(), "publish_id": db_publish.id} for item in items
+    ]
+
+    LOG.debug("Adding %s items into '%s'", len(items_data), db_publish.id)
+
+    statement = insert(models.Item).values(items_data)
+
+    # Update all target table columns, except for the primary_key column.
+    update_dict = {c.name: c for c in statement.excluded if not c.primary_key}
+
+    update_statement = statement.on_conflict_do_update(
+        index_elements=["publish_id", "web_uri"],
+        set_=update_dict,
+    )
+
+    db.execute(update_statement)
 
     return {}
 
