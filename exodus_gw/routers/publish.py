@@ -177,7 +177,10 @@ def update_publish_items(
     db_publish = (
         db.query(models.Publish)
         .with_for_update()
-        .filter(models.Publish.id == publish_id)
+        .filter(
+            models.Publish.id == publish_id,
+            models.Publish.env == env.name,
+        )
         .first()
     )
 
@@ -251,7 +254,10 @@ def commit_publish(
     db_publish = (
         db.query(models.Publish)
         .with_for_update()
-        .filter(models.Publish.id == publish_id)
+        .filter(
+            models.Publish.id == publish_id,
+            models.Publish.env == env.name,
+        )
         .first()
     )
 
@@ -333,7 +339,6 @@ async def get_publish(
         db.query(models.Publish)
         .options(noload("items"))
         .filter(
-            # Since sub-environments share some resources, filter for env as well.
             models.Publish.id == publish_id,
             models.Publish.env == env.name,
         )
