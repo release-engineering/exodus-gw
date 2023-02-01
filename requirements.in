@@ -6,7 +6,8 @@ defusedxml
 uvicorn[standard]
 gunicorn
 psycopg2
-sqlalchemy
+# Need to do RHELDST-15252 in order to upgrade sqlalchemy
+sqlalchemy<2
 jsonschema
 alembic
 backoff
