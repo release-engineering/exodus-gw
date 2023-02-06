@@ -813,6 +813,23 @@ def test_commit_no_publish(auth_header):
     assert r.json() == {"detail": "No publish found for ID %s" % publish_id}
 
 
+def test_commit_env_mismatch(auth_header, fake_publish, db):
+    """Ensure we can't operate on publishes belonging to other environments"""
+
+    fake_publish.env = "pre"
+    db.add(fake_publish)
+    db.commit()
+
+    url = "/test/publish/%s/commit" % fake_publish.id
+    with TestClient(app) as client:
+        r = client.post(url, headers=auth_header(roles=["test-publisher"]))
+
+    assert r.status_code == 404
+    assert r.json() == {
+        "detail": "No publish found for ID %s" % fake_publish.id
+    }
+
+
 def test_get_publish_typical(auth_header, db):
     """GETing an existing publish returns a publish with no items."""
 
