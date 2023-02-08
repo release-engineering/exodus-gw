@@ -113,7 +113,7 @@ def xml_response(operation: str, **kwargs) -> Response:
 
     status_code = kwargs.get("Code", 200)
 
-    for (key, value) in kwargs.items():
+    for key, value in kwargs.items():
         child = SubElement(root, key)
         child.text = str(value)
 

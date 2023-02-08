@@ -17,6 +17,7 @@ def new_requests_session(args):
         session.cert = (args.cert, args.key)
     return session
 
+
 def check_service(args):
     session = new_requests_session(args)
 
@@ -118,7 +119,7 @@ def main():
     config = exodus_config.derive_exodus_config(eng_pp)
 
     post_url = os.path.join(args.exodus_gw_url, args.env, "deploy-config")
-    
+
     print("Submitting config to %s" % post_url)
 
     session = new_requests_session(args)
@@ -134,4 +135,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

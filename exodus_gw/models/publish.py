@@ -18,7 +18,6 @@ from .base import Base
 
 
 class Publish(Base):
-
     __tablename__ = "publishes"
 
     id = Column(
@@ -84,7 +83,6 @@ def publish_before_update(_mapper, _connection, publish):
 
 
 class Item(Base):
-
     __tablename__ = "items"
 
     id = Column(
