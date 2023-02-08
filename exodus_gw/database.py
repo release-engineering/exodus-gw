@@ -1,9 +1,9 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import DeclarativeBase
 
 from .settings import Settings
 
-Base = declarative_base()
+Base = DeclarativeBase()
 
 
 def db_url(settings: Settings):

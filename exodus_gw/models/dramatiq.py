@@ -1,6 +1,10 @@
-from sqlalchemy import Column, DateTime, String
-from sqlalchemy.dialects.postgresql import JSONB, UUID
-from sqlalchemy.orm import relationship
+import datetime
+from typing import Any, Dict, Optional
+
+from sqlalchemy import DateTime, String
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.types import Uuid
 
 from .base import Base
 
@@ -12,8 +16,8 @@ class DramatiqMessage(Base):
     __tablename__ = "dramatiq_messages"
 
     # ID of message
-    id = Column(
-        UUID(as_uuid=True),
+    id: Mapped[str] = mapped_column(
+        Uuid(as_uuid=False),
         primary_key=True,
     )
 
@@ -21,7 +25,7 @@ class DramatiqMessage(Base):
     # Null means message is not yet assigned.
     # Not a foreign key since consumers can disappear while leaving
     # their messages behind.
-    consumer_id = Column(String, nullable=True)
+    consumer_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
 
     consumer = relationship(
         "DramatiqConsumer",
@@ -30,13 +34,13 @@ class DramatiqMessage(Base):
     )
 
     # Name of queue (e.g. "default" for most messages)
-    queue = Column(String, nullable=False)
+    queue: Mapped[str] = mapped_column(String, nullable=False)
 
     # Name of actor
-    actor = Column(String, nullable=False)
+    actor: Mapped[str] = mapped_column(String, nullable=False)
 
     # Full message body.
-    body = Column(JSONB, nullable=False)
+    body: Mapped[Dict[str, Any]] = mapped_column(JSONB, nullable=False)
 
 
 class DramatiqConsumer(Base):
@@ -48,10 +52,12 @@ class DramatiqConsumer(Base):
 
     # Unique ID of consumer. Consumers set a new unique ID every
     # time they start up.
-    id = Column(
+    id: Mapped[str] = mapped_column(
         String,
         primary_key=True,
     )
 
     # Last time this consumer reported itself to be alive.
-    last_alive = Column(DateTime, nullable=False)
+    last_alive: Mapped[datetime.datetime] = mapped_column(
+        DateTime, nullable=False
+    )

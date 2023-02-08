@@ -130,7 +130,7 @@ class PublishStates(str, Enum):
 
 
 class PublishBase(BaseModel):
-    id: UUID = Field(..., description="Unique ID of publish object.")
+    id: str = Field(..., description="Unique ID of publish object.")
 
 
 class Publish(PublishBase):

@@ -1,7 +1,7 @@
 import pytest
 from alembic.command import downgrade, upgrade
 from alembic.config import Config
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
@@ -25,17 +25,17 @@ def test_migrations_up_down(tmpdir):
 
     # Sanity check: we shouldn't have any tables yet
     with pytest.raises(OperationalError):
-        session.execute("SELECT 1 FROM publishes")
+        session.execute(text("SELECT 1 FROM publishes"))
 
     # Upgrade to latest works
     upgrade(config, "head")
 
     # Sanity check: now we should have some tables
-    session.execute("SELECT 1 FROM publishes")
+    session.execute(text("SELECT 1 FROM publishes"))
 
     # Downgrade to initial state works
     downgrade(config, "base")
 
     # Sanity check: once again no tables
     with pytest.raises(OperationalError):
-        session.execute("SELECT 1 FROM publishes")
+        session.execute(text("SELECT 1 FROM publishes"))

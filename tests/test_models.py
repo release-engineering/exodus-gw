@@ -20,12 +20,12 @@ def test_publish_task_before_update(db):
     """Changing object states updates timestamp."""
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
-    publish = Publish(id=uuid.UUID(publish_id), env="test", state="PENDING")
+    publish = Publish(id=publish_id, env="test", state="PENDING")
 
     task_id = "8d8a4692-c89b-4b57-840f-b3f0166148d2"
     task = Task(
         id=task_id,
-        publish_id=uuid.UUID(publish_id),
+        publish_id=publish_id,
         state="NOT_STARTED",
     )
 
