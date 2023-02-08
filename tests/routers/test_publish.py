@@ -187,13 +187,14 @@ def test_update_publish_items_path_normalization(db, auth_header):
     # Publish object should now have matching items
     db.refresh(publish)
 
+    items = sorted(publish.items, key=lambda item: item.link_to)
     item_dicts = [
         {
             "web_uri": item.web_uri,
             "object_key": item.object_key,
             "link_to": item.link_to,
         }
-        for item in publish.items
+        for item in items
     ]
 
     # Should have stored normalized web_uri and link_to paths
@@ -276,6 +277,74 @@ def test_update_publish_items_no_uri(db, auth_header):
     # It should have failed with 400
     assert r.status_code == 400
     assert r.json() == {"detail": ["No URI: %s" % expected_item]}
+
+
+def test_update_publish_items_existing_uri(db, auth_header):
+    """PUTting an item which item's web_uri already exists creates expected objects in DB."""
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(
+        id=uuid.UUID("{%s}" % publish_id),
+        env="test",
+        state="PENDING",
+        items=[
+            Item(
+                web_uri="/uri1",
+                object_key="1" * 64,
+                publish_id=publish_id,
+            ),
+            Item(
+                web_uri="/uri2",
+                object_key="2" * 64,
+                publish_id=publish_id,
+            ),
+        ],
+    )
+
+    with TestClient(app) as client:
+        # Ensure a publish object exists
+        db.add(publish)
+        db.commit()
+
+        # Try to add an item which item's web_uri already exists
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json=[
+                {
+                    "web_uri": "/uri1",
+                    "object_key": "3" * 64,
+                },
+            ],
+            headers=auth_header(roles=["test-publisher"]),
+        )
+
+    # It should have succeeded
+    assert r.status_code == 200
+
+    # Publish object should now have matching items
+    db.refresh(publish)
+
+    items = sorted(publish.items, key=lambda item: item.web_uri)
+    item_dicts = [
+        {
+            "web_uri": item.web_uri,
+            "object_key": item.object_key,
+        }
+        for item in items
+    ]
+
+    # Should have stored exactly what we asked for
+    assert item_dicts == [
+        {
+            "web_uri": "/uri1",
+            "object_key": "3" * 64,
+        },
+        {
+            "web_uri": "/uri2",
+            "object_key": "2" * 64,
+        },
+    ]
 
 
 def test_update_publish_items_invalid_item(db, auth_header):
@@ -703,7 +772,7 @@ def test_commit_publish_linked_items(mock_commit, fake_publish, db):
 
     # Whole items
     item1 = Item(
-        web_uri="/some/path",
+        web_uri="/the/path",
         object_key="1" * 64,
         publish_id=fake_publish.id,
         link_to=None,  # It should be able to handle None/NULL link_to values...
@@ -723,8 +792,8 @@ def test_commit_publish_linked_items(mock_commit, fake_publish, db):
     )
     # Linked items
     ln_item1 = Item(
-        web_uri="/alternate/route/to/some/path",
-        link_to="/some/path",
+        web_uri="/alternate/route/to/the/path",
+        link_to="/the/path",
         publish_id=fake_publish.id,
     )
     ln_item2 = Item(
