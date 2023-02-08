@@ -12,17 +12,15 @@ jobs:
      - name: Setup Python
        uses: actions/setup-python@v2
        with:
-         # TODO: multi-version support
          python-version: 3.9
 
+     - name: Install tox
+       run: pip install tox
      
      - name: pip-compile
        uses: technote-space/create-pr-action@v2
        with:
-         EXECUTE_COMMANDS: |
-           pip install pip-tools
-           pip-compile -U --generate-hashes requirements.in
-           pip-compile -U --generate-hashes requirements.in test-requirements.in -o test-requirements.txt
+         EXECUTE_COMMANDS: tox -e pip-compile
          COMMIT_MESSAGE: 'chore: scheduled pip-compile'
          COMMIT_NAME: 'GitHub Actions'
          COMMIT_EMAIL: 'noreply@github.com'
