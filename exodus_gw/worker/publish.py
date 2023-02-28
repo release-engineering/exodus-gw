@@ -293,7 +293,7 @@ class Commit:
 
 @dramatiq.actor(time_limit=Settings().actor_time_limit)
 def commit(
-    publish_id: str, env: str, from_date: str, settings: Settings
+    publish_id: str, env: str, from_date: str, settings: Settings = Settings()
 ) -> None:
     actor_msg_id = CurrentMessage.get_current_message().message_id
     commit_obj = Commit(publish_id, env, from_date, actor_msg_id, settings)
