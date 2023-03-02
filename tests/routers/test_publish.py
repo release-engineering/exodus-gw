@@ -76,9 +76,7 @@ def test_update_publish_items_typical(db, auth_header):
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
 
-    publish = Publish(
-        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
-    )
+    publish = Publish(id=publish_id, env="test", state="PENDING")
 
     with TestClient(app) as client:
         # Ensure a publish object exists
@@ -162,9 +160,7 @@ def test_update_publish_items_path_normalization(db, auth_header):
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
 
-    publish = Publish(
-        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
-    )
+    publish = Publish(id=publish_id, env="test", state="PENDING")
 
     with TestClient(app) as client:
         # Ensure a publish object exists
@@ -213,9 +209,7 @@ def test_update_publish_items_invalid_publish(db, auth_header):
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
 
-    publish = Publish(
-        id=uuid.UUID("{%s}" % publish_id), env="test", state="COMPLETE"
-    )
+    publish = Publish(id=publish_id, env="test", state="COMPLETE")
 
     with TestClient(app) as client:
         # ensure a publish object exists
@@ -246,9 +240,7 @@ def test_update_publish_items_no_uri(db, auth_header):
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
 
-    publish = Publish(
-        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
-    )
+    publish = Publish(id=publish_id, env="test", state="PENDING")
 
     with TestClient(app) as client:
         # ensure a publish object exists
@@ -285,7 +277,7 @@ def test_update_publish_items_existing_uri(db, auth_header):
     publish_id = "11224567-e89b-12d3-a456-426614174000"
 
     publish = Publish(
-        id=uuid.UUID("{%s}" % publish_id),
+        id=publish_id,
         env="test",
         state="PENDING",
         items=[
@@ -352,9 +344,7 @@ def test_update_publish_items_invalid_item(db, auth_header):
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
 
-    publish = Publish(
-        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
-    )
+    publish = Publish(id=publish_id, env="test", state="PENDING")
 
     with TestClient(app) as client:
         # ensure a publish object exists
@@ -387,9 +377,7 @@ def test_update_publish_items_rejects_autoindex(db, auth_header):
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
 
-    publish = Publish(
-        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
-    )
+    publish = Publish(id=publish_id, env="test", state="PENDING")
 
     with TestClient(app) as client:
         # ensure a publish object exists
@@ -424,9 +412,7 @@ def test_update_publish_items_link_and_key(db, auth_header):
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
 
-    publish = Publish(
-        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
-    )
+    publish = Publish(id=publish_id, env="test", state="PENDING")
 
     with TestClient(app) as client:
         # ensure a publish object exists
@@ -467,9 +453,7 @@ def test_update_publish_items_link_content_type(db, auth_header):
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
 
-    publish = Publish(
-        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
-    )
+    publish = Publish(id=publish_id, env="test", state="PENDING")
 
     with TestClient(app) as client:
         # ensure a publish object exists
@@ -507,9 +491,7 @@ def test_update_publish_items_invalid_object_key(db, auth_header):
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
 
-    publish = Publish(
-        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
-    )
+    publish = Publish(id=publish_id, env="test", state="PENDING")
 
     with TestClient(app) as client:
         # ensure a publish object exists
@@ -547,9 +529,7 @@ def test_update_publish_absent_items_with_content_type(db, auth_header):
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
 
-    publish = Publish(
-        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
-    )
+    publish = Publish(id=publish_id, env="test", state="PENDING")
 
     with TestClient(app) as client:
         # ensure a publish object exists
@@ -591,9 +571,7 @@ def test_update_publish_items_invalid_content_type(db, auth_header):
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
 
-    publish = Publish(
-        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
-    )
+    publish = Publish(id=publish_id, env="test", state="PENDING")
 
     with TestClient(app) as client:
         # ensure a publish object exists
@@ -655,9 +633,7 @@ def test_commit_publish(deadline, auth_header, db):
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
 
-    publish = Publish(
-        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
-    )
+    publish = Publish(id=publish_id, env="test", state="PENDING")
 
     url = "/test/publish/11224567-e89b-12d3-a456-426614174000/commit"
     if deadline:
@@ -686,9 +662,7 @@ def test_commit_publish(deadline, auth_header, db):
 def test_commit_publish_bad_deadline(auth_header, db):
     publish_id = "11224567-e89b-12d3-a456-426614174000"
 
-    publish = Publish(
-        id=uuid.UUID("{%s}" % publish_id), env="test", state="PENDING"
-    )
+    publish = Publish(id=publish_id, env="test", state="PENDING")
 
     url = "/test/publish/11224567-e89b-12d3-a456-426614174000/commit"
     url += "?deadline=07/25/2022 3:47:47 PM"

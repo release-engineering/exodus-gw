@@ -19,6 +19,8 @@ def complete_deploy_config_task(task_id: str):
     db = Session(bind=db_engine(settings))
     task = db.query(models.Task).filter(models.Task.id == task_id).first()
 
+    assert task
+
     if task.state != "IN_PROGRESS":
         LOG.warning("Task %s in unexpected state, '%s'", task.id, task.state)
         return
@@ -40,6 +42,8 @@ def deploy_config(config: Dict[str, Any], env: str, from_date: str):
         .filter(models.Task.id == current_message_id)
         .first()
     )
+
+    assert task
 
     if task.state not in ("NOT_STARTED", "IN_PROGRESS"):
         LOG.warning("Task %s in unexpected state, '%s'", task.id, task.state)

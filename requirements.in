@@ -7,7 +7,7 @@ uvicorn[standard]
 gunicorn
 psycopg2
 # Need to do RHELDST-15252 in order to upgrade sqlalchemy
-sqlalchemy<2
+sqlalchemy>=2.0
 jsonschema
 alembic
 backoff

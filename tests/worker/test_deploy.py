@@ -12,7 +12,7 @@ NOW_UTC = datetime.now(timezone.utc)
 
 def _task():
     return models.Task(
-        id=uuid.UUID("8d8a4692-c89b-4b57-840f-b3f0166148d2"),
+        id="8d8a4692-c89b-4b57-840f-b3f0166148d2",
         state="NOT_STARTED",
     )
 

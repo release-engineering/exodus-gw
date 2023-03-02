@@ -12,7 +12,7 @@ from exodus_gw.main import app
 from exodus_gw.models import Publish
 
 # A hardcoded UUID so we can find what we've created.
-TEST_UUID = uuid.UUID("{12345678-1234-5678-1234-567812345678}")
+TEST_UUID = "12345678-1234-5678-1234-567812345678"
 
 
 # A testing endpoint which will create an object and then commit,
@@ -30,13 +30,13 @@ def make_publish(
     elif mode == "raise":
         raise HTTPException(500)
     elif mode == "raise-db":
-        raise DBAPIError("err", "params", "orig")
+        raise DBAPIError("err", "params", BaseException())
     elif mode == "raise-db-and-resolve":
         request.state.make_publish_count = (
             getattr(request.state, "make_publish_count", 0) + 1
         )
         if request.state.make_publish_count == 1:
-            raise DBAPIError("err", "params", "orig")
+            raise DBAPIError("err", "params", BaseException())
         db.commit()
 
 

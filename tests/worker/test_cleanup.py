@@ -44,16 +44,19 @@ def test_cleanup_mixed(caplog, db):
 
     # Some objects with missing timestamps.
     p1_missing_ts = Publish(
-        id=uuid.uuid4(), env="test", state=PublishStates.failed, updated=None
+        id=str(uuid.uuid4()),
+        env="test",
+        state=PublishStates.failed,
+        updated=None,
     )
     p2_missing_ts = Publish(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         env="test2",
         state=PublishStates.committed,
         updated=None,
     )
     t1_missing_ts = Task(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         publish_id=p1_missing_ts.id,
         state=TaskStates.failed,
         updated=None,
@@ -61,7 +64,7 @@ def test_cleanup_mixed(caplog, db):
 
     # Some publishes which seem to be abandoned.
     p1_abandoned = Publish(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         env="test",
         state=PublishStates.pending,
         updated=eight_days_ago,
@@ -71,13 +74,13 @@ def test_cleanup_mixed(caplog, db):
         ],
     )
     p2_abandoned = Publish(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         env="test",
         state=PublishStates.committing,
         updated=thirty_days_ago,
     )
     t1_abandoned = Task(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         publish_id=p1_abandoned.id,
         state=TaskStates.in_progress,
         updated=eight_days_ago,
@@ -85,7 +88,7 @@ def test_cleanup_mixed(caplog, db):
 
     # Some objects which are old enough to be cleaned up.
     p1_old = Publish(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         env="test2",
         state=PublishStates.committed,
         updated=thirty_days_ago,
@@ -95,13 +98,13 @@ def test_cleanup_mixed(caplog, db):
         ],
     )
     p2_old = Publish(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         env="test3",
         state=PublishStates.failed,
         updated=thirty_days_ago,
     )
     t1_old = Task(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         publish_id=p1_old.id,
         state=TaskStates.failed,
         updated=thirty_days_ago,
@@ -114,13 +117,13 @@ def test_cleanup_mixed(caplog, db):
 
     # And finally some recent objects which should not be touched at all.
     p1_recent = Publish(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         env="test3",
         state=PublishStates.pending,
         updated=half_day_ago,
     )
     t1_recent = Task(
-        id=uuid.uuid4(),
+        id=str(uuid.uuid4()),
         publish_id=p1_recent.id,
         state=TaskStates.complete,
         updated=two_days_ago,
