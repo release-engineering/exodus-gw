@@ -192,10 +192,10 @@ class Commit:
         LOG.debug("No items to write for publish %s", self.publish.id)
         return False
 
-    def _query_task(self, actor_msg_id: str) -> Task:
+    def _query_task(self, actor_msg_id: str):
         return self.db.query(Task).filter(Task.id == actor_msg_id).first()
 
-    def _query_publish(self, publish_id: str) -> Publish:
+    def _query_publish(self, publish_id: str):
         publish = (
             self.db.query(Publish)
             .filter(Publish.id == publish_id)
@@ -293,7 +293,7 @@ class Commit:
 
 @dramatiq.actor(time_limit=Settings().actor_time_limit)
 def commit(
-    publish_id: str, env: str, from_date: str, settings: Settings
+    publish_id: str, env: str, from_date: str, settings: Settings = Settings()
 ) -> None:
     actor_msg_id = CurrentMessage.get_current_message().message_id
     commit_obj = Commit(publish_id, env, from_date, actor_msg_id, settings)

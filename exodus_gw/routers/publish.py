@@ -73,7 +73,7 @@ indefinitely.
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Union
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from fastapi import APIRouter, Body, HTTPException, Query
 from sqlalchemy.dialects.postgresql import insert
@@ -122,7 +122,7 @@ def publish(
     **Required roles**: `{env}-publisher`
     """
 
-    db_publish = models.Publish(id=uuid4(), env=env.name, state="PENDING")
+    db_publish = models.Publish(id=str(uuid4()), env=env.name, state="PENDING")
     db.add(db_publish)
 
     return db_publish
@@ -158,7 +158,7 @@ def update_publish_items(
             },
         ],
     ),
-    publish_id: UUID = schemas.PathPublishId,
+    publish_id: str = schemas.PathPublishId,
     env: Environment = deps.env,
     db: Session = deps.db,
 ) -> Dict[None, None]:
@@ -226,7 +226,7 @@ def update_publish_items(
     dependencies=[auth.needs_role("publisher")],
 )
 def commit_publish(
-    publish_id: UUID = schemas.PathPublishId,
+    publish_id: str = schemas.PathPublishId,
     env: Environment = deps.env,
     db: Session = deps.db,
     settings: Settings = deps.settings,
@@ -350,7 +350,7 @@ def commit_publish(
     dependencies=[auth.needs_role("publisher")],
 )
 async def get_publish(
-    publish_id: UUID = schemas.PathPublishId,
+    publish_id: str = schemas.PathPublishId,
     env: Environment = deps.env,
     db: Session = deps.db,
 ):
@@ -363,7 +363,7 @@ async def get_publish(
 
     db_publish = (
         db.query(models.Publish)
-        .options(noload("items"))
+        .options(noload(models.Publish.items))
         .filter(
             models.Publish.id == publish_id,
             models.Publish.env == env.name,

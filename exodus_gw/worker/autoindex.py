@@ -50,7 +50,7 @@ class PublishContentFetcher:
             return None
 
         item: Item = matched[0]
-        key: str = item.object_key
+        key: Optional[str] = item.object_key
         LOG.debug("%s can be fetched from %s", uri, key)
         response = await self.s3_client.get_object(
             Bucket=self.environment.bucket, Key=key
@@ -85,7 +85,11 @@ class AutoindexEnricher:
         self.env_name = env_name
         self.env = get_environment(env_name, settings)
         self.settings = settings
-        self.db = inspect(publish).session
+
+        ins = inspect(publish)
+        assert ins
+        self.db = ins.session
+
         self.item_query = self.db.query(Item).filter(
             Item.publish_id == publish.id
         )

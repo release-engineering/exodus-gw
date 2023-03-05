@@ -91,7 +91,7 @@ def test_scheduled_actor_enqueued_on_startup(db):
     # broker starts up.
     db.add(
         DramatiqMessage(
-            id=uuid.uuid4(),
+            id=str(uuid.uuid4()),
             queue="default",
             actor="schedule_test1",
             body={},
@@ -99,7 +99,7 @@ def test_scheduled_actor_enqueued_on_startup(db):
     )
     db.add(
         DramatiqMessage(
-            id=uuid.uuid4(),
+            id=str(uuid.uuid4()),
             queue="default",
             actor="schedule_test1",
             body={},
@@ -107,7 +107,7 @@ def test_scheduled_actor_enqueued_on_startup(db):
     )
     db.add(
         DramatiqMessage(
-            id=uuid.uuid4(),
+            id=str(uuid.uuid4()),
             queue="default",
             actor="schedule_test2",
             body={},
@@ -117,7 +117,7 @@ def test_scheduled_actor_enqueued_on_startup(db):
     # There can be messages for unrelated actors too.
     db.add(
         DramatiqMessage(
-            id=uuid.UUID("f3d9ae4aeea6946a8668445395ba10b7"),
+            id="f3d9ae4a-eea6-946a-8668-445395ba10b7",
             queue="default",
             actor="other_actor",
             body={},

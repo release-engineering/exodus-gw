@@ -50,8 +50,11 @@ class SchedulerMiddleware(Middleware):
         # It is a bug to define a scheduled actor without a corresponding setting.
         assert hasattr(self.__settings, settings_key)
 
-        actor.options["scheduled_message_id"] = uuid.uuid5(
-            self.SCHEDULER_NS, "-".join([actor.queue_name, actor.actor_name])
+        actor.options["scheduled_message_id"] = str(
+            uuid.uuid5(
+                self.SCHEDULER_NS,
+                "-".join([actor.queue_name, actor.actor_name]),
+            )
         )
 
         LOG.info(

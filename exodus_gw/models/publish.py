@@ -1,18 +1,11 @@
 import uuid
 from datetime import datetime
+from typing import Optional
 
 from fastapi import HTTPException
-from sqlalchemy import (
-    Column,
-    DateTime,
-    ForeignKey,
-    String,
-    event,
-    func,
-    inspect,
-)
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Bundle, relationship
+from sqlalchemy import DateTime, ForeignKey, String, event, func, inspect
+from sqlalchemy.orm import Bundle, Mapped, mapped_column, relationship
+from sqlalchemy.types import Uuid
 
 from .base import Base
 
@@ -20,14 +13,14 @@ from .base import Base
 class Publish(Base):
     __tablename__ = "publishes"
 
-    id = Column(
-        UUID(as_uuid=True),
+    id: Mapped[str] = mapped_column(
+        Uuid(as_uuid=False),
         primary_key=True,
-        default=uuid.uuid4,
+        default=lambda: str(uuid.uuid4()),
     )
-    env = Column(String, nullable=False)
-    state = Column(String, nullable=False)
-    updated = Column(DateTime())
+    env: Mapped[str] = mapped_column(String, nullable=False)
+    state: Mapped[str] = mapped_column(String, nullable=False)
+    updated: Mapped[datetime] = mapped_column(DateTime())
     items = relationship(
         "Item", back_populates="publish", cascade="all, delete-orphan"
     )
@@ -38,7 +31,9 @@ class Publish(Base):
         ln_items = (
             db.query(Item)
             .filter(Item.publish_id == self.id)
-            .filter(func.coalesce(Item.link_to, "") != "")
+            .filter(
+                func.coalesce(Item.link_to, "") != ""  # pylint: disable=E1102
+            )
             .all()
         )
         # Collect link targets of linked items for finding matches.
@@ -49,9 +44,9 @@ class Publish(Base):
             "match", Item.web_uri, Item.object_key, Item.content_type
         )
         matches = {
-            row.match["web_uri"]: {
-                "object_key": row.match["object_key"],
-                "content_type": row.match["content_type"],
+            row.match.web_uri: {
+                "object_key": row.match.object_key,
+                "content_type": row.match.content_type,
             }
             for row in db.query(match).filter(Item.web_uri.in_(ln_item_paths))
         }
@@ -85,17 +80,17 @@ def publish_before_update(_mapper, _connection, publish):
 class Item(Base):
     __tablename__ = "items"
 
-    id = Column(
-        UUID(as_uuid=True),
+    id: Mapped[str] = mapped_column(
+        Uuid(as_uuid=False),
         primary_key=True,
-        default=uuid.uuid4,
+        default=lambda: str(uuid.uuid4()),
     )
-    web_uri = Column(String, nullable=False)
-    object_key = Column(String, nullable=True)
-    content_type = Column(String, nullable=True)
-    link_to = Column(String, nullable=True)
-    publish_id = Column(
-        UUID(as_uuid=True), ForeignKey("publishes.id"), nullable=False
+    web_uri: Mapped[str] = mapped_column(String, nullable=False)
+    object_key: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    content_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    link_to: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    publish_id: Mapped[str] = mapped_column(
+        Uuid(as_uuid=False), ForeignKey("publishes.id"), nullable=False
     )
 
     publish = relationship("Publish", back_populates="items")

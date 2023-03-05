@@ -15,15 +15,15 @@ LOG = logging.getLogger("exodus-gw")
 def db_reset(db: Engine):
     LOG.warning("Resetting database!")
 
-    meta = MetaData(bind=db)
+    meta = MetaData()
 
     # This finds all existing tables (in public schema; does not include dramatiq queue)
-    meta.reflect()
+    meta.reflect(bind=db)
 
     LOG.warning("Dropping table(s): [%s]", ", ".join(meta.tables.keys()))
 
     # This drops them all
-    meta.drop_all()
+    meta.drop_all(bind=db)
 
     LOG.warning("Database emptied!")
 
