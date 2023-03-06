@@ -8,6 +8,7 @@ Create Date: 2021-02-11 13:54:23.787714
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.types import Uuid
 
 # revision identifiers, used by Alembic.
 revision = "0a3a709da247"
@@ -26,7 +27,7 @@ def upgrade():
     )
     op.create_table(
         "dramatiq_messages",
-        sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
+        sa.Column("id", Uuid(as_uuid=False), nullable=False),
         sa.Column("consumer_id", sa.String(), nullable=True),
         sa.Column("queue", sa.String(), nullable=False),
         sa.Column(

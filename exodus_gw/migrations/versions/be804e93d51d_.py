@@ -8,7 +8,7 @@ Create Date: 2021-11-17 18:15:24.393374
 import os
 
 from alembic import op
-from sqlalchemy.dialects import postgresql
+from sqlalchemy.types import Uuid
 
 # revision identifiers, used by Alembic.
 revision = "be804e93d51d"
@@ -31,12 +31,12 @@ def upgrade():
 
     with op.batch_alter_table("tasks", recreate=recreate) as batch_op:
         batch_op.alter_column(
-            "publish_id", existing_type=postgresql.UUID(), nullable=True
+            "publish_id", existing_type=Uuid(), nullable=True
         )
 
 
 def downgrade():
     with op.batch_alter_table("tasks") as batch_op:
         batch_op.alter_column(
-            "publish_id", existing_type=postgresql.UUID(), nullable=False
+            "publish_id", existing_type=Uuid(), nullable=False
         )
