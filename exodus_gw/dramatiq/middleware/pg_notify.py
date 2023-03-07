@@ -4,6 +4,7 @@ import threading
 
 import backoff
 from dramatiq import Middleware
+from sqlalchemy import text
 
 LOG = logging.getLogger("exodus-gw")
 
@@ -40,7 +41,7 @@ class PostgresNotifyMiddleware(Middleware):
             return self.do_notify_with_db(connection)
 
     def do_notify_with_db(self, db):
-        db.execute("NOTIFY dramatiq")
+        db.execute(text("NOTIFY dramatiq"))
 
     def before_worker_shutdown(self, broker, worker):
         # As worker shuts down we should shut down the listener thread.
@@ -76,7 +77,7 @@ class Listener:
             isolation_level="AUTOCOMMIT"
         ) as connection:
             # This tells the server we're interested in notifications.
-            connection.execute("LISTEN dramatiq")
+            connection.execute(text("LISTEN dramatiq"))
 
             # For the next step we need to unwrap the sqlalchemy
             # connection facade and get down to the native psycopg2

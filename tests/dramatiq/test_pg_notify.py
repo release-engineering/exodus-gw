@@ -3,6 +3,7 @@ import threading
 from unittest import mock
 
 import dramatiq
+from sqlalchemy import text
 
 from exodus_gw.dramatiq.middleware import PostgresNotifyMiddleware
 
@@ -97,14 +98,14 @@ def test_notifies():
     broker.emit_after("nack", None)
     broker.emit_after("enqueue", None, None)
 
-    assert [str(call) for call in db_conn.execute.mock_calls] == 3 * [
-        "call('NOTIFY dramatiq')"
+    assert [call.args[0].text for call in db_conn.execute.mock_calls] == 3 * [
+        "NOTIFY dramatiq"
     ]
 
     # And if the broker has a session, it should use that
     broker.session = mock.MagicMock()
     broker.emit_after("ack", None)
 
-    assert [str(call) for call in broker.session.execute.mock_calls] == [
-        "call('NOTIFY dramatiq')"
-    ]
+    assert [
+        call.args[0].text for call in broker.session.execute.mock_calls
+    ] == ["NOTIFY dramatiq"]
