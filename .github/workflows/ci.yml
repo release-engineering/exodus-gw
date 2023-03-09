@@ -26,7 +26,7 @@ jobs:
     - name: Build docker image
       run: |
         docker --version
-        docker build . -f openshift/containers/exodus-gw/Dockerfile
+        docker build . -f openshift/containers/exodus-gw/Containerfile
 
     - name: Run bandit test
       run: tox -e bandit
