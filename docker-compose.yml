@@ -12,7 +12,7 @@ services:
     image: app
     build:
       context: .
-      dockerfile: openshift/containers/exodus-gw/Dockerfile
+      dockerfile: openshift/containers/exodus-gw/Containerfile
     container_name: exodus-gw-app
     environment:
       - exodus_gw_db_service_user=exodus-gw
