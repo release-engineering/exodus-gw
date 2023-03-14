@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "enabledManagers": ["dockerfile", "github-actions"],
+  "dockerfile": {
+    "fileMatch": [".*Containerfile$"]
+  },
+  "automerge": true,
+  "stabilityDays": 3
+}
