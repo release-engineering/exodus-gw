@@ -107,7 +107,6 @@ class Janitor:
                     instance.id,
                     instance.updated,
                 )
-                self.db.delete(instance)
 
                 if isinstance(instance, Publish):
                     # Because publish items aren't loaded, they won't automatically be deleted.
@@ -115,6 +114,8 @@ class Janitor:
                     self.db.query(Item).filter(
                         Item.publish_id == instance.id
                     ).delete()
+
+                self.db.delete(instance)
 
 
 @dramatiq.actor(scheduled=True)
