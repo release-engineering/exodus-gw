@@ -49,6 +49,12 @@ from botocore.config import Config
 # Prepare S3 resource pointing at exodus-gw
 s3 = boto3.resource('s3',
                     endpoint_url='https://exodus-gw.example.com/upload',
+                    # In a typical setup using PKI auth, these values are not used during
+                    # auth to exodus-gw, but boto client always insists on having *some* keys.
+                    # Dummy values can be provided to prevent boto looking for credentials
+                    # in config files.
+                    aws_access_key_id="dummy",
+                    aws_secret_access_key="dummy",
                     # If SSL needs to be configured:
                     verify='/path/to/bundle.pem',
                     config=Config(client_cert=('client.crt', 'client.key')))

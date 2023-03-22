@@ -75,6 +75,12 @@ def main():
 
     s3 = boto3.resource(
         "s3",
+        # In a typical setup using PKI auth, these values are not used during
+        # auth to exodus-gw, but boto client always insists on having *some* keys.
+        # Dummy values can be provided to prevent boto looking for credentials
+        # in config files.
+        aws_access_key_id="dummy",
+        aws_secret_access_key="dummy",
         endpoint_url=args.endpoint_url,
         config=Config(client_cert=(args.cert, args.key)),
     )

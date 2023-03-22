@@ -81,7 +81,17 @@ def new_s3_resource(args):
     if args.cert:
         config = config.merge(Config(client_cert=(args.cert, args.key)))
 
-    return session.resource("s3", endpoint_url=s3_endpoint, config=config)
+    return session.resource(
+        "s3",
+        # In a typical setup using PKI auth, these values are not used during
+        # auth to exodus-gw, but boto client always insists on having *some* keys.
+        # Dummy values can be provided to prevent boto looking for credentials
+        # in config files.
+        aws_access_key_id="dummy",
+        aws_secret_access_key="dummy",
+        endpoint_url=s3_endpoint,
+        config=config,
+    )
 
 
 def new_requests_session(args):
