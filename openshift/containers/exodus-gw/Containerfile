@@ -31,4 +31,5 @@ EXPOSE 8080
 ENTRYPOINT ["gunicorn", \
     "-k", "uvicorn.workers.UvicornWorker", \
     "--bind", "0.0.0.0:8080", \
+    "--keep-alive", "15", \
     "exodus_gw.main:app"]
