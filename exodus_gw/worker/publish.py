@@ -1,4 +1,5 @@
 import asyncio
+import contextvars
 import logging
 from datetime import datetime
 from os.path import basename
@@ -49,8 +50,18 @@ class _BatchWriter:
         self.stop()
 
     def start(self):
-        for _ in range(self.settings.write_max_workers):
-            thread = Thread(target=self.write_batches, daemon=True)
+        for i in range(self.settings.write_max_workers):
+            # These threads are considered as belonging to whatever actor spawned them.
+            # This is indicated by propagating the context downwards.
+            # Mainly influences logging.
+            context = contextvars.copy_context()
+
+            thread = Thread(
+                name=f"batchwriter-{i}",
+                daemon=True,
+                target=context.run,
+                args=(self.write_batches,),
+            )
             thread.start()
             self.threads.append(thread)
 

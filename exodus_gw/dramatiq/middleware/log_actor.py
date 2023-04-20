@@ -1,19 +1,17 @@
 import logging
+from contextvars import ContextVar
 from functools import wraps
-from threading import local
 
 from dramatiq import Middleware
 
+CURRENT_PREFIX: ContextVar[str] = ContextVar("CURRENT_PREFIX")
+
 
 class PrefixFilter(logging.Filter):
-    # A filter which will add an arbitrary thread-local prefix onto each message.
-
-    def __init__(self):
-        self.tls = local()
-        super().__init__()
+    # A filter which will add CURRENT_PREFIX onto each message.
 
     def filter(self, record: logging.LogRecord) -> bool:
-        record.msg = getattr(self.tls, "prefix", "") + record.msg
+        record.msg = CURRENT_PREFIX.get("") + record.msg
         return True
 
 
@@ -31,7 +29,7 @@ class LogActorMiddleware(Middleware):
 
     def wrap_fn_with_prefix(self, fn):
         # Given a function, returns a wrapped version of it which will adjust
-        # PrefixFilter's prefix around the function's invocation.
+        # CURRENT_PREFIX around the function's invocation.
 
         @wraps(fn)
         def new_fn(*args, **kwargs):
@@ -47,10 +45,10 @@ class LogActorMiddleware(Middleware):
 
             prefix = f"[{prefix}] "
 
+            token = CURRENT_PREFIX.set(prefix)
             try:
-                self.filter.tls.prefix = prefix
                 return fn(*args, **kwargs)
             finally:
-                self.filter.tls.prefix = ""
+                CURRENT_PREFIX.reset(token)
 
         return new_fn
