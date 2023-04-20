@@ -4,6 +4,7 @@ import base64
 import json
 import logging
 import os
+import urllib.parse
 from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
 
@@ -11,10 +12,10 @@ from botocore.utils import datetime2timestamp
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
-from fastapi import APIRouter, HTTPException, Path
+from fastapi import APIRouter, HTTPException, Path, Query
 from fastapi.responses import Response
 
-from exodus_gw import schemas
+from exodus_gw import auth, schemas
 
 from .. import deps
 from ..settings import Environment, Settings
@@ -42,7 +43,7 @@ def rsa_signer(private_key: str, policy: bytes):
     return loaded_key.sign(policy, padding.PKCS1v15(), hashes.SHA1())  # type: ignore # nosec
 
 
-def encode_signature(data: bytes):
+def cf_b64(data: bytes):
     return (
         base64.b64encode(data)
         .replace(b"+", b"-")
@@ -78,7 +79,7 @@ def sign_url(url: str, timeout: int, env: Environment):
     signature = rsa_signer(env.cdn_private_key, policy)
     params = [
         "Expires=%s" % int(datetime2timestamp(expiration)),
-        "Signature=%s" % encode_signature(signature).decode("utf8"),
+        "Signature=%s" % cf_b64(signature).decode("utf8"),
         "Key-Pair-Id=%s" % env.cdn_key_id,
     ]
     separator = "&" if "?" in url else "?"
@@ -115,7 +116,7 @@ redirect_common = dict(
     # overriding description here avoids repeating the main doc text
     # under both GET and HEAD methods.
     description="Identical to GET redirect, but for HEAD method.",
-    **redirect_common  # type: ignore
+    **redirect_common,  # type: ignore
 )
 @router.get(
     "/{env}/cdn/{url:path}", summary="Redirect (GET)", **redirect_common  # type: ignore
@@ -139,3 +140,108 @@ def cdn_redirect(
     return Response(
         content=None, headers={"location": signed_url}, status_code=302
     )
+
+
+@router.get(
+    "/{env}/cdn-access",
+    summary="Access",
+    status_code=200,
+    dependencies=[auth.needs_role("cdn-consumer")],
+    response_model=schemas.AccessResponse,
+)
+def cdn_access(
+    expire_days: int = Query(
+        # The following default is invalid and is set just to share a single
+        # validation path below for unset, too small and too large values.
+        default=-1,
+        description=(
+            "Desired expiration time, in days, for generated signatures.\n\n"
+            "It is mandatory to provide a value.\n\n"
+            "Cannot exceed a maximum value configured by the "
+            "server (typically 365 days)."
+        ),
+        example=30,
+    ),
+    settings: Settings = deps.settings,
+    env: Environment = deps.env,
+    call_context: auth.CallContext = deps.call_context,
+):
+    """Obtain signed cookies and other information needed for accessing
+    a specific CDN environment.
+
+    This endpoint may be used to look up the CDN origin server belonging
+    to a particular environment and to obtain long-term signed cookies
+    authorizing requests to that environment. The cookies returned by
+    this endpoint should be treated as a secret.
+
+    **Required roles**: `{env}-cdn-consumer`
+    """
+
+    if expire_days < 1 or expire_days > settings.cdn_max_expire_days:
+        raise HTTPException(
+            400,
+            detail=(
+                "An expire_days option from 1 "
+                f"to {settings.cdn_max_expire_days} must be provided"
+            ),
+        )
+
+    parsed_url = urllib.parse.urlparse(env.cdn_url)
+    base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+
+    # Note: it would be nice to generate separate cookies for /origin/*
+    # and /content/* resources, like the browser-oriented /_/cookie
+    # endpoint on exodus-lambda does, to help ensure all CDN access is
+    # locked down to those paths only.
+    #
+    # The problem with it is that CloudFront doesn't seem to accept
+    # multiple cookies provided by the client at once (seems undefined
+    # which one of the cookies is used). That means the client has to
+    # only provide the cookie which is relevant for the path being
+    # accessed.
+    #
+    # This is not an issue for a proper cookie engine as found
+    # in a browser or curl, which will implement that as a standard
+    # feature. But it is significantly onerous for some expected usage
+    # of these cookies: CDN edge servers cannot simply add
+    # a hardcoded Cookie header when contacting cloudfront but would
+    # instead have to branch based on which subtree is accessed.
+    #
+    # It seems as though it'd be unreasonable to require that complexity,
+    # so we're just going to generate a single cookie for "/*" and let
+    # the client provide one cookie for all requests.
+    resource = f"{base_url}/*"
+    expires = datetime.utcnow() + timedelta(days=expire_days)
+
+    policy = build_policy(resource, expires)
+    signature = rsa_signer(env.cdn_private_key, policy)
+    policy_encoded = cf_b64(policy).decode("utf-8")
+
+    components = {
+        "CloudFront-Key-Pair-Id": env.cdn_key_id,
+        "CloudFront-Policy": policy_encoded,
+        "CloudFront-Signature": cf_b64(signature).decode("utf8"),
+    }
+    cookie = "; ".join(f"{key}={value}" for (key, value) in components.items())
+
+    # Log info with sufficient detail so that all cookies in use can be traced
+    # back to the creating user.
+    username = (
+        call_context.client.serviceAccountId
+        or call_context.user.internalUsername
+        or "<unknown user>"
+    )
+    LOG.info(
+        "Generated cookie for: user=%s, key=%s, resource=%s, expires=%s, policy=%s",
+        username,
+        env.cdn_key_id,
+        resource,
+        expires,
+        policy_encoded,
+    )
+
+    return {
+        "url": base_url,
+        "expires": expires.isoformat(timespec="minutes") + "Z",
+        "cookie": cookie,
+    }
