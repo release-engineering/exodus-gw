@@ -234,6 +234,14 @@
     <span class="n">cdn_signature_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">30</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Time (in seconds) signed URLs remain valid.&quot;&quot;&quot;</span>
 
+    <span class="n">cdn_max_expire_days</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">365</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum permitted value for ``expire_days`` option on</span>
+<span class="sd">    ``cdn-access`` endpoint.</span>
+
+<span class="sd">    Clients obtaining signed cookies for CDN using ``cdn-access`` will be</span>
+<span class="sd">    forced to renew their cookies at least this frequently.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">s3_pool_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Number of S3 clients to cache&quot;&quot;&quot;</span>
 

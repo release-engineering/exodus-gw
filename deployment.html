@@ -335,6 +335,15 @@ should run.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="exodus_gw.settings.Settings.cdn_max_expire_days">
+<span class="sig-name descname"><span class="pre">cdn_max_expire_days</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.cdn_max_expire_days" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum permitted value for <code class="docutils literal notranslate"><span class="pre">expire_days</span></code> option on
+<code class="docutils literal notranslate"><span class="pre">cdn-access</span></code> endpoint.</p>
+<p>Clients obtaining signed cookies for CDN using <code class="docutils literal notranslate"><span class="pre">cdn-access</span></code> will be
+forced to renew their cookies at least this frequently.</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.s3_pool_size">
 <span class="sig-name descname"><span class="pre">s3_pool_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.s3_pool_size" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of S3 clients to cache</p>
