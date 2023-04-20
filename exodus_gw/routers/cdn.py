@@ -116,7 +116,7 @@ redirect_common = dict(
     # overriding description here avoids repeating the main doc text
     # under both GET and HEAD methods.
     description="Identical to GET redirect, but for HEAD method.",
-    **redirect_common  # type: ignore
+    **redirect_common,  # type: ignore
 )
 @router.get(
     "/{env}/cdn/{url:path}", summary="Redirect (GET)", **redirect_common  # type: ignore
