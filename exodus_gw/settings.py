@@ -201,6 +201,14 @@ class Settings(BaseSettings):
     cdn_signature_timeout: int = 60 * 30
     """Time (in seconds) signed URLs remain valid."""
 
+    cdn_max_expire_days: int = 365
+    """Maximum permitted value for ``expire_days`` option on
+    ``cdn-access`` endpoint.
+
+    Clients obtaining signed cookies for CDN using ``cdn-access`` will be
+    forced to renew their cookies at least this frequently.
+    """
+
     s3_pool_size: int = 3
     """Number of S3 clients to cache"""
 

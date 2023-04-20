@@ -201,6 +201,28 @@ class Task(BaseModel):
         orm_mode = True
 
 
+class AccessResponse(BaseModel):
+    url: str = Field(
+        description="Base URL of this CDN environment.",
+        example="https://abc123.cloudfront.net",
+    )
+    expires: str = Field(
+        description=(
+            "Expiration time of access information included in this "
+            "response. ISO8601 UTC timestamp."
+        ),
+        example="2024-04-18T05:30Z",
+    )
+    cookie: str = Field(
+        description="A cookie granting access to this CDN environment.",
+        example=(
+            "CloudFront-Key-Pair-Id=K2266GIXCH; "
+            "CloudFront-Policy=eyJTdGF0ZW1lbn...; "
+            "CloudFront-Signature=kGkxpnrY9h..."
+        ),
+    )
+
+
 class MessageResponse(BaseModel):
     detail: str = Field(
         ..., description="A human-readable message with additional info."
