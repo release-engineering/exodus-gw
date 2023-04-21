@@ -18,6 +18,7 @@ from exodus_gw.schemas import PublishStates, TaskStates
 from exodus_gw.settings import Settings, get_environment
 
 from .autoindex import AutoindexEnricher
+from .progress import ProgressLogger
 
 LOG = logging.getLogger("exodus-gw")
 
@@ -31,6 +32,8 @@ class _BatchWriter:
         self,
         dynamodb: DynamoDB,
         settings: Settings,
+        item_count: int,
+        message: str,
         delete: bool = False,
     ):
         self.dynamodb = dynamodb
@@ -40,6 +43,10 @@ class _BatchWriter:
         self.sentinel = object()
         self.threads: List[Thread] = []
         self.errors: List[Exception] = []
+        self.progress_logger = ProgressLogger(
+            message=message,
+            items_total=item_count,
+        )
 
     def __enter__(self):
         self.start()
@@ -47,6 +54,9 @@ class _BatchWriter:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop()
+
+    def adjust_total(self, increment: int):
+        self.progress_logger.adjust_total(increment)
 
     def start(self):
         for _ in range(self.settings.write_max_workers):
@@ -113,6 +123,7 @@ class _BatchWriter:
                 if got is self.sentinel:
                     break
                 self.dynamodb.write_batch(got, delete=self.delete)
+                self.progress_logger.update(len(got))
             except (RuntimeError, ValueError, Empty) as err:
                 if err is not Empty:
                     self.append_error(err)
@@ -176,16 +187,23 @@ class Commit:
         return False
 
     @property
-    def has_items(self) -> bool:
-        item_count = (
+    def item_count(self):
+        # Items included in publish.
+        #
+        # Intentionally not cached because the item count can be
+        # changed during commit (e.g. autoindex)
+        return (
             self.db.query(Item)
             .filter(Item.publish_id == self.publish.id)
             .count()
         )
-        if item_count > 0:
+
+    @property
+    def has_items(self) -> bool:
+        if self.item_count > 0:
             LOG.debug(
                 "Prepared to write %d item(s) for publish %s",
-                item_count,
+                self.item_count,
                 self.publish.id,
             )
             return True
@@ -234,9 +252,16 @@ class Commit:
         # Save any entry point items to publish last.
         final_items: List[Item] = []
 
+        wrote_count = 0
+
         # The queue is empty at this point but we want to write batches
         # as they're put rather than wait until they're all queued.
-        with _BatchWriter(self.dynamodb, self.settings) as bw:
+        with _BatchWriter(
+            self.dynamodb,
+            self.settings,
+            self.item_count,
+            "Writing phase 1 items",
+        ) as bw:
             # Being queuing item batches.
             for partition in partitions:
                 items: List[Item] = []
@@ -248,17 +273,32 @@ class Commit:
                         basename(item.web_uri)
                         in self.settings.entry_point_files
                     ):
+                        LOG.debug("Delayed write for %s", item.web_uri)
                         final_items.append(item)
+                        bw.adjust_total(-1)
                     else:
                         items.append(item)
+
+                wrote_count += len(items)
 
                 # Submit items to be batched and queued, saving item
                 # IDs in case rollback is needed.
                 self.rollback_item_ids.extend(bw.queue_batches(items))
 
+        LOG.info(
+            "Phase 1: committed %s items, phase 2: committing %s items",
+            wrote_count,
+            len(final_items),
+        )
+
         # Start a new context manager to raise any errors from previous
         # and skip additional write attempts.
-        with _BatchWriter(self.dynamodb, self.settings) as bw:
+        with _BatchWriter(
+            self.dynamodb,
+            self.settings,
+            len(final_items),
+            "Writing phase 2 items",
+        ) as bw:
             if final_items:
                 # Submit items to be batched and queued, saving item
                 # IDs in case rollback is needed.
@@ -281,7 +321,11 @@ class Commit:
             item_ids = self.rollback_item_ids[index : index + chunk_size]
             if item_ids:
                 with _BatchWriter(
-                    self.dynamodb, self.settings, delete=True
+                    self.dynamodb,
+                    self.settings,
+                    len(item_ids),
+                    "Rolling back",
+                    delete=True,
                 ) as bw:
                     items = self.db.query(Item).filter(Item.id.in_(item_ids))
                     bw.queue_batches(items)

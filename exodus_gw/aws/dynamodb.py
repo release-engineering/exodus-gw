@@ -182,7 +182,7 @@ class DynamoDB:
 
             raise RuntimeError("One or more writes were unsuccessful")
 
-        LOG.info("Items successfully %s", "deleted" if delete else "written")
+        LOG.debug("Items successfully %s", "deleted" if delete else "written")
 
     def write_config(self, config):
         request = self.create_config_request(config)

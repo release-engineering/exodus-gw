@@ -311,7 +311,12 @@ def test_commit_write_queue_unfinished(
     commit_obj = worker.publish.Commit(
         fake_publish.id, fake_publish.env, NOW_UTC, task.id, settings
     )
-    bw = worker.publish._BatchWriter(commit_obj.dynamodb, settings)
+    bw = worker.publish._BatchWriter(
+        commit_obj.dynamodb,
+        settings,
+        len(fake_publish.items),
+        "test write items",
+    )
     # Simulate worker issue preventing write_batches from executing and
     # getting items from the queue.
     bw.write_batches = mock.MagicMock()
