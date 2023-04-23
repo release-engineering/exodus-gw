@@ -126,7 +126,7 @@ def test_batch_write_item_limit(mock_boto3_client, fake_publish, caplog):
 
 @pytest.mark.parametrize("delete", [False, True], ids=["Put", "Delete"])
 def test_write_batch(delete, mock_boto3_client, fake_publish, caplog):
-    caplog.set_level(logging.INFO, logger="exodus-gw")
+    caplog.set_level(logging.DEBUG, logger="exodus-gw")
 
     mock_boto3_client.batch_write_item.return_value = {"UnprocessedItems": {}}
     mock_boto3_client.query.return_value = {
