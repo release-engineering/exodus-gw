@@ -40,6 +40,9 @@ com.redhat.api.platform:\n\
    test-config-deployer:\n\
     users:\n\
      byInternalUsername: [${USER}]\n\
+   test-cdn-consumer:\n\
+    users:\n\
+     byInternalUsername: [${USER}]\n\
 \nEND\n\
 "
 
