@@ -1,5 +1,6 @@
 """These tests do system testing of our broker & consumer by running a real worker."""
 
+import contextvars
 import logging
 import os
 import threading
@@ -54,6 +55,9 @@ class Actors:
         )
         self.blocking_fn = dramatiq.actor(self.blocking_fn, broker=broker)
         self.log_warning = dramatiq.actor(self.log_warning, broker=broker)
+        self.log_warning_from_thread = dramatiq.actor(
+            self.log_warning_from_thread, broker=broker
+        )
 
     def record_call(self, name):
         self.actor_calls.append(name)
@@ -92,6 +96,22 @@ class Actors:
         logging.getLogger("any-logger").warning(
             "warning from actor: %s", value
         )
+
+    def log_warning_from_thread(self, task_id, value):
+        self.record_call("log_warning_from_thread")
+
+        def fn_in_thread():
+            logging.getLogger("any-logger").warning(
+                "warning from actor: %s", value
+            )
+
+        # Run the logging statement from within a thread which
+        # is set up to propagate the current context. We want to
+        # verify that the log prefix goes along with the context.
+        context = contextvars.copy_context()
+        thread = threading.Thread(target=context.run, args=(fn_in_thread,))
+        thread.start()
+        thread.join()
 
 
 # start/stop of worker is relatively slow, hence why we use module-scoped
@@ -262,6 +282,27 @@ def test_logs_prefixed(actors, caplog):
     # both the actor name and the task id
     assert (
         "[log_warning task-abc123] warning from actor: some value"
+        in caplog.text
+    )
+
+
+def test_logs_prefixed_threaded(actors, caplog):
+    """Log messages generated within an actor-spawned thread are prefixed
+    (as long as contextvars.Context was propagated).
+    """
+
+    actors.log_warning_from_thread.send(
+        task_id="task-abc123", value="some value"
+    )
+
+    # Ensure actor is invoked
+    assert_soon(lambda: len(actors.actor_calls) == 1)
+    assert sorted(actors.actor_calls) == ["log_warning_from_thread"]
+
+    # When the warning was logged, it should have automatically embedded
+    # both the actor name and the task id
+    assert (
+        "[log_warning_from_thread task-abc123] warning from actor: some value"
         in caplog.text
     )
 
