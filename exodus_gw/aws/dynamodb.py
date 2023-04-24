@@ -1,6 +1,7 @@
 import json
 import logging
 from itertools import islice
+from threading import Lock
 from typing import Any, Dict, List, Optional
 
 import backoff
@@ -25,22 +26,19 @@ class DynamoDB:
         self.env_obj = env_obj or get_environment(env)
         self.settings = settings
         self.from_date = from_date
-        self._client = None
+        self.client = DynamoDBClientWrapper(self.env_obj.aws_profile).client
+        self._lock = Lock()
         self._definitions = None
-
-    @property
-    def client(self):
-        """A DynamoDB client."""
-        if self._client is None:
-            self._client = DynamoDBClientWrapper(
-                self.env_obj.aws_profile
-            ).client
-        return self._client
 
     @property
     def definitions(self):
         if self._definitions is None:
-            self._definitions = self.query_definitions()
+            # This class is used from multiple threads, which could be
+            # competing to load definitions. Make sure we load only
+            # a single time.
+            with self._lock:
+                if self._definitions is None:
+                    self._definitions = self.query_definitions()
         return self._definitions
 
     def query_definitions(self):
@@ -49,6 +47,8 @@ class DynamoDB:
 
         # Return an empty dict if a query result is not found
         out: Dict[str, Any] = {}
+
+        LOG.info("Loading exodus-config as at %s.", self.from_date)
 
         query_result = self.client.query(
             TableName=self.env_obj.config_table,
