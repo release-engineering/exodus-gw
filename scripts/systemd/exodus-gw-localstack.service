@@ -10,7 +10,7 @@ After=network-online.target exodus-gw-cert.service
 
 [Service]
 EnvironmentFile=-%S/exodus-gw-dev/.env
-Environment=EXODUS_GW_LOCALSTACK_IMAGE=quay.io/exodus/localstack:0.12.2
+Environment=EXODUS_GW_LOCALSTACK_IMAGE=quay.io/exodus/localstack:1.4.0
 Environment=EXODUS_GW_LOCALSTACK_PORT=3377
 
 Environment=PODMAN_SYSTEMD_UNIT=%n
@@ -26,9 +26,10 @@ ExecStartPre=mkdir -p %S/exodus-gw-dev/localstack
 # cert rather than being generated using a separate CA, and that means
 # update-ca-trust command is not going to import it.
 ExecStartPre=/bin/sh -c "cd %S/exodus-gw-dev; \
-  cp service.pem localstack/server.test.pem.crt; \
-  cp service-key.pem localstack/server.test.pem.key; \
-  cat localstack/server.test.pem.* > localstack/server.test.pem"
+  mkdir -p localstack/cache; \
+  cp service.pem localstack/cache/server.test.pem.crt; \
+  cp service-key.pem localstack/cache/server.test.pem.key; \
+  cat localstack/cache/server.test.pem.* > localstack/cache/server.test.pem"
 
 # Remove existing container if it's already there
 ExecStartPre=-/usr/bin/podman rm --ignore -f --cidfile %t/%n-cid
@@ -39,8 +40,9 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/%n-pid --cidfile %t/%n-cid --c
   --network host\
   --hostname localhost\
   --log-driver journald\
-  -v %S/exodus-gw-dev/localstack:/tmp/localstack:z\
-  -e DATA_DIR=/tmp/localstack/data\
+  -v %S/exodus-gw-dev/localstack:/var/lib/localstack:z\
+  -e PERSISTENCE=1\
+  -e SKIP_SSL_CERT_DOWNLOAD=1\
   -e SERVICES=s3,dynamodb,secretsmanager\
   -e DEBUG=1\
   -e EDGE_PORT=${EXODUS_GW_LOCALSTACK_PORT}\
