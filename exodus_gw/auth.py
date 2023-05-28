@@ -7,6 +7,9 @@ from pydantic import BaseModel
 
 LOG = logging.getLogger("exodus-gw")
 
+# To play nice with module-local dependency injection...
+# pylint: disable=redefined-outer-name
+
 
 class ClientContext(BaseModel):
     """Call context data relating to service accounts / machine users."""
@@ -54,6 +57,26 @@ async def call_context(request: Request) -> CallContext:
         raise HTTPException(400, detail=summary) from None
 
 
+async def caller_name(context: CallContext = Depends(call_context)) -> str:
+    """Returns the name(s) of the calling user and/or serviceaccount.
+
+    The returned value is appropriate only for logging.
+    """
+
+    # No idea whether it's actually possible for a request to be authenticated
+    # as both a user and a serviceaccount, but the design of the call context
+    # structure allows for it, so this code will tolerate it also.
+    users = []
+    if context.user.internalUsername:
+        users.append(f"user {context.user.internalUsername}")
+    if context.client.serviceAccountId:
+        users.append(f"serviceaccount {context.client.serviceAccountId}")
+    if not users:
+        users.append("<anonymous user>")
+
+    return " AND ".join(users)
+
+
 async def caller_roles(
     context: CallContext = Depends(call_context),
 ) -> Set[str]:
@@ -79,13 +102,29 @@ def needs_role(rolename):
     """
 
     async def check_roles(
-        env: Optional[str] = None, roles: Set[str] = Depends(caller_roles)
+        request: Request,
+        env: Optional[str] = None,
+        roles: Set[str] = Depends(caller_roles),
+        caller_name: str = Depends(caller_name),
     ):
         role = env + "-" + rolename if env else rolename
 
         if role not in roles:
+            LOG.warning(
+                "Access denied; path=%s, user=%s, role=%s",
+                request.base_url.path,
+                caller_name,
+                role,
+            )
             raise HTTPException(
                 403, "this operation requires role '%s'" % role
             )
+
+        LOG.info(
+            "Access permitted; path=%s, user=%s, role=%s",
+            request.base_url.path,
+            caller_name,
+            role,
+        )
 
     return Depends(check_roles)
