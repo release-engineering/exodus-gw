@@ -54,18 +54,28 @@ def cf_b64(data: bytes):
 
 def sign_url(url: str, timeout: int, env: Environment):
     if not env.cdn_url:
-        LOG.error("Missing cdn_url in exodus-gw environment settings")
+        LOG.error(
+            "Missing cdn_url in exodus-gw environment settings",
+            extra={"event": "cdn", "success": False},
+        )
         raise HTTPException(
             status_code=500,
             detail="Missing cdn_url, nowhere to redirect request",
         )
     if not env.cdn_key_id:
-        LOG.error("Missing cdn_key_id in exodus-gw environment settings")
+        LOG.error(
+            "Missing cdn_key_id in exodus-gw environment settings",
+            extra={"event": "cdn", "success": False},
+        )
         raise HTTPException(
             status_code=500, detail="Missing key ID for CDN access"
         )
     if not env.cdn_private_key:
-        LOG.error("CDN_PRIVATE_KEY_%s is unset", env.name.upper())
+        LOG.error(
+            "CDN_PRIVATE_KEY_%s is unset",
+            env.name.upper(),
+            extra={"event": "cdn", "success": False},
+        )
         raise HTTPException(
             status_code=500, detail="Missing private key for CDN access"
         )
@@ -73,7 +83,12 @@ def sign_url(url: str, timeout: int, env: Environment):
     dest_url = os.path.join(env.cdn_url, url)
     expiration = datetime.now(timezone.utc) + timedelta(seconds=timeout)
 
-    LOG.info("redirecting %s to %s. . .", url, dest_url)
+    LOG.info(
+        "redirecting %s to %s. . .",
+        url,
+        dest_url,
+        extra={"event": "cdn", "success": True},
+    )
 
     policy = build_policy(dest_url, expiration)
     signature = rsa_signer(env.cdn_private_key, policy)
@@ -238,6 +253,7 @@ def cdn_access(
         resource,
         expires,
         policy_encoded,
+        extra={"event": "cdn", "success": True},
     )
 
     return {

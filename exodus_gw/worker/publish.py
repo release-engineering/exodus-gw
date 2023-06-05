@@ -100,7 +100,11 @@ class _BatchWriter:
             raise self.errors[0]
 
     def append_error(self, err: Exception):
-        LOG.error("Exception while submitting batch write(s)", exc_info=err)
+        LOG.error(
+            "Exception while submitting batch write(s)",
+            exc_info=err,
+            extra={"event": "publish", "success": False},
+        )
         self.errors.append(err)
 
     def queue_batches(self, items: List[Item]) -> List[str]:
@@ -174,11 +178,19 @@ class Commit:
         now = datetime.utcnow()
         if task.state in (TaskStates.complete, TaskStates.failed):
             LOG.warning(
-                "Task %s in unexpected state, '%s'", task.id, task.state
+                "Task %s in unexpected state, '%s'",
+                task.id,
+                task.state,
+                extra={"event": "publish"},
             )
             return False
         if task.deadline and (task.deadline.timestamp() < now.timestamp()):
-            LOG.warning("Task %s expired at %s", task.id, task.deadline)
+            LOG.warning(
+                "Task %s expired at %s",
+                task.id,
+                task.deadline,
+                extra={"event": "publish", "success": False},
+            )
             # Fail expired task and associated publish
             self.task.state = TaskStates.failed
             self.publish.state = PublishStates.failed
@@ -194,6 +206,7 @@ class Commit:
             "Publish %s in unexpected state, '%s'",
             self.publish.id,
             self.publish.state,
+            extra={"event": "publish"},
         )
         return False
 
@@ -216,9 +229,14 @@ class Commit:
                 "Prepared to write %d item(s) for publish %s",
                 self.item_count,
                 self.publish.id,
+                extra={"event": "publish"},
             )
             return True
-        LOG.debug("No items to write for publish %s", self.publish.id)
+        LOG.debug(
+            "No items to write for publish %s",
+            self.publish.id,
+            extra={"event": "publish", "success": True},
+        )
         return False
 
     def _query_task(self, actor_msg_id: str):
@@ -284,7 +302,11 @@ class Commit:
                         basename(item.web_uri)
                         in self.settings.entry_point_files
                     ):
-                        LOG.debug("Delayed write for %s", item.web_uri)
+                        LOG.debug(
+                            "Delayed write for %s",
+                            item.web_uri,
+                            extra={"event": "publish"},
+                        )
                         final_items.append(item)
                         bw.adjust_total(-1)
                     else:
@@ -300,6 +322,7 @@ class Commit:
             "Phase 1: committed %s items, phase 2: committing %s items",
             wrote_count,
             len(final_items),
+            extra={"event": "publish"},
         )
 
         # Start a new context manager to raise any errors from previous
@@ -325,6 +348,7 @@ class Commit:
             "Rolling back %d item(s) due to error",
             len(self.rollback_item_ids),
             exc_info=exception,
+            extra={"event": "publish"},
         )
 
         chunk_size = self.settings.item_yield_size
@@ -371,7 +395,11 @@ def commit(
         commit_obj.publish.state = PublishStates.committed
         commit_obj.db.commit()
     except Exception as exc_info:  # pylint: disable=broad-except
-        LOG.exception("Task %s encountered an error", commit_obj.task.id)
+        LOG.exception(
+            "Task %s encountered an error",
+            commit_obj.task.id,
+            extra={"event": "publish", "success": False},
+        )
         try:
             commit_obj.rollback_publish_items(exc_info)
         finally:

@@ -202,7 +202,12 @@ def update_publish_items(
         {**item.dict(), "publish_id": db_publish.id} for item in items
     ]
 
-    LOG.debug("Adding %s items into '%s'", len(items_data), db_publish.id)
+    LOG.debug(
+        "Adding %s items into '%s'",
+        len(items_data),
+        db_publish.id,
+        extra={"event": "publish"},
+    )
 
     statement = insert(models.Item).values(items_data)
 
@@ -307,7 +312,11 @@ def commit_publish(
         from_date=str(now),
     )
 
-    LOG.info("Enqueued commit for '%s'", msg.kwargs["publish_id"])
+    LOG.info(
+        "Enqueued commit for '%s'",
+        msg.kwargs["publish_id"],
+        extra={"event": "publish", "success": True},
+    )
     db_publish.state = schemas.PublishStates.committing
 
     task = models.Task(

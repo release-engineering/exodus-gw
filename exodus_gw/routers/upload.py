@@ -240,7 +240,7 @@ async def complete_multipart_upload(
     body = await request.body()
     parts = extract_mpu_parts(body)
 
-    LOG.debug("completing mpu for parts %s", parts)
+    LOG.debug("completing mpu for parts %s", parts, extra={"event": "upload"})
 
     validate_object_key(key)
 
@@ -251,7 +251,11 @@ async def complete_multipart_upload(
         MultipartUpload={"Parts": parts},
     )
 
-    LOG.debug("Completed mpu: %s", response)
+    LOG.debug(
+        "Completed mpu: %s",
+        response,
+        extra={"event": "upload", "success": True},
+    )
     return xml_response(
         "CompleteMultipartUploadOutput",
         Location=response["Location"],
@@ -326,7 +330,7 @@ async def abort_multipart_upload(
 
     See also: https://docs.aws.amazon.com/AmazonS3/latest/API/API_AbortMultipartUpload.html
     """
-    LOG.debug("Abort %s", uploadId)
+    LOG.debug("Abort %s", uploadId, extra={"event": "upload"})
 
     validate_object_key(key)
 
@@ -374,10 +378,19 @@ async def head(
 
         if code == 404:
             # This is normal if asked about a nonexistent object
-            LOG.debug("404 when querying %s %s", env.name, key, exc_info=True)
+            LOG.debug(
+                "404 when querying %s %s",
+                env.name,
+                key,
+                exc_info=True,
+                extra={"event": "upload"},
+            )
         else:
             # This is cause for concern
-            LOG.exception("HEAD to S3 failed")
+            LOG.exception(
+                "HEAD to S3 failed",
+                extra={"event": "upload", "success": False},
+            )
 
         return Response(status_code=code)
 

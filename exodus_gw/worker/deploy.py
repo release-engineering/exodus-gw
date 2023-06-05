@@ -22,13 +22,22 @@ def complete_deploy_config_task(task_id: str):
     assert task
 
     if task.state != "IN_PROGRESS":
-        LOG.warning("Task %s in unexpected state, '%s'", task.id, task.state)
+        LOG.warning(
+            "Task %s in unexpected state, '%s'",
+            task.id,
+            task.state,
+            extra={"event": "deploy"},
+        )
         return
 
     task.state = schemas.TaskStates.complete
     db.commit()
 
-    LOG.info("Task %s completed successfully", task.id)
+    LOG.info(
+        "Task %s completed successfully",
+        task.id,
+        extra={"event": "deploy", "success": True},
+    )
 
 
 @dramatiq.actor(time_limit=Settings().actor_time_limit)
@@ -46,18 +55,32 @@ def deploy_config(config: Dict[str, Any], env: str, from_date: str):
     assert task
 
     if task.state not in ("NOT_STARTED", "IN_PROGRESS"):
-        LOG.warning("Task %s in unexpected state, '%s'", task.id, task.state)
+        LOG.warning(
+            "Task %s in unexpected state, '%s'",
+            task.id,
+            task.state,
+            extra={"event": "deploy"},
+        )
         return
 
     task.state = schemas.TaskStates.in_progress
     db.commit()
 
     try:
-        LOG.info("Task %s writing config from %s", task.id, from_date)
+        LOG.info(
+            "Task %s writing config from %s",
+            task.id,
+            from_date,
+            extra={"event": "deploy"},
+        )
         ddb.write_config(config)
 
     except Exception:  # pylint: disable=broad-except
-        LOG.exception("Task %s encountered an error", task.id)
+        LOG.exception(
+            "Task %s encountered an error",
+            task.id,
+            extra={"event": "deploy", "success": False},
+        )
 
         task.state = schemas.TaskStates.failed
         db.commit()
@@ -70,5 +93,8 @@ def deploy_config(config: Dict[str, Any], env: str, from_date: str):
         kwargs={"task_id": str(task.id)}, delay=ttl
     )
     LOG.debug(
-        "Sent task %s for completion via message %s", task.id, msg.message_id
+        "Sent task %s for completion via message %s",
+        task.id,
+        msg.message_id,
+        extra={"event": "deploy"},
     )

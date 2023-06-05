@@ -80,4 +80,5 @@ class ProgressLogger:
             total,
             percent,
             items_per_second,
+            extra={"event": "progress"},
         )

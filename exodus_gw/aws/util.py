@@ -179,7 +179,10 @@ def uri_alias(uri, aliases):
             if uri.startswith(alias["src"] + "/") or uri == alias["src"]:
                 new_uri = uri.replace(alias["src"], alias["dest"], 1)
                 LOG.debug(
-                    "Resolved alias:\n\tsrc: %s\n\tdest: %s", uri, new_uri
+                    "Resolved alias:\n\tsrc: %s\n\tdest: %s",
+                    uri,
+                    new_uri,
+                    extra={"event": "publish", "success": True},
                 )
                 uri = new_uri
                 processed.append(alias)

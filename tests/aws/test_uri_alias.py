@@ -12,8 +12,9 @@ def test_uri_alias(caplog):
     ]
     expected = "/origin/rpms/path/to/file.iso"
 
-    assert uri_alias(uri, aliases) == "/origin/rpms/path/to/file.iso"
+    assert uri_alias(uri, aliases) == expected
     assert (
-        "Resolved alias:\n\tsrc: %s\n\tdest: %s" % (uri, expected)
-        in caplog.text
+        f'"message": "Resolved alias:\\n\\tsrc: {uri}\\n\\tdest: {expected}", '
+        '"event": "publish", '
+        '"success": true' in caplog.text
     )

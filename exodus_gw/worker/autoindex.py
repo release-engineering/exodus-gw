@@ -38,7 +38,7 @@ class PublishContentFetcher:
         self.environment = environment
 
     async def __call__(self, uri: str) -> Optional[str]:
-        LOG.debug("Requested to fetch: %s", uri)
+        LOG.debug("Requested to fetch: %s", uri, extra={"event": "publish"})
 
         matched = (
             self.db.query(Item)
@@ -51,11 +51,13 @@ class PublishContentFetcher:
 
         item: Item = matched[0]
         key: Optional[str] = item.object_key
-        LOG.debug("%s can be fetched from %s", uri, key)
+        LOG.debug(
+            "%s can be fetched from %s", uri, key, extra={"event": "publish"}
+        )
         response = await self.s3_client.get_object(
             Bucket=self.environment.bucket, Key=key
         )
-        LOG.debug("S3 response: %s", response)
+        LOG.debug("S3 response: %s", response, extra={"event": "publish"})
 
         content_type: str = response["ResponseMetadata"]["HTTPHeaders"][
             "content-type"
@@ -129,9 +131,17 @@ class AutoindexEnricher:
         for repo_base_uri in self.repo_base_uris:
             index_uri = f"{repo_base_uri}/{self.settings.autoindex_filename}"
             if self.item_query.filter(Item.web_uri == index_uri).count():
-                LOG.debug("Index at %s already exists", index_uri)
+                LOG.debug(
+                    "Index at %s already exists",
+                    index_uri,
+                    extra={"event": "publish"},
+                )
             else:
-                LOG.debug("Should generate index for %s", repo_base_uri)
+                LOG.debug(
+                    "Should generate index for %s",
+                    repo_base_uri,
+                    extra={"event": "publish"},
+                )
                 out.append(repo_base_uri)
 
         return out
@@ -183,6 +193,7 @@ class AutoindexEnricher:
                 web_uri,
                 content_key,
                 response.get("ETag"),
+                extra={"event": "publish", "success": True},
             )
 
             item = Item(
@@ -199,14 +210,15 @@ class AutoindexEnricher:
             base_uri,
             count,
             duration,
+            extra={"event": "publish", "success": True},
         )
 
     async def run(self):
         if not self.settings.autoindex_filename:
-            LOG.debug("autoindex is disabled")
+            LOG.debug("autoindex is disabled", extra={"event": "publish"})
             return
 
-        LOG.info("Starting autoindex")
+        LOG.info("Starting autoindex", extra={"event": "publish"})
 
         before = monotonic()
         count = 0
@@ -215,6 +227,7 @@ class AutoindexEnricher:
         LOG.info(
             "Found %d path(s) eligible for autoindex",
             len(uris),
+            extra={"event": "publish"},
         )
 
         async with S3ClientWrapper(profile=self.env.aws_profile) as s3_client:
@@ -240,6 +253,7 @@ class AutoindexEnricher:
                         "autoindex for %s skipped due to invalid content",
                         base_uri,
                         exc_info=True,
+                        extra={"event": "publish"},
                     )
 
         duration = monotonic() - before
@@ -247,4 +261,5 @@ class AutoindexEnricher:
             "autoindex complete: generated %s item(s) in %.02f second(s)",
             count,
             duration,
+            extra={"event": "publish", "success": True},
         )

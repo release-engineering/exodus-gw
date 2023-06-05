@@ -25,7 +25,10 @@ class Janitor:
 
         self.db.commit()
 
-        LOG.info("Scheduled cleanup has completed")
+        LOG.info(
+            "Scheduled cleanup has completed",
+            extra={"event": "cleanup", "success": True},
+        )
 
     def fix_timestamps(self):
         # Fill in missing timestamps on any data.
@@ -43,6 +46,7 @@ class Janitor:
                     "%s %s: setting updated",
                     klass.__name__,
                     instance.id,
+                    extra={"event": "cleanup"},
                 )
                 instance.updated = self.now
 
@@ -78,6 +82,7 @@ class Janitor:
                     klass.__name__,
                     instance.id,
                     instance.updated,
+                    extra={"event": "cleanup", "success": False},
                 )
                 instance.state = states.failed
 
@@ -106,6 +111,7 @@ class Janitor:
                     klass.__name__,
                     instance.id,
                     instance.updated,
+                    extra={"event": "cleanup"},
                 )
 
                 if isinstance(instance, Publish):
