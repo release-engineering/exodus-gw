@@ -5,7 +5,7 @@ import mock
 import pytest
 
 from exodus_gw.aws import dynamodb
-from exodus_gw.settings import Environment, Settings, get_environment
+from exodus_gw.settings import Settings
 
 NOW_UTC = str(datetime.now(timezone.utc))
 
@@ -111,7 +111,7 @@ def test_batch_write(
     )
 
 
-def test_batch_write_item_limit(mock_boto3_client, fake_publish, caplog):
+def test_batch_write_item_limit(fake_publish, caplog):
     items = fake_publish.items * 9
     ddb = dynamodb.DynamoDB("test", Settings(), NOW_UTC)
 
@@ -173,15 +173,9 @@ def test_write_batch_delete_fail(mock_batch_write, fake_publish, caplog):
         ddb.write_batch(fake_publish.items, delete=True)
 
     assert (
-        "Unprocessed items:\n\t%s"
-        % str(
-            {
-                "my-table": [
-                    {"PutRequest": {"Key": {"web_uri": {"S": "/some/path"}}}},
-                ]
-            }
-        )
-        in caplog.text
+        "\"message\": \"Unprocessed items:\\n\\t{'my-table': [{'PutRequest': {'Key': {'web_uri': {'S': '/some/path'}}}}]}\", "
+        '"event": "publish", '
+        '"success": false' in caplog.text
     )
     assert "Deletion failed" in str(exc_info.value)
 

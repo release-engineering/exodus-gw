@@ -1,9 +1,10 @@
-import uuid
+import json
 
 import mock
 import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
+from freezegun import freeze_time
 
 from exodus_gw import routers, schemas
 from exodus_gw.main import app
@@ -628,7 +629,8 @@ def test_update_publish_items_no_publish(auth_header):
     [None, "2022-07-25T15:47:47Z"],
     ids=["typical", "with deadline"],
 )
-def test_commit_publish(deadline, auth_header, db):
+@freeze_time("2023-04-26 14:43:13.570034+00:00")
+def test_commit_publish(deadline, auth_header, db, caplog):
     """Ensure commit_publish delegates to worker and creates task."""
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
@@ -657,6 +659,30 @@ def test_commit_publish(deadline, auth_header, db):
     if deadline:
         # 'Z' suffix is dropped when stored as datetime in the database
         assert json_r["deadline"] == "2022-07-25T15:47:47"
+
+    for message, event in [
+        (
+            "Access permitted; path=/, user=user fake-user, role=test-publisher",
+            "auth",
+        ),
+        (
+            "Enqueued commit for '11224567-e89b-12d3-a456-426614174000'",
+            "publish",
+        ),
+    ]:
+        assert (
+            json.dumps(
+                {
+                    "level": "INFO",
+                    "logger": "exodus-gw",
+                    "time": "2023-04-26 14:43:13.570",
+                    "message": message,
+                    "event": event,
+                    "success": True,
+                }
+            )
+            in caplog.text
+        )
 
 
 def test_commit_publish_bad_deadline(auth_header, db):

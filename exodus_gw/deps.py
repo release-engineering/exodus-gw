@@ -71,7 +71,10 @@ async def get_s3_client(
 
     try:
         LOG.debug(
-            "Request %s using S3 client %s", request.scope.get("path"), client
+            "Request %s using S3 client %s",
+            request.scope.get("path"),
+            client,
+            extra={"event": "deps"},
         )
         yield client
     except Exception:

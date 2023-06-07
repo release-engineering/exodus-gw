@@ -48,7 +48,11 @@ class DynamoDB:
         # Return an empty dict if a query result is not found
         out: Dict[str, Any] = {}
 
-        LOG.info("Loading exodus-config as at %s.", self.from_date)
+        LOG.info(
+            "Loading exodus-config as at %s.",
+            self.from_date,
+            extra={"event": "publish"},
+        )
 
         query_result = self.client.query(
             TableName=self.env_obj.config_table,
@@ -140,7 +144,10 @@ class DynamoDB:
         item_count = len(request.get(self.env_obj.table, []))
 
         if item_count > 25:
-            LOG.error("Cannot process more than 25 items per request")
+            LOG.error(
+                "Cannot process more than 25 items per request",
+                extra={"event": "publish", "success": False},
+            )
             raise ValueError(
                 "Request contains too many items (%s)" % item_count
             )
@@ -166,6 +173,7 @@ class DynamoDB:
                 "Exception while %s items on table '%s'",
                 ("deleting" if delete else "writing"),
                 self.env_obj.table,
+                extra={"event": "publish", "success": False},
             )
             raise
         # Raise immediately for put requests.
@@ -175,6 +183,7 @@ class DynamoDB:
                 LOG.error(
                     "Unprocessed items:\n\t%s",
                     (response["UnprocessedItems"]),
+                    extra={"event": "publish", "success": False},
                 )
                 raise RuntimeError(
                     "Deletion failed\nSee error log for details"
@@ -182,7 +191,11 @@ class DynamoDB:
 
             raise RuntimeError("One or more writes were unsuccessful")
 
-        LOG.debug("Items successfully %s", "deleted" if delete else "written")
+        LOG.debug(
+            "Items successfully %s",
+            "deleted" if delete else "written",
+            extra={"event": "publish", "success": True},
+        )
 
     def write_config(self, config):
         request = self.create_config_request(config)

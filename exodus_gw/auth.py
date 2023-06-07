@@ -53,7 +53,7 @@ async def call_context(request: Request) -> CallContext:
         return CallContext.parse_raw(decoded)
     except Exception:
         summary = "Invalid %s header in request" % header
-        LOG.exception(summary)
+        LOG.exception(summary, extra={"event": "auth", "success": False})
         raise HTTPException(400, detail=summary) from None
 
 
@@ -115,6 +115,7 @@ def needs_role(rolename):
                 request.base_url.path,
                 caller_name,
                 role,
+                extra={"event": "auth", "success": False},
             )
             raise HTTPException(
                 403, "this operation requires role '%s'" % role
@@ -125,6 +126,7 @@ def needs_role(rolename):
             request.base_url.path,
             caller_name,
             role,
+            extra={"event": "auth", "success": True},
         )
 
     return Depends(check_roles)

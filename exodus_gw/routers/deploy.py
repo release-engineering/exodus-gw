@@ -154,7 +154,11 @@ def deploy_config(
     try:
         jsonschema.validate(config, CONFIG_SCHEMA)
     except jsonschema.ValidationError as exc_info:
-        LOG.error("Invalid config", exc_info=exc_info)
+        LOG.error(
+            "Invalid config",
+            exc_info=exc_info,
+            extra={"event": "deploy", "success": False},
+        )
         raise HTTPException(
             status_code=400, detail="Invalid configuration structure"
         ) from exc_info
@@ -169,6 +173,7 @@ def deploy_config(
         "Enqueued configuration deployment at %s: %s",
         msg.kwargs["from_date"],
         msg.message_id,
+        extra={"event": "deploy", "success": True},
     )
 
     task = models.Task(
