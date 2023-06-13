@@ -662,7 +662,11 @@ def test_commit_publish(deadline, auth_header, db, caplog):
 
     for message, event in [
         (
-            "Access permitted; path=/, user=user fake-user, role=test-publisher",
+            (
+                "Access permitted; "
+                "path=/test/publish/11224567-e89b-12d3-a456-426614174000/commit, "
+                "user=user fake-user, role=test-publisher"
+            ),
             "auth",
         ),
         (

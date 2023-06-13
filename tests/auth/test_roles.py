@@ -17,7 +17,7 @@ from exodus_gw.auth import (
 
 @dataclass
 class FakeRequest:
-    base_url: URL
+    url: URL
 
 
 async def test_caller_roles_empty():

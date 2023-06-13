@@ -112,7 +112,7 @@ def needs_role(rolename):
         if role not in roles:
             LOG.warning(
                 "Access denied; path=%s, user=%s, role=%s",
-                request.base_url.path,
+                request.url.path,
                 caller_name,
                 role,
                 extra={"event": "auth", "success": False},
@@ -123,7 +123,7 @@ def needs_role(rolename):
 
         LOG.info(
             "Access permitted; path=%s, user=%s, role=%s",
-            request.base_url.path,
+            request.url.path,
             caller_name,
             role,
             extra={"event": "auth", "success": True},
