@@ -199,4 +199,4 @@ class DynamoDB:
 
     def write_config(self, config):
         request = self.create_config_request(config)
-        self.batch_write(self.env_obj, request)
+        self.batch_write(request)

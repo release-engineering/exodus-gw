@@ -18,9 +18,8 @@ def _task():
 
 
 @mock.patch("exodus_gw.worker.deploy.CurrentMessage.get_current_message")
-@mock.patch("exodus_gw.worker.deploy.DynamoDB.batch_write")
 def test_deploy_config(
-    mock_batch_write, mock_get_message, db, fake_config, caplog
+    mock_get_message, db, fake_config, caplog, mock_boto3_client
 ):
     caplog.set_level(logging.DEBUG, logger="exodus-gw")
 
@@ -31,7 +30,7 @@ def test_deploy_config(
     mock_get_message.return_value = mock.MagicMock(message_id=t.id)
 
     # Simulate successful write by batch_write.
-    mock_batch_write.return_value = {"UnprocessedItems": {}}
+    mock_boto3_client.batch_write_item.return_value = {"UnprocessedItems": {}}
 
     db.add(t)
     db.commit()
@@ -60,7 +59,7 @@ def test_deploy_config(
     assert "Task %s writing config from %s" % (t.id, NOW_UTC) in caplog.text
 
     # It should've called batch_write with the expected request.
-    mock_batch_write.assert_called_with(mock.ANY, request)
+    mock_boto3_client.batch_write_item.assert_called_with(RequestItems=request)
 
     # It should've sent task id to complete_deploy_config_task.
     messages = db.query(models.DramatiqMessage).all()
