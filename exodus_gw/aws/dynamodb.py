@@ -5,6 +5,7 @@ from threading import Lock
 from typing import Any, Dict, List, Optional
 
 import backoff
+from botocore.exceptions import EndpointConnectionError
 
 from .. import models
 from ..aws.client import DynamoDBClientWrapper
@@ -132,6 +133,11 @@ class DynamoDB:
         Item limit of 25 is, at this time, imposed by AWS's boto3 library.
         """
 
+        @backoff.on_exception(
+            backoff.expo,
+            EndpointConnectionError,
+            max_tries=self.settings.write_max_tries,
+        )
         @backoff.on_predicate(
             wait_gen=backoff.expo,
             predicate=lambda response: response["UnprocessedItems"],
