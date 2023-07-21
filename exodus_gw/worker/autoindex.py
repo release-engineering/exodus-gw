@@ -2,7 +2,7 @@ import gzip
 import hashlib
 import logging
 from time import monotonic
-from typing import AsyncGenerator, Optional
+from typing import AsyncGenerator, Generator, Optional
 
 from repo_autoindex import ContentError, Fetcher, autoindex
 from sqlalchemy import inspect
@@ -109,20 +109,20 @@ class AutoindexEnricher:
         ).all()
 
     @property
-    def repo_base_uris(self):
+    def repo_base_uris(self) -> Generator[str, None, None]:
         yielded = set()
 
         for item in self.repomd_xml_items:
-            uri: str = item.web_uri[: -len("/repodata/repomd.xml")]
-            if uri not in yielded:
-                yielded.add(uri)
-                yield uri
+            repomd_uri: str = item.web_uri[: -len("/repodata/repomd.xml")]
+            if repomd_uri not in yielded:
+                yielded.add(repomd_uri)
+                yield repomd_uri
 
         for item in self.pulp_manifest_items:
-            uri: str = item.web_uri[: -len("/PULP_MANIFEST")]
-            if uri not in yielded:
-                yielded.add(uri)
-                yield uri
+            manifest_uri: str = item.web_uri[: -len("/PULP_MANIFEST")]
+            if manifest_uri not in yielded:
+                yielded.add(manifest_uri)
+                yield manifest_uri
 
     @property
     def uris_for_autoindex(self) -> list[str]:

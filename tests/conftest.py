@@ -262,11 +262,11 @@ def fake_config():
         ],
         "releasever_alias": [
             {
-                "dest": "/content/dist/rhel8/8.5",
                 "src": "/content/dist/rhel8/8",
+                "dest": "/content/dist/rhel8/8.5",
             },
         ],
         "rhui_alias": [
-            {"dest": "/content/dist/rhel8", "src": "/content/dist/rhel8/rhui"},
+            {"src": "/content/dist/rhel8/rhui", "dest": "/content/dist/rhel8"},
         ],
     }

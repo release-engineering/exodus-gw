@@ -41,7 +41,7 @@ class DynamoDB:
                     self._definitions = self.query_definitions()
         return self._definitions
 
-    def query_definitions(self):
+    def query_definitions(self) -> Dict[str, Any]:
         """Query the definitions in the config_table. If definitions are found, return them. Otherwise,
         return an empty dictionary."""
 
@@ -78,11 +78,14 @@ class DynamoDB:
         table_name = self.env_obj.table
         request: Dict[str, List[Any]] = {table_name: []}
 
+        uri_aliases = []
+        for k, v in self.definitions.items():
+            # Exclude rhui aliases (for now? RHELDST-18849).
+            if k in ("origin_alias", "releasever_alias"):
+                uri_aliases.extend(v)
+
         for item in items:
-            # Resolve aliases relating to origin, e.g. content/origin <=> origin
-            web_uri = uri_alias(
-                item.web_uri, self.definitions.get("origin_alias")
-            )
+            web_uri = uri_alias(item.web_uri, uri_aliases)
 
             if delete:
                 request[table_name].append(
