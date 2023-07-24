@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 import mock
 import pytest
+from botocore.exceptions import EndpointConnectionError
 
 from exodus_gw.aws import dynamodb
 from exodus_gw.settings import Settings
@@ -191,3 +192,19 @@ def test_write_batch_excs(mock_boto3_client, fake_publish, delete, caplog):
         ddb.write_batch(fake_publish.items, delete)
 
     assert expected_msg in caplog.text
+    assert mock_boto3_client.batch_write_item.call_count == 1
+
+
+def test_write_batch_endpoint_connection_error(
+    mock_boto3_client, fake_publish, caplog
+):
+    mock_boto3_client.batch_write_item.side_effect = EndpointConnectionError(
+        endpoint_url="fake-url"
+    )
+
+    with mock.patch("time.sleep"):
+        with pytest.raises(EndpointConnectionError):
+            ddb = dynamodb.DynamoDB("test", Settings(), NOW_UTC)
+            ddb.write_batch(fake_publish.items)
+
+    assert mock_boto3_client.batch_write_item.call_count == 20
