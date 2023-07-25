@@ -1,4 +1,5 @@
 import logging
+import re
 from datetime import datetime, timezone
 
 import mock
@@ -198,13 +199,25 @@ def test_write_batch_excs(mock_boto3_client, fake_publish, delete, caplog):
 def test_write_batch_endpoint_connection_error(
     mock_boto3_client, fake_publish, caplog
 ):
+    num_retries = 20
     mock_boto3_client.batch_write_item.side_effect = EndpointConnectionError(
         endpoint_url="fake-url"
     )
+
+    caplog.set_level(logging.DEBUG, logger="exodus-gw")
 
     with mock.patch("time.sleep"):
         with pytest.raises(EndpointConnectionError):
             ddb = dynamodb.DynamoDB("test", Settings(), NOW_UTC)
             ddb.write_batch(fake_publish.items)
 
-    assert mock_boto3_client.batch_write_item.call_count == 20
+    p = re.compile(
+        r"Backing off _batch_write\(\.\.\.\) for [0-9]+[.]?[0-9]+s \(botocore\.exceptions\.EndpointConnectionError: Could not connect to the endpoint URL: \\\"fake-url\\\"\)"
+    )
+    num_logs = len(p.findall(caplog.text))
+    assert len(p.findall(caplog.text)) == num_retries - 1
+    assert (
+        f'Giving up _batch_write(...) after {num_retries} tries (botocore.exceptions.EndpointConnectionError: Could not connect to the endpoint URL: \\"fake-url\\")'
+        in caplog.text
+    )
+    assert mock_boto3_client.batch_write_item.call_count == num_retries
