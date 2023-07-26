@@ -140,6 +140,8 @@ class DynamoDB:
             backoff.expo,
             EndpointConnectionError,
             max_tries=self.settings.write_max_tries,
+            logger=LOG,
+            backoff_log_level=logging.DEBUG,
         )
         @backoff.on_predicate(
             wait_gen=backoff.expo,
