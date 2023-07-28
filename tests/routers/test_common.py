@@ -1,7 +1,11 @@
 """Tests some invariants which are common to most/all endpoints."""
 
+import json
+
 import pytest
 from fastapi.routing import APIRoute
+from fastapi.testclient import TestClient
+from freezegun import freeze_time
 
 from exodus_gw.main import app
 
@@ -60,3 +64,44 @@ def test_requires_auth(api_route):
     # In any other case, the endpoint must declare some dependency on the
     # role checker.
     assert "Depends(check_roles)" in repr(api_route.dependencies)
+
+
+@freeze_time("2023-07-28 13:24:03.597+00:00")
+@pytest.mark.parametrize(
+    "endpoint,user,roles",
+    [
+        ("/healthcheck", "<anonymous user>", set()),
+        ("/healthcheck", "user fake-user", "{'test-publisher'}"),
+        ("/foo/publish", "user fake-user", "{'test-publisher'}"),
+    ],
+    ids=[
+        "anon-auth-not-required",
+        "authenticated-auth-not-required",
+        "authenticated-auth-required",
+    ],
+)
+def test_login_log(endpoint, user, roles, caplog, auth_header):
+    """Every route produces a log describing a login event."""
+    with TestClient(app) as client:
+        if roles:
+            if endpoint == "/foo/publish":
+                client.post(
+                    endpoint, headers=auth_header(roles=["test-publisher"])
+                )
+            else:
+                client.get(
+                    endpoint, headers=auth_header(roles=["test-publisher"])
+                )
+        else:
+            client.get(endpoint)
+        expected_log = {
+            "level": "INFO",
+            "logger": "exodus-gw",
+            "time": "2023-07-28 13:24:03.596",
+            "message": f"Login: path={endpoint}, user={user}, roles={roles}",
+            "event": "login",
+            "success": True,
+        }
+        assert expected_log in [
+            json.loads(line) for line in caplog.text.splitlines()
+        ]
