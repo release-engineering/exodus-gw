@@ -60,7 +60,7 @@ internal documentation for advice on which environment(s) you should be using.
 
 import backoff
 import dramatiq
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -69,6 +69,7 @@ from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from .auth import log_login
 from .aws.util import xml_response
 from .database import db_engine
 from .logging import loggers_init
@@ -89,6 +90,7 @@ app = FastAPI(
         deploy.openapi_tag,
         cdn.openapi_tag,
     ],
+    dependencies=[Depends(log_login)],
 )
 app.include_router(service.router)
 app.include_router(upload.router)
