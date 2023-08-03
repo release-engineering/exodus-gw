@@ -137,10 +137,11 @@ async def log_login(
     roles: Set[str] = Depends(caller_roles),
     caller_name: str = Depends(caller_name),
 ):
-    LOG.info(
-        "Login: path=%s, user=%s, roles=%s",
-        request.url.path,
-        caller_name,
-        roles,
-        extra={"event": "login", "success": True},
-    )
+    if caller_name != "<anonymous user>":
+        LOG.info(
+            "Login: path=%s, user=%s, roles=%s",
+            request.url.path,
+            caller_name,
+            roles,
+            extra={"event": "login", "success": True},
+        )
