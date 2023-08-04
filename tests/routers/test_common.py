@@ -102,6 +102,11 @@ def test_login_log(endpoint, user, roles, caplog, auth_header):
             "event": "login",
             "success": True,
         }
-        assert expected_log in [
-            json.loads(line) for line in caplog.text.splitlines()
-        ]
+        if user == "<anonymous user>":
+            assert expected_log not in [
+                json.loads(line) for line in caplog.text.splitlines()
+            ]
+        else:
+            assert expected_log in [
+                json.loads(line) for line in caplog.text.splitlines()
+            ]
