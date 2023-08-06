@@ -214,7 +214,6 @@ def test_write_batch_endpoint_connection_error(
     p = re.compile(
         r"Backing off _batch_write\(\.\.\.\) for [0-9]+[.]?[0-9]+s \(botocore\.exceptions\.EndpointConnectionError: Could not connect to the endpoint URL: \\\"fake-url\\\"\)"
     )
-    num_logs = len(p.findall(caplog.text))
     assert len(p.findall(caplog.text)) == num_retries - 1
     assert (
         f'Giving up _batch_write(...) after {num_retries} tries (botocore.exceptions.EndpointConnectionError: Could not connect to the endpoint URL: \\"fake-url\\")'
