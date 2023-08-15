@@ -16,8 +16,11 @@ pycron
 cryptography
 repo-autoindex>=1.0.2
 # Needed to get compatible idna between requirements.txt and test-requirements.txt,
-# consider removing when 'requests' no longer requires <3
-idna<3
+# consider removing when 'requests' no longer requires <4
+idna==3.4
 # Required by alembic but not resolved by pip-compile.
 importlib-metadata
 importlib-resources
+# It's unclear which dependency is asing for which version, but setting to the
+# newer of the two, 23.1, solves the conflict. RHELDST-19563
+packaging==23.1
