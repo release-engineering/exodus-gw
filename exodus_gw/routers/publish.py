@@ -99,15 +99,17 @@ router = APIRouter(tags=[openapi_tag["name"]])
             "description": "Publish created",
             "content": {
                 "application/json": {
-                    "example": {
-                        "id": "497f6eca-6276-4993-bfeb-53cbbbba6f08",
-                        "env": "prod",
-                        "links": {
-                            "self": "/prod/publish/497f6eca-6276-4993-bfeb-53cbbbba6f08",
-                            "commit": "/prod/publish/497f6eca-6276-4993-bfeb-53cbbbba6f08/commit",
-                        },
-                        "items": [],
-                    }
+                    "examples": [
+                        {
+                            "id": "497f6eca-6276-4993-bfeb-53cbbbba6f08",
+                            "env": "prod",
+                            "links": {
+                                "self": "/prod/publish/497f6eca-6276-4993-bfeb-53cbbbba6f08",
+                                "commit": "/prod/publish/497f6eca-6276-4993-bfeb-53cbbbba6f08/commit",
+                            },
+                            "items": [],
+                        }
+                    ]
                 }
             },
         }
@@ -137,25 +139,27 @@ def publish(
 def update_publish_items(
     items: List[schemas.ItemBase] = Body(
         ...,
-        example=[
-            {
-                "web_uri": "/my/awesome/file.iso",
-                "object_key": "aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f",
-                "content_type": "application/octet-stream",
-            },
-            {
-                "web_uri": "/my/slightly-less-awesome/other-file.iso",
-                "object_key": "c06545d4e1a1c8e221d47e7d568c035fb32c6b6124881fd0bc17983bd9088ae0",
-                "content_type": "application/octet-stream",
-            },
-            {
-                "web_uri": "/another/route/to/my/awesome/file.iso",
-                "link_to": "/my/awesome/file.iso",
-            },
-            {
-                "web_uri": "/my/awesome/deletion.iso",
-                "object_key": "absent",
-            },
+        examples=[
+            [
+                {
+                    "web_uri": "/my/awesome/file.iso",
+                    "object_key": "aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f",
+                    "content_type": "application/octet-stream",
+                },
+                {
+                    "web_uri": "/my/slightly-less-awesome/other-file.iso",
+                    "object_key": "c06545d4e1a1c8e221d47e7d568c035fb32c6b6124881fd0bc17983bd9088ae0",
+                    "content_type": "application/octet-stream",
+                },
+                {
+                    "web_uri": "/another/route/to/my/awesome/file.iso",
+                    "link_to": "/my/awesome/file.iso",
+                },
+                {
+                    "web_uri": "/my/awesome/deletion.iso",
+                    "object_key": "absent",
+                },
+            ]
         ],
     ),
     publish_id: str = schemas.PathPublishId,
@@ -199,7 +203,7 @@ def update_publish_items(
 
     # Convert the list into dict and update each dict with a publish_id.
     items_data = [
-        {**item.dict(), "publish_id": db_publish.id} for item in items
+        {**item.model_dump(), "publish_id": db_publish.id} for item in items
     ]
 
     LOG.debug(
@@ -236,7 +240,7 @@ def commit_publish(
     db: Session = deps.db,
     settings: Settings = deps.settings,
     deadline: Union[str, None] = Query(
-        default=None, example="2022-07-25T15:47:47Z"
+        default=None, examples=["2022-07-25T15:47:47Z"]
     ),
 ) -> models.Task:
     """Commit an existing publish object.
@@ -339,15 +343,17 @@ def commit_publish(
             "description": "Publish found",
             "content": {
                 "application/json": {
-                    "example": {
-                        "id": "497f6eca-6276-4993-bfeb-53cbbbba6f08",
-                        "env": "live",
-                        "links": {
-                            "self": "/live/publish/497f6eca-6276-4993-bfeb-53cbbbba6f08",
-                            "commit": "/live/publish/497f6eca-6276-4993-bfeb-53cbbbba6f08/commit",
-                        },
-                        "items": [],
-                    }
+                    "examples": [
+                        {
+                            "id": "497f6eca-6276-4993-bfeb-53cbbbba6f08",
+                            "env": "live",
+                            "links": {
+                                "self": "/live/publish/497f6eca-6276-4993-bfeb-53cbbbba6f08",
+                                "commit": "/live/publish/497f6eca-6276-4993-bfeb-53cbbbba6f08/commit",
+                            },
+                            "items": [],
+                        }
+                    ]
                 }
             },
         },

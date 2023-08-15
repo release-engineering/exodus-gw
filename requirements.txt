@@ -753,6 +753,7 @@ pydantic==2.1.1 \
     # via
     #   -r requirements.in
     #   fastapi
+    #   pydantic-settings
 pydantic-core==2.4.0 \
     --hash=sha256:01947ad728f426fa07fcb26457ebf90ce29320259938414bc0edd1476e75addb \
     --hash=sha256:0455876d575a35defc4da7e0a199596d6c773e20d3d42fa1fc29f6aa640369ed \
@@ -856,6 +857,10 @@ pydantic-core==2.4.0 \
     --hash=sha256:ff246c0111076c8022f9ba325c294f2cb5983403506989253e04dbae565e019b \
     --hash=sha256:ffe18407a4d000c568182ce5388bbbedeb099896904e43fc14eee76cfae6dec5
     # via pydantic
+pydantic-settings==2.0.3 \
+    --hash=sha256:962dc3672495aad6ae96a4390fac7e593591e144625e5112d359f8f67fb75945 \
+    --hash=sha256:ddd907b066622bd67603b75e2ff791875540dc485b7307c4fffc015719da8625
+    # via -r requirements.in
 python-dateutil==2.8.2 \
     --hash=sha256:0123cacc1627ae19ddf3c27a5de5bd67ee4586fbdd6440d9748f8abb483d3e86 \
     --hash=sha256:961d03dc3453ebbc59dbdea9e4e11c5651520a876d0f4db161e8674aae935da9
@@ -863,7 +868,9 @@ python-dateutil==2.8.2 \
 python-dotenv==1.0.0 \
     --hash=sha256:a8df96034aae6d2d50a4ebe8216326c61c3eb64836776504fcca410e5937a3ba \
     --hash=sha256:f5971a9226b701070a4bf2c38c89e5a3f0d64de8debda981d1db98583009122a
-    # via uvicorn
+    # via
+    #   pydantic-settings
+    #   uvicorn
 pyyaml==6.0.1 \
     --hash=sha256:062582fca9fabdd2c8b54a3ef1c978d786e0f6b3a1510e0ac93ef59e0ddae2bc \
     --hash=sha256:1635fd110e8d85d55237ab316b5b011de701ea0f29d07611174a1b42f1444741 \

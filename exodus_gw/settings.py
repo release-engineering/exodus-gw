@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from fastapi import HTTPException
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Environment(object):
@@ -212,8 +212,7 @@ class Settings(BaseSettings):
     s3_pool_size: int = 3
     """Number of S3 clients to cache"""
 
-    class Config:
-        env_prefix = "exodus_gw_"
+    model_config = SettingsConfigDict(env_prefix="exodus_gw_")
 
 
 def load_settings() -> Settings:

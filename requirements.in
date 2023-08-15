@@ -1,6 +1,7 @@
 fastapi
 starlette>=0.21.0
 pydantic
+pydantic-settings
 aioboto3
 defusedxml
 uvicorn[standard]

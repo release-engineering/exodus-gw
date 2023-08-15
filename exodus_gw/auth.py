@@ -50,7 +50,7 @@ async def call_context(request: Request) -> CallContext:
 
     try:
         decoded = base64.b64decode(header_value, validate=True)
-        return CallContext.parse_raw(decoded)
+        return CallContext.model_validate_json(decoded)
     except Exception:
         summary = "Invalid %s header in request" % header
         LOG.exception(summary, extra={"event": "auth", "success": False})

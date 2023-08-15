@@ -269,7 +269,7 @@ def test_update_publish_items_no_uri(db, auth_header):
 
     # It should have failed with 400
     assert r.status_code == 400
-    assert r.json() == {"detail": ["No URI: %s" % expected_item]}
+    assert r.json() == {"detail": ["Value error, No URI: %s" % expected_item]}
 
 
 def test_update_publish_items_existing_uri(db, auth_header):
@@ -369,7 +369,9 @@ def test_update_publish_items_invalid_item(db, auth_header):
     # It should have failed with 400
     assert r.status_code == 400
     assert r.json() == {
-        "detail": ["No object key or link target: %s" % expected_item]
+        "detail": [
+            "Value error, No object key or link target: %s" % expected_item
+        ]
     }
 
 
@@ -403,7 +405,7 @@ def test_update_publish_items_rejects_autoindex(db, auth_header):
     # It should tell the reason why
     assert r.json() == {
         "detail": [
-            "Invalid URI /foo/bar/.__exodus_autoindex: filename is reserved"
+            "Value error, Invalid URI /foo/bar/.__exodus_autoindex: filename is reserved"
         ]
     }
 
@@ -444,7 +446,8 @@ def test_update_publish_items_link_and_key(db, auth_header):
     assert r.status_code == 400
     assert r.json() == {
         "detail": [
-            "Both link target and object key present: %s" % expected_item
+            "Value error, Both link target and object key present: %s"
+            % expected_item
         ]
     }
 
@@ -483,7 +486,9 @@ def test_update_publish_items_link_content_type(db, auth_header):
     # It should have failed with 400
     assert r.status_code == 400
     assert r.json() == {
-        "detail": ["Content type specified for link: %s" % expected_item]
+        "detail": [
+            "Value error, Content type specified for link: %s" % expected_item
+        ]
     }
 
 
@@ -521,7 +526,10 @@ def test_update_publish_items_invalid_object_key(db, auth_header):
     # It should have failed with 400
     assert r.status_code == 400
     assert r.json() == {
-        "detail": ["Invalid object key; must be sha256sum: %s" % expected_item]
+        "detail": [
+            "Value error, Invalid object key; must be sha256sum: %s"
+            % expected_item
+        ]
     }
 
 
@@ -561,7 +569,7 @@ def test_update_publish_absent_items_with_content_type(db, auth_header):
     assert r.status_code == 400
     assert r.json() == {
         "detail": [
-            "Cannot set content type when object_key is 'absent': %s"
+            "Value error, Cannot set content type when object_key is 'absent': %s"
             % expected_item
         ]
     }
@@ -601,7 +609,9 @@ def test_update_publish_items_invalid_content_type(db, auth_header):
 
     # It should have failed with 400
     assert r.status_code == 400
-    assert r.json() == {"detail": ["Invalid content type: %s" % expected_item]}
+    assert r.json() == {
+        "detail": ["Value error, Invalid content type: %s" % expected_item]
+    }
 
 
 def test_update_publish_items_no_publish(auth_header):
