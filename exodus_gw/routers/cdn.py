@@ -177,6 +177,13 @@ def cdn_access(
         ),
         examples=[30],
     ),
+    resource: str = Query(
+        default="/*",
+        description=(
+            "Desired resource to access. If included, must begin with '/'. Defaults to '/*', providing access to the entire CloudFront distribution."
+        ),
+        examples=["/content/dist/rhel8/8.2/x86_64/baseos/iso/PULP_MANIFEST"],
+    ),
     settings: Settings = deps.settings,
     env: Environment = deps.env,
     call_context: auth.CallContext = deps.call_context,
@@ -192,6 +199,11 @@ def cdn_access(
     **Required roles**: `{env}-cdn-consumer`
     """
 
+    if not resource.startswith("/"):
+        raise HTTPException(
+            400, detail="A resource URL option must begin with '/'"
+        )
+
     if expire_days < 1 or expire_days > settings.cdn_max_expire_days:
         raise HTTPException(
             400,
@@ -204,31 +216,10 @@ def cdn_access(
     parsed_url = urllib.parse.urlparse(env.cdn_url)
     base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
 
-    # Note: it would be nice to generate separate cookies for /origin/*
-    # and /content/* resources, like the browser-oriented /_/cookie
-    # endpoint on exodus-lambda does, to help ensure all CDN access is
-    # locked down to those paths only.
-    #
-    # The problem with it is that CloudFront doesn't seem to accept
-    # multiple cookies provided by the client at once (seems undefined
-    # which one of the cookies is used). That means the client has to
-    # only provide the cookie which is relevant for the path being
-    # accessed.
-    #
-    # This is not an issue for a proper cookie engine as found
-    # in a browser or curl, which will implement that as a standard
-    # feature. But it is significantly onerous for some expected usage
-    # of these cookies: CDN edge servers cannot simply add
-    # a hardcoded Cookie header when contacting cloudfront but would
-    # instead have to branch based on which subtree is accessed.
-    #
-    # It seems as though it'd be unreasonable to require that complexity,
-    # so we're just going to generate a single cookie for "/*" and let
-    # the client provide one cookie for all requests.
-    resource = f"{base_url}/*"
+    policy_url = f"{base_url}{resource}"
     expires = datetime.utcnow() + timedelta(days=expire_days)
 
-    policy = build_policy(resource, expires)
+    policy = build_policy(policy_url, expires)
     signature = rsa_signer(env.cdn_private_key, policy)
     policy_encoded = cf_b64(policy).decode("utf-8")
 
@@ -250,7 +241,7 @@ def cdn_access(
         "Generated cookie for: user=%s, key=%s, resource=%s, expires=%s, policy=%s",
         username,
         env.cdn_key_id,
-        resource,
+        policy_url,
         expires,
         policy_encoded,
         extra={"event": "cdn", "success": True},
