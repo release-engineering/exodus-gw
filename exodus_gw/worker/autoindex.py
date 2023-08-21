@@ -90,7 +90,11 @@ class AutoindexEnricher:
 
         ins = inspect(publish)
         assert ins
-        self.db = ins.session
+        # The object returned by inspect() leads mypy to believe that Session
+        # is Optional[Session]. Typed as Session here to contain the complaint.
+        # Otherwise all db calls trigger mypy, as None, which is included in
+        # Optional (Union[x, None]), doesn't have a 'query' attr.
+        self.db: Session = ins.session  # type: ignore
 
         self.item_query = self.db.query(Item).filter(
             Item.publish_id == publish.id

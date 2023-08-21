@@ -13,8 +13,8 @@ def test_cdn_redirect_(monkeypatch, dummy_private_key):
     monkeypatch.setenv("EXODUS_GW_CDN_PRIVATE_KEY_TEST", dummy_private_key)
 
     with TestClient(app) as client:
-        get_r = client.get("/test/cdn/some/url", allow_redirects=False)
-        head_r = client.head("/test/cdn/some/url", allow_redirects=False)
+        get_r = client.get("/test/cdn/some/url", follow_redirects=False)
+        head_r = client.head("/test/cdn/some/url", follow_redirects=False)
 
     expected_url = (
         "http://localhost:8049/_/cookie/some/url?Expires=1644971400&"

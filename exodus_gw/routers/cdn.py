@@ -105,7 +105,7 @@ Url = Path(
     ...,
     title="URL",
     description="URL of a piece of content relative to CDN root",
-    example="content/dist/rhel8/8/x86_64/baseos/os/repodata/repomd.xml",
+    examples=["content/dist/rhel8/8/x86_64/baseos/os/repodata/repomd.xml"],
 )
 
 
@@ -175,7 +175,7 @@ def cdn_access(
             "Cannot exceed a maximum value configured by the "
             "server (typically 365 days)."
         ),
-        example=30,
+        examples=[30],
     ),
     settings: Settings = deps.settings,
     env: Environment = deps.env,

@@ -1,7 +1,6 @@
 import base64
 import json
 import os
-import uuid
 from typing import List
 
 import dramatiq
