@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" data-content_root="./">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -9,9 +9,9 @@
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=4f649999" />
     <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=1fc5d657" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=eafc0fe6" />
-    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=b3ba4146"></script>
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
     <script src="_static/doctools.js?v=888ff710"></script>
-    <script src="_static/sphinx_highlight.js?v=4825356b"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Development Guide" href="development.html" />
@@ -33,9 +33,9 @@
           <div class="body" role="main">
             
   <section id="deployment-guide">
-<span id="deploy-guide"></span><h1>Deployment Guide<a class="headerlink" href="#deployment-guide" title="Permalink to this heading">¶</a></h1>
+<span id="deploy-guide"></span><h1>Deployment Guide<a class="headerlink" href="#deployment-guide" title="Link to this heading">¶</a></h1>
 <section id="target-platform">
-<h2>Target platform<a class="headerlink" href="#target-platform" title="Permalink to this heading">¶</a></h2>
+<h2>Target platform<a class="headerlink" href="#target-platform" title="Link to this heading">¶</a></h2>
 <p>exodus-gw is an ASGI application which may be deployed using any ASGI-compliant
 web server. The development team’s recommended setup is summarized as:</p>
 <ul>
@@ -51,7 +51,7 @@ authentication according to your organization’s needs (see next section).</p><
 </ul>
 </section>
 <section id="authentication-authorization">
-<h2>Authentication &amp; Authorization<a class="headerlink" href="#authentication-authorization" title="Permalink to this heading">¶</a></h2>
+<h2>Authentication &amp; Authorization<a class="headerlink" href="#authentication-authorization" title="Link to this heading">¶</a></h2>
 <p>The exodus-gw service does not implement any authentication mechanism. It is instead
 designed to integrate with a reverse-proxy implementing any desired mechanism.</p>
 <div class="admonition warning">
@@ -85,7 +85,7 @@ internal documentation for information on this component. In other contexts, any
 proxy may be used as long as it produces headers according to the scheme documented above.</p>
 </section>
 <section id="database-migrations">
-<h2>Database Migrations<a class="headerlink" href="#database-migrations" title="Permalink to this heading">¶</a></h2>
+<h2>Database Migrations<a class="headerlink" href="#database-migrations" title="Link to this heading">¶</a></h2>
 <p>The exodus-gw service uses a postgres database.</p>
 <p>On startup, the service will run database migrations to ensure the DB implements the
 required schema.</p>
@@ -97,79 +97,79 @@ service. However, as exodus-gw is designed not to store any permanent state, dro
 and recreating the exodus-gw database is a viable option if needed.</p>
 </section>
 <section id="settings">
-<h2>Settings<a class="headerlink" href="#settings" title="Permalink to this heading">¶</a></h2>
+<h2>Settings<a class="headerlink" href="#settings" title="Link to this heading">¶</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">exodus_gw.settings.</span></span><span class="sig-name descname"><span class="pre">Settings</span></span><a class="reference internal" href="_modules/exodus_gw/settings.html#Settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#exodus_gw.settings.Settings" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">exodus_gw.settings.</span></span><span class="sig-name descname"><span class="pre">Settings</span></span><a class="reference internal" href="_modules/exodus_gw/settings.html#Settings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#exodus_gw.settings.Settings" title="Link to this definition">¶</a></dt>
 <dd><p>exodus-gw may be configured by the following settings.</p>
 <p>Each settings value may be overridden using an environment variable of the
 same name, prefixed with <code class="docutils literal notranslate"><span class="pre">EXODUS_GW_</span></code> (example: <code class="docutils literal notranslate"><span class="pre">EXODUS_GW_CALL_CONTEXT_HEADER</span></code>).</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.call_context_header">
-<span class="sig-name descname"><span class="pre">call_context_header</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.call_context_header" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">call_context_header</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.call_context_header" title="Link to this definition">¶</a></dt>
 <dd><p>Name of the header from which to extract call context (for authentication
 and authorization).</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.upload_meta_fields">
-<span class="sig-name descname"><span class="pre">upload_meta_fields</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.11)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#exodus_gw.settings.Settings.upload_meta_fields" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">upload_meta_fields</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.11)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#exodus_gw.settings.Settings.upload_meta_fields" title="Link to this definition">¶</a></dt>
 <dd><p>Permitted metadata field names for s3 uploads and their regex
 for validation. E.g., “exodus-migration-md5”: “^[0-9a-f]{32}$”</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.log_config">
-<span class="sig-name descname"><span class="pre">log_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.11)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.11)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#exodus_gw.settings.Settings.log_config" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">log_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.11)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.11)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#exodus_gw.settings.Settings.log_config" title="Link to this definition">¶</a></dt>
 <dd><p>Logging configuration in dictConfig schema.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.ini_path">
-<span class="sig-name descname"><span class="pre">ini_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.ini_path" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">ini_path</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.ini_path" title="Link to this definition">¶</a></dt>
 <dd><p>Path to an exodus-gw.ini config file with additional settings.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.db_service_user">
-<span class="sig-name descname"><span class="pre">db_service_user</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_service_user" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">db_service_user</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_service_user" title="Link to this definition">¶</a></dt>
 <dd><p>db service user name</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.db_service_pass">
-<span class="sig-name descname"><span class="pre">db_service_pass</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_service_pass" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">db_service_pass</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_service_pass" title="Link to this definition">¶</a></dt>
 <dd><p>db service user password</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.db_service_host">
-<span class="sig-name descname"><span class="pre">db_service_host</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_service_host" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">db_service_host</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_service_host" title="Link to this definition">¶</a></dt>
 <dd><p>db service host</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.db_service_port">
-<span class="sig-name descname"><span class="pre">db_service_port</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_service_port" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">db_service_port</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_service_port" title="Link to this definition">¶</a></dt>
 <dd><p>db service port</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.db_url">
-<span class="sig-name descname"><span class="pre">db_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_url" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">db_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.11)"><span class="pre">None</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_url" title="Link to this definition">¶</a></dt>
 <dd><p>Connection string for database. If set, overrides the <code class="docutils literal notranslate"><span class="pre">db_service_*</span></code> settings.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.db_reset">
-<span class="sig-name descname"><span class="pre">db_reset</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_reset" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">db_reset</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.11)"><span class="pre">bool</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_reset" title="Link to this definition">¶</a></dt>
 <dd><p>If set to True, drop all DB tables during startup.</p>
 <p>This setting is intended for use during development.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.db_migration_mode">
-<span class="sig-name descname"><span class="pre">db_migration_mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MigrationMode</span></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_migration_mode" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">db_migration_mode</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">MigrationMode</span></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_migration_mode" title="Link to this definition">¶</a></dt>
 <dd><p>Adjusts the DB migration behavior when the exodus-gw service starts.</p>
 <p>Valid values are:</p>
 <blockquote>
@@ -192,64 +192,64 @@ schema changes.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.db_migration_revision">
-<span class="sig-name descname"><span class="pre">db_migration_revision</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_migration_revision" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">db_migration_revision</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_migration_revision" title="Link to this definition">¶</a></dt>
 <dd><p>If <code class="docutils literal notranslate"><span class="pre">db_migration_mode</span></code> is <code class="docutils literal notranslate"><span class="pre">upgrade</span></code>, this setting can be used to override
 the target revision when migrating the DB.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.db_session_max_tries">
-<span class="sig-name descname"><span class="pre">db_session_max_tries</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_session_max_tries" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">db_session_max_tries</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.db_session_max_tries" title="Link to this definition">¶</a></dt>
 <dd><p>The maximum number of attempts to recreate a DB session within a request.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.item_yield_size">
-<span class="sig-name descname"><span class="pre">item_yield_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.item_yield_size" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">item_yield_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.item_yield_size" title="Link to this definition">¶</a></dt>
 <dd><p>Number of publish items to load from the service DB at one time.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.write_batch_size">
-<span class="sig-name descname"><span class="pre">write_batch_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.write_batch_size" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">write_batch_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.write_batch_size" title="Link to this definition">¶</a></dt>
 <dd><p>Maximum number of items to write to the DynamoDB table at one time.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.write_max_tries">
-<span class="sig-name descname"><span class="pre">write_max_tries</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.write_max_tries" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">write_max_tries</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.write_max_tries" title="Link to this definition">¶</a></dt>
 <dd><p>Maximum write attempts to the DynamoDB table.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.write_max_workers">
-<span class="sig-name descname"><span class="pre">write_max_workers</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.write_max_workers" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">write_max_workers</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.write_max_workers" title="Link to this definition">¶</a></dt>
 <dd><p>Maximum number of worker threads used in the DynamoDB batch writes.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.write_queue_size">
-<span class="sig-name descname"><span class="pre">write_queue_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.write_queue_size" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">write_queue_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.write_queue_size" title="Link to this definition">¶</a></dt>
 <dd><p>Maximum number of items the queue can hold at one time.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.write_queue_timeout">
-<span class="sig-name descname"><span class="pre">write_queue_timeout</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.write_queue_timeout" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">write_queue_timeout</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.write_queue_timeout" title="Link to this definition">¶</a></dt>
 <dd><p>Maximum amount of time (in seconds) to wait for queue items.
 Defaults to 10 minutes.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.publish_timeout">
-<span class="sig-name descname"><span class="pre">publish_timeout</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.publish_timeout" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">publish_timeout</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.publish_timeout" title="Link to this definition">¶</a></dt>
 <dd><p>Maximum amount of time (in hours) between updates to a pending publish before
 it will be considered abandoned. Defaults to one day.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.history_timeout">
-<span class="sig-name descname"><span class="pre">history_timeout</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.history_timeout" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">history_timeout</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.history_timeout" title="Link to this definition">¶</a></dt>
 <dd><p>Maximum amount of time (in hours) to retain historical data for publishes and
 tasks. Publishes and tasks in a terminal state will be erased after this time has
 passed. Defaults to two weeks.</p>
@@ -257,33 +257,33 @@ passed. Defaults to two weeks.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.task_deadline">
-<span class="sig-name descname"><span class="pre">task_deadline</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.task_deadline" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">task_deadline</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.task_deadline" title="Link to this definition">¶</a></dt>
 <dd><p>Maximum amount of time (in hours) a task should remain viable. Defaults to two
 hours.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.actor_time_limit">
-<span class="sig-name descname"><span class="pre">actor_time_limit</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.actor_time_limit" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">actor_time_limit</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.actor_time_limit" title="Link to this definition">¶</a></dt>
 <dd><p>Maximum amount of time (in milliseconds) actors may run.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.entry_point_files">
-<span class="sig-name descname"><span class="pre">entry_point_files</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.11)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#exodus_gw.settings.Settings.entry_point_files" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">entry_point_files</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.List" title="(in Python v3.11)"><span class="pre">List</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#exodus_gw.settings.Settings.entry_point_files" title="Link to this definition">¶</a></dt>
 <dd><p>List of file names that should be saved for last when publishing.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.autoindex_filename">
-<span class="sig-name descname"><span class="pre">autoindex_filename</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.autoindex_filename" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">autoindex_filename</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.autoindex_filename" title="Link to this definition">¶</a></dt>
 <dd><p>Filename for indexes automatically generated during publish.</p>
 <p>Can be set to an empty string to disable generation of indexes.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.config_cache_ttl">
-<span class="sig-name descname"><span class="pre">config_cache_ttl</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.config_cache_ttl" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">config_cache_ttl</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.config_cache_ttl" title="Link to this definition">¶</a></dt>
 <dd><p>Time (in minutes) config is expected to live in components that consume it.</p>
 <p>Determines the delay for deployment task completion to allow for
 existing caches to expire and the newly deployed config to take effect.</p>
@@ -291,7 +291,7 @@ existing caches to expire and the newly deployed config to take effect.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.worker_keepalive_timeout">
-<span class="sig-name descname"><span class="pre">worker_keepalive_timeout</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.worker_keepalive_timeout" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">worker_keepalive_timeout</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.worker_keepalive_timeout" title="Link to this definition">¶</a></dt>
 <dd><p>Background worker keepalive timeout, in seconds. If a worker fails to update its
 status within this time period, it is assumed dead.</p>
 <p>This setting affects how quickly the system can recover from issues such as a worker
@@ -300,13 +300,13 @@ process being killed unexpectedly.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.worker_keepalive_interval">
-<span class="sig-name descname"><span class="pre">worker_keepalive_interval</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.worker_keepalive_interval" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">worker_keepalive_interval</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.worker_keepalive_interval" title="Link to this definition">¶</a></dt>
 <dd><p>How often, in seconds, should background workers update their status.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.cron_cleanup">
-<span class="sig-name descname"><span class="pre">cron_cleanup</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.cron_cleanup" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">cron_cleanup</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.11)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.cron_cleanup" title="Link to this definition">¶</a></dt>
 <dd><p>cron-style schedule for cleanup task.</p>
 <p>exodus-gw will run a cleanup task approximately according to this schedule, removing old
 data from the system.</p>
@@ -314,7 +314,7 @@ data from the system.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.scheduler_interval">
-<span class="sig-name descname"><span class="pre">scheduler_interval</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.scheduler_interval" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">scheduler_interval</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.scheduler_interval" title="Link to this definition">¶</a></dt>
 <dd><p>How often, in minutes, exodus-gw should check if a scheduled task is ready to run.</p>
 <p>Note that the cron rules applied to each scheduled task are only as accurate as this
 interval allows, i.e. each rule may be triggered up to <code class="docutils literal notranslate"><span class="pre">scheduler_interval</span></code> minutes late.</p>
@@ -322,20 +322,20 @@ interval allows, i.e. each rule may be triggered up to <code class="docutils lit
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.scheduler_delay">
-<span class="sig-name descname"><span class="pre">scheduler_delay</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.scheduler_delay" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">scheduler_delay</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.scheduler_delay" title="Link to this definition">¶</a></dt>
 <dd><p>Delay, in minutes, after exodus-gw workers start up before any scheduled tasks
 should run.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.cdn_signature_timeout">
-<span class="sig-name descname"><span class="pre">cdn_signature_timeout</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.cdn_signature_timeout" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">cdn_signature_timeout</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.cdn_signature_timeout" title="Link to this definition">¶</a></dt>
 <dd><p>Time (in seconds) signed URLs remain valid.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.cdn_max_expire_days">
-<span class="sig-name descname"><span class="pre">cdn_max_expire_days</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.cdn_max_expire_days" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">cdn_max_expire_days</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.cdn_max_expire_days" title="Link to this definition">¶</a></dt>
 <dd><p>Maximum permitted value for <code class="docutils literal notranslate"><span class="pre">expire_days</span></code> option on
 <code class="docutils literal notranslate"><span class="pre">cdn-access</span></code> endpoint.</p>
 <p>Clients obtaining signed cookies for CDN using <code class="docutils literal notranslate"><span class="pre">cdn-access</span></code> will be
@@ -344,7 +344,7 @@ forced to renew their cookies at least this frequently.</p>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.s3_pool_size">
-<span class="sig-name descname"><span class="pre">s3_pool_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.s3_pool_size" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">s3_pool_size</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.s3_pool_size" title="Link to this definition">¶</a></dt>
 <dd><p>Number of S3 clients to cache</p>
 </dd></dl>
 
@@ -449,7 +449,7 @@ users may specify a logger name and the level at which to set said logger.</p>
       &copy;2020, Red Hat.
       
       |
-      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.1.2</a>
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 7.2.2</a>
       &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.13</a>
       
       |
