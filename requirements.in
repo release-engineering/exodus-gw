@@ -22,6 +22,5 @@ idna==3.4
 # Required by alembic but not resolved by pip-compile.
 importlib-metadata
 importlib-resources
-# It's unclear which dependency is asing for which version, but setting to the
-# newer of the two, 23.1, solves the conflict. RHELDST-19563
-packaging==23.1
+# safety requires packaging<22.0 and >=21.0.
+packaging==21.3
