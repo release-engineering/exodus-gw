@@ -1,6 +1,5 @@
 from datetime import datetime
 
-import pytest
 from fastapi.testclient import TestClient
 
 from exodus_gw import models

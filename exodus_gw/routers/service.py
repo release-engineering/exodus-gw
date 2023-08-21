@@ -63,18 +63,20 @@ def healthcheck_worker(
             "description": "Caller's auth context retrieved",
             "content": {
                 "application/json": {
-                    "example": {
-                        "client": {
-                            "roles": ["someRole", "anotherRole"],
-                            "authenticated": True,
-                            "serviceAccountId": "clientappname",
-                        },
-                        "user": {
-                            "roles": ["viewer"],
-                            "authenticated": True,
-                            "internalUsername": "someuser",
-                        },
-                    }
+                    "examples": [
+                        {
+                            "client": {
+                                "roles": ["someRole", "anotherRole"],
+                                "authenticated": True,
+                                "serviceAccountId": "clientappname",
+                            },
+                            "user": {
+                                "roles": ["viewer"],
+                                "authenticated": True,
+                                "internalUsername": "someuser",
+                            },
+                        }
+                    ]
                 }
             },
         }

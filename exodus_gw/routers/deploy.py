@@ -115,30 +115,40 @@ CONFIG_SCHEMA = {
 def deploy_config(
     config: Dict[str, Any] = Body(
         ...,
-        example={
-            "listing": {
-                "/content/dist/rhel8": {
-                    "var": "releasever",
-                    "values": ["8", "8.0", "8.1", "8.2", "8.3", "8.4", "8.5"],
+        examples=[
+            {
+                "listing": {
+                    "/content/dist/rhel8": {
+                        "var": "releasever",
+                        "values": [
+                            "8",
+                            "8.0",
+                            "8.1",
+                            "8.2",
+                            "8.3",
+                            "8.4",
+                            "8.5",
+                        ],
+                    },
                 },
-            },
-            "origin_alias": [
-                {"src": "/content/origin", "dest": "/origin"},
-                {"src": "/origin/rpm", "dest": "/origin/rpms"},
-            ],
-            "releasever_alias": [
-                {
-                    "dest": "/content/dist/rhel8/8.5",
-                    "src": "/content/dist/rhel8/8",
-                },
-            ],
-            "rhui_alias": [
-                {
-                    "dest": "/content/dist/rhel8",
-                    "src": "/content/dist/rhel8/rhui",
-                },
-            ],
-        },
+                "origin_alias": [
+                    {"src": "/content/origin", "dest": "/origin"},
+                    {"src": "/origin/rpm", "dest": "/origin/rpms"},
+                ],
+                "releasever_alias": [
+                    {
+                        "dest": "/content/dist/rhel8/8.5",
+                        "src": "/content/dist/rhel8/8",
+                    },
+                ],
+                "rhui_alias": [
+                    {
+                        "dest": "/content/dist/rhel8",
+                        "src": "/content/dist/rhel8/rhui",
+                    },
+                ],
+            }
+        ],
     ),
     env: settings.Environment = deps.env,
     db: Session = deps.db,

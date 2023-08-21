@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 from uuid import UUID
 
 from fastapi import Path
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, Field, model_validator
 
 from .settings import Settings
 
@@ -59,45 +59,45 @@ class ItemBase(BaseModel):
     )
     link_to: str = Field("", description="Path of file targeted by symlink.")
 
-    @root_validator()
-    @classmethod
-    def validate_item(cls, values):
-        web_uri = values.get("web_uri")
-        object_key = values.get("object_key")
-        content_type = values.get("content_type")
-        link_to = values.get("link_to")
+    @model_validator(mode="after")
+    def validate_item(self) -> "ItemBase":
+        web_uri = self.web_uri
+        object_key = self.object_key
+        content_type = self.content_type
+        link_to = self.link_to
+        data = self.__dict__
 
         if not web_uri:
-            raise ValueError("No URI: %s" % values)
-        values["web_uri"] = normalize_path(web_uri)
+            raise ValueError("No URI: %s" % data)
+        self.web_uri = normalize_path(web_uri)
 
         if link_to and object_key:
             raise ValueError(
-                "Both link target and object key present: %s" % values
+                "Both link target and object key present: %s" % data
             )
         if link_to and content_type:
-            raise ValueError("Content type specified for link: %s" % values)
+            raise ValueError("Content type specified for link: %s" % data)
 
         if link_to:
-            values["link_to"] = normalize_path(link_to)
+            self.link_to = normalize_path(link_to)
         elif object_key:
             if object_key == "absent":
                 if content_type:
                     raise ValueError(
                         "Cannot set content type when object_key is 'absent': %s"
-                        % values
+                        % data
                     )
             elif not re.match(SHA256SUM_PATTERN, object_key):
                 raise ValueError(
-                    "Invalid object key; must be sha256sum: %s" % values
+                    "Invalid object key; must be sha256sum: %s" % data
                 )
         else:
-            raise ValueError("No object key or link target: %s" % values)
+            raise ValueError("No object key or link target: %s" % data)
 
         if content_type:
             # Enforce MIME type structure
             if not re.match(MIMETYPE_PATTERN, content_type):
-                raise ValueError("Invalid content type: %s" % values)
+                raise ValueError("Invalid content type: %s" % data)
 
         if (
             web_uri
@@ -106,16 +106,13 @@ class ItemBase(BaseModel):
         ):
             raise ValueError(f"Invalid URI {web_uri}: filename is reserved")
 
-        return values
+        return self
 
 
 class Item(ItemBase):
     publish_id: UUID = Field(
         ..., description="Unique ID of publish object containing this item."
     )
-
-    class Config:
-        orm_mode = True
 
 
 class PublishStates(str, Enum):
@@ -140,7 +137,7 @@ class Publish(PublishBase):
     state: PublishStates = Field(
         ..., description="Current state of this publish."
     )
-    updated: datetime = Field(
+    updated: Optional[datetime] = Field(
         None,
         description="DateTime of last update to this publish. None if never updated.",
     )
@@ -152,15 +149,11 @@ class Publish(PublishBase):
         description="""All items (pieces of content) included in this publish.""",
     )
 
-    @root_validator
-    @classmethod
-    def make_links(cls, values):
-        _self = join("/", values["env"], "publish", str(values["id"]))
-        values["links"] = {"self": _self, "commit": join(_self, "commit")}
-        return values
-
-    class Config:
-        orm_mode = True
+    @model_validator(mode="after")
+    def make_links(self) -> "Publish":
+        _self = join("/", self.env, "publish", str(self.id))
+        self.links = {"self": _self, "commit": join(_self, "commit")}
+        return self
 
 
 class TaskStates(str, Enum):
@@ -177,49 +170,47 @@ class TaskStates(str, Enum):
 class Task(BaseModel):
     id: UUID = Field(..., description="Unique ID of task object.")
     publish_id: Optional[UUID] = Field(
-        ..., description="Unique ID of publish object handled by this task."
+        None, description="Unique ID of publish object handled by this task."
     )
     state: TaskStates = Field(..., description="Current state of this task.")
-    updated: datetime = Field(
+    updated: Optional[datetime] = Field(
         None,
         description="DateTime of last update to this task. None if never updated.",
     )
-    deadline: datetime = Field(
+    deadline: Optional[datetime] = Field(
         None, description="DateTime at which this task should be abandoned."
     )
     links: Dict[str, str] = Field(
         {}, description="""URL links related to this task."""
     )
 
-    @root_validator
-    @classmethod
-    def make_links(cls, values):
-        values["links"] = {"self": join("/task", str(values["id"]))}
-        return values
-
-    class Config:
-        orm_mode = True
+    @model_validator(mode="after")
+    def make_links(self) -> "Task":
+        self.links = {"self": join("/task", str(self.id))}
+        return self
 
 
 class AccessResponse(BaseModel):
     url: str = Field(
         description="Base URL of this CDN environment.",
-        example="https://abc123.cloudfront.net",
+        examples=["https://abc123.cloudfront.net"],
     )
     expires: str = Field(
         description=(
             "Expiration time of access information included in this "
             "response. ISO8601 UTC timestamp."
         ),
-        example="2024-04-18T05:30Z",
+        examples=["2024-04-18T05:30Z"],
     )
     cookie: str = Field(
         description="A cookie granting access to this CDN environment.",
-        example=(
-            "CloudFront-Key-Pair-Id=K2266GIXCH; "
-            "CloudFront-Policy=eyJTdGF0ZW1lbn...; "
-            "CloudFront-Signature=kGkxpnrY9h..."
-        ),
+        examples=[
+            (
+                "CloudFront-Key-Pair-Id=K2266GIXCH; "
+                "CloudFront-Policy=eyJTdGF0ZW1lbn...; "
+                "CloudFront-Signature=kGkxpnrY9h..."
+            )
+        ],
     )
 
 
