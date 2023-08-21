@@ -1001,6 +1001,7 @@ pydantic==2.2.1 \
     # via
     #   -r requirements.in
     #   fastapi
+    #   pydantic-settings
 pydantic-core==2.6.1 \
     --hash=sha256:043212f21c75cb6ee3a92fffbc747410e32b08e1a419ce16a9da98a16d660a7c \
     --hash=sha256:09e4ebd11a0b333b1fca75c1004c76dc9719f3aaf83ae38c42358754d8a76148 \
@@ -1420,9 +1421,9 @@ sphinxcontrib-qthelp==1.0.6 \
     --hash=sha256:62b9d1a186ab7f5ee3356d906f648cacb7a6bdb94d201ee7adf26db55092982d \
     --hash=sha256:bf76886ee7470b934e363da7a954ea2825650013d367728588732c7350f49ea4
     # via sphinx
-sphinxcontrib-serializinghtml==1.1.8 \
-    --hash=sha256:27849e7227277333d3d32f17c138ee148a51fa01f888a41cd6d4e73bcabe2d06 \
-    --hash=sha256:aaf3026335146e688fd209b72320314b1b278320cf232e3cda198f873838511a
+sphinxcontrib-serializinghtml==1.1.9 \
+    --hash=sha256:0c64ff898339e1fac29abd2bf5f11078f3ec413cfe9c046d3120d7ca65530b54 \
+    --hash=sha256:9b36e503703ff04f20e9675771df105e58aa029cfcbc23b8ed716019b7416ae1
     # via sphinx
 sqlalchemy==2.0.20 \
     --hash=sha256:1506e988ebeaaf316f183da601f24eedd7452e163010ea63dbe52dc91c7fc70e \
