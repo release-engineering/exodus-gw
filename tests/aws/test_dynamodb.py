@@ -1,6 +1,7 @@
+import json
 import logging
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import mock
 import pytest
@@ -124,6 +125,48 @@ def test_batch_write_item_limit(fake_publish, caplog):
 
     assert "Cannot process more than 25 items per request" in caplog.text
     assert str(exc_info.value) == "Request contains too many items (27)"
+
+
+def test_batch_write_deadline(mock_boto3_client, fake_publish, caplog):
+    """Ensure deadline is respected by backoff/retry.
+
+    With a deadline set, retries' max_time is assigned however many seconds
+    remain before the deadline is reached.
+    """
+
+    caplog.set_level(logging.DEBUG, logger="exodus-gw")
+
+    # Set deadline to 2 seconds from the start of the test.
+    deadline = datetime.utcnow() + timedelta(seconds=2)
+
+    ddb = dynamodb.DynamoDB(
+        env="test",
+        settings=Settings(),
+        from_date=NOW_UTC,
+        deadline=deadline,
+    )
+    request = ddb.create_request(items=fake_publish.items)
+
+    # Ensure eternally unsuccessful write of all items to the table.
+    # This would ordinarily exhaust all tries defined in settings (default 20).
+    mock_boto3_client.batch_write_item.return_value = {
+        "UnprocessedItems": {fake_publish.items[-1]}
+    }
+
+    ddb.batch_write(request=request)
+
+    # It should report remaining time.
+    # This indicates that the max_time was dynamically generated.
+    # We won't specify number of seconds, as it can vary.
+    assert "Remaining time for batch_write:" in caplog.text
+    # It should report backing off at least once.
+    assert "Backing off _batch_write(...)" in caplog.text
+    # It should report giving up...
+    last_rec = json.loads(caplog.text.splitlines()[-1])
+    assert "Giving up _batch_write(...)" in last_rec["message"]
+    # ...and it should've given up immediately past the deadline.
+    giveup_time = datetime.strptime(last_rec["time"], "%Y-%m-%d %H:%M:%S.%f")
+    assert (giveup_time.timestamp() - deadline.timestamp()) < 0.1
 
 
 @pytest.mark.parametrize("delete", [False, True], ids=["Put", "Delete"])
