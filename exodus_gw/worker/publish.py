@@ -168,7 +168,11 @@ class Commit:
     def dynamodb(self):
         if self._dynamodb is None:
             self._dynamodb = DynamoDB(
-                self.env, self.settings, self.from_date, self.env_obj
+                self.env,
+                self.settings,
+                self.from_date,
+                self.env_obj,
+                self.task.deadline,
             )
         return self._dynamodb
 

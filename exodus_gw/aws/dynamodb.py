@@ -1,5 +1,6 @@
 import json
 import logging
+from datetime import datetime
 from itertools import islice
 from threading import Lock
 from typing import Any, Dict, List, Optional
@@ -22,11 +23,13 @@ class DynamoDB:
         settings: Settings,
         from_date: str,
         env_obj: Optional[Environment] = None,
+        deadline: Optional[datetime] = None,
     ):
         self.env = env
-        self.env_obj = env_obj or get_environment(env)
         self.settings = settings
         self.from_date = from_date
+        self.env_obj = env_obj or get_environment(env)
+        self.deadline = deadline
         self.client = DynamoDBClientWrapper(self.env_obj.aws_profile).client
         self._lock = Lock()
         self._definitions = None
@@ -136,10 +139,28 @@ class DynamoDB:
         Item limit of 25 is, at this time, imposed by AWS's boto3 library.
         """
 
+        def _max_time():
+            # Calculates the retry time limit at runtime, in seconds, based on
+            # the deadline, should one be set.
+            #
+            # E.g., if it's currently 12:20 and there's a deadline set for
+            # 12:46, backoff will only permit retrying for 1560 seconds before
+            # failing, regardless of the next calculated wait time.
+            #
+            # The backoff wait generator won't sleep longer than the remaining
+            # time. github.com/litl/backoff/blob/master/backoff/_common.py#L34
+
+            if self.deadline is not None:
+                now = datetime.utcnow()
+                diff = self.deadline.timestamp() - now.timestamp()
+                LOG.debug("Remaining time for batch_write: %ds", diff)
+                return diff
+
         @backoff.on_exception(
-            backoff.expo,
-            EndpointConnectionError,
+            wait_gen=backoff.expo,
+            exception=EndpointConnectionError,
             max_tries=self.settings.write_max_tries,
+            max_time=_max_time,
             logger=LOG,
             backoff_log_level=logging.DEBUG,
         )
@@ -147,6 +168,9 @@ class DynamoDB:
             wait_gen=backoff.expo,
             predicate=lambda response: response["UnprocessedItems"],
             max_tries=self.settings.write_max_tries,
+            max_time=_max_time,
+            logger=LOG,
+            backoff_log_level=logging.DEBUG,
         )
         def _batch_write(req):
             response = self.client.batch_write_item(RequestItems=req)
