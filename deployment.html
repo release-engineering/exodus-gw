@@ -265,7 +265,15 @@ hours.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.actor_time_limit">
 <span class="sig-name descname"><span class="pre">actor_time_limit</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.actor_time_limit" title="Link to this definition">¶</a></dt>
-<dd><p>Maximum amount of time (in milliseconds) actors may run.</p>
+<dd><p>Maximum amount of time (in milliseconds) actors may run. Defaults to 30
+minutes.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="exodus_gw.settings.Settings.actor_max_backoff">
+<span class="sig-name descname"><span class="pre">actor_max_backoff</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.11)"><span class="pre">int</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.actor_max_backoff" title="Link to this definition">¶</a></dt>
+<dd><p>Maximum amount of time (in milliseconds) actors may use while backing
+off retries. Defaults to five (5) minutes.</p>
 </dd></dl>
 
 <dl class="py attribute">

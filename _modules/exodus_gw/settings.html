@@ -182,7 +182,13 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">actor_time_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span> <span class="o">*</span> <span class="mi">60000</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum amount of time (in milliseconds) actors may run.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum amount of time (in milliseconds) actors may run. Defaults to 30</span>
+<span class="sd">    minutes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">actor_max_backoff</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">*</span> <span class="mi">60000</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum amount of time (in milliseconds) actors may use while backing</span>
+<span class="sd">    off retries. Defaults to five (5) minutes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">entry_point_files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s2">&quot;repomd.xml&quot;</span><span class="p">,</span>
