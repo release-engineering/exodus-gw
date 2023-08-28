@@ -374,7 +374,10 @@ class Commit:
         asyncio.run(enricher.run())
 
 
-@dramatiq.actor(time_limit=Settings().actor_time_limit)
+@dramatiq.actor(
+    time_limit=Settings().actor_time_limit,
+    max_backoff=Settings().actor_max_backoff,
+)
 def commit(
     publish_id: str, env: str, from_date: str, settings: Settings = Settings()
 ) -> None:

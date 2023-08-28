@@ -13,7 +13,10 @@ from exodus_gw.settings import Settings
 LOG = logging.getLogger("exodus-gw")
 
 
-@dramatiq.actor(time_limit=Settings().actor_time_limit)
+@dramatiq.actor(
+    time_limit=Settings().actor_time_limit,
+    max_backoff=Settings().actor_max_backoff,
+)
 def complete_deploy_config_task(task_id: str):
     settings = Settings()
     db = Session(bind=db_engine(settings))
@@ -40,7 +43,10 @@ def complete_deploy_config_task(task_id: str):
     )
 
 
-@dramatiq.actor(time_limit=Settings().actor_time_limit)
+@dramatiq.actor(
+    time_limit=Settings().actor_time_limit,
+    max_backoff=Settings().actor_max_backoff,
+)
 def deploy_config(config: Dict[str, Any], env: str, from_date: str):
     settings = Settings()
     db = Session(bind=db_engine(settings))
