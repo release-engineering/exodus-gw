@@ -148,7 +148,13 @@ class Settings(BaseSettings):
     """
 
     actor_time_limit: int = 30 * 60000
-    """Maximum amount of time (in milliseconds) actors may run."""
+    """Maximum amount of time (in milliseconds) actors may run. Defaults to 30
+    minutes.
+    """
+    actor_max_backoff: int = 5 * 60000
+    """Maximum amount of time (in milliseconds) actors may use while backing
+    off retries. Defaults to five (5) minutes.
+    """
 
     entry_point_files: List[str] = [
         "repomd.xml",
