@@ -9,12 +9,41 @@ def loggers_init(settings):
 
     root_logger = logging.getLogger()
     if not root_logger.hasHandlers():
-        handler = logging.StreamHandler()
-        root_logger.addHandler(handler)
+        root_logger.addHandler(logging.StreamHandler())
+
+    if not any([isinstance(h, GWHandler) for h in root_logger.handlers]):
+        root_logger.addHandler(GWHandler(settings))
 
     for handler in root_logger.handlers:
         datefmt = settings.log_config.get("datefmt")
         handler.setFormatter(JsonFormatter(datefmt))
+
+
+class GWHandler(logging.Handler):  # type: ignore
+    """GWHandler's emit implementation just logs additional information to a
+    file to indicate healthiness of worker(s).
+    """
+
+    def __init__(self, settings):
+        super().__init__()
+        self.settings = settings
+
+    def emit(self, _):
+        """Writes the current datetime to a file specified in settings.
+        Discards the received record.
+        """
+        self.acquire()
+        try:
+            filepath = self.settings.worker_health_filepath
+            with open(filepath, "w") as healthy:
+                # The open mode is intentional. We don't need to append,
+                # accumulating text and increasing the file's footprint, we
+                # only need to touch the file so the changed date is updated.
+                # What is written shouldn't matter either, but we'll record the
+                # time of the write, as it may be interesting while debugging.
+                healthy.write(str(datetime.datetime.utcnow()))
+        finally:
+            self.release()
 
 
 class JsonFormatter(logging.Formatter):
