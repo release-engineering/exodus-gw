@@ -1,7 +1,9 @@
 import logging
+import os
 
 from freezegun import freeze_time
 
+from exodus_gw.logging import GWHandler
 from exodus_gw.main import loggers_init
 from exodus_gw.settings import load_settings
 
@@ -23,7 +25,7 @@ def test_log_levels():
     assert logging.getLogger("s3").level == logging.DEBUG
 
 
-def test_log_handler():
+def test_log_handler(tmp_path):
     """Ensure handler is added to root logger when none are present"""
 
     root_logger = logging.getLogger()
@@ -33,11 +35,23 @@ def test_log_handler():
     root_handlers.clear()
     assert not root_handlers
 
-    loggers_init(load_settings())
+    settings = load_settings()
 
-    # Should now have one (1) StreamHandler.
-    assert len(root_handlers) == 1
+    # Setting the healthcheck filepath may not be strictly necessary but is
+    # done for additional control since we make assertions about it.
+    settings.worker_health_filepath = f"{tmp_path}/test-last-healthy"
+
+    loggers_init(settings)
+
+    # Should now have one (1) StreamHandler
     assert type(root_handlers[0]) == logging.StreamHandler
+
+    # Should now have one (1) GWHandler.
+    assert type(root_handlers[1]) == GWHandler
+
+    logging.getLogger("exodus-gw").info("...")
+    # Handler should've written to the healthy file as a byproduct of logging.
+    assert os.path.isfile(f"{tmp_path}/test-last-healthy")
 
 
 @freeze_time("2023-04-26 14:43:13.570034+00:00")
