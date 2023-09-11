@@ -24,3 +24,4 @@ importlib-metadata
 importlib-resources
 # safety requires packaging<22.0 and >=21.0.
 packaging==21.3
+asgi-correlation-id

@@ -85,19 +85,20 @@ def test_login_log(endpoint, user, roles, caplog, auth_header):
     with TestClient(app) as client:
         if roles:
             if endpoint == "/foo/publish":
-                client.post(
+                r = client.post(
                     endpoint, headers=auth_header(roles=["test-publisher"])
                 )
             else:
-                client.get(
+                r = client.get(
                     endpoint, headers=auth_header(roles=["test-publisher"])
                 )
         else:
-            client.get(endpoint)
+            r = client.get(endpoint)
         expected_log = {
             "level": "INFO",
             "logger": "exodus-gw",
             "time": "2023-07-28 13:24:03.596",
+            "request_id": r.headers["X-Request-ID"],
             "message": f"Login: path={endpoint}, user={user}, roles={roles}",
             "event": "login",
             "success": True,

@@ -47,6 +47,9 @@ def test_healthcheck_worker_unhealthy(db):
         # Should give a generic message
         assert r.json() == {"detail": "background workers unavailable"}
 
+        # Code 500 responses should provide a request ID
+        assert len(r.headers["X-Request-ID"]) == 8
+
 
 async def test_whoami():
     # All work is done by fastapi deserialization, so this doesn't actually

@@ -3,6 +3,8 @@ import json
 import logging
 import logging.config
 
+from asgi_correlation_id import CorrelationIdFilter
+
 
 def loggers_init(settings):
     logging.config.dictConfig(settings.log_config)
@@ -11,12 +13,13 @@ def loggers_init(settings):
     if not root_logger.hasHandlers():
         root_logger.addHandler(logging.StreamHandler())
 
-    if not any([isinstance(h, GWHandler) for h in root_logger.handlers]):
+    if not [h for h in root_logger.handlers if isinstance(h, GWHandler)]:
         root_logger.addHandler(GWHandler(settings))
 
     for handler in root_logger.handlers:
         datefmt = settings.log_config.get("datefmt")
         handler.setFormatter(JsonFormatter(datefmt))
+        handler.addFilter(CorrelationIdFilter())
 
 
 class GWHandler(logging.Handler):  # type: ignore
@@ -53,6 +56,7 @@ class JsonFormatter(logging.Formatter):
             "level": "levelname",
             "logger": "name",
             "time": "asctime",
+            "request_id": "correlation_id",
             "message": "message",
             "event": "event",
             "success": "success",

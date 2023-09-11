@@ -1,3 +1,5 @@
+from uuid import UUID
+
 import mock
 import pytest
 from fastapi.testclient import TestClient
@@ -45,7 +47,9 @@ async def test_full_upload(
     assert r.status_code == 200
 
     # It should return the correct headers
-    assert r.headers == {"etag": "a1b2c3", "content-length": "0"}
+    assert r.headers["etag"] == "a1b2c3"
+    assert r.headers["content-length"] == "0"
+    assert r.headers["x-request-id"]
 
     # It should have an empty body
     assert r.content == b""
@@ -67,7 +71,9 @@ async def test_part_upload(mock_aws_client, mock_request_reader, auth_header):
     assert r.status_code == 200
 
     # It should return the correct headers
-    assert r.headers == {"etag": "a1b2c3", "content-length": "0"}
+    assert r.headers["etag"] == "a1b2c3"
+    assert r.headers["content-length"] == "0"
+    assert r.headers["x-request-id"]
 
     # It should have an empty body
     assert r.content == b""

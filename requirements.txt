@@ -126,6 +126,10 @@ anyio==3.7.1 \
     #   fastapi
     #   starlette
     #   watchfiles
+asgi-correlation-id==4.2.0 \
+    --hash=sha256:9d7dcfc2ed016f6e594fffd553788ac70129db7f92bb4dc268ab0b1a3284de5a \
+    --hash=sha256:bd3321a4022f38179db775d27c40cb45130ac9429d569cd59b5474cb2f65fb1b
+    # via -r requirements.in
 async-timeout==4.0.3 \
     --hash=sha256:4640d96be84d82d02ed59ea2b7105a0f7b33abe8703703cd0ab0bf87c427522f \
     --hash=sha256:7405140ff1230c310e51dc27b3145b9092d659ce68ff733fb0cefe3ee42be028
@@ -1114,6 +1118,7 @@ starlette==0.27.0 \
     --hash=sha256:918416370e846586541235ccd38a474c08b80443ed31c578a418e2209b3eef91
     # via
     #   -r requirements.in
+    #   asgi-correlation-id
     #   fastapi
 typing-extensions==4.7.1 \
     --hash=sha256:440d5dd3af93b060174bf433bccd69b0babc3b15b1a8dca43789fd7f61514b36 \
