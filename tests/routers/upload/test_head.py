@@ -38,12 +38,14 @@ async def test_head(mock_aws_client, auth_header, monkeypatch):
         )
 
     assert r.status_code == 200
-    assert r.headers == {
-        "etag": "a1b2c3",
-        "x-amz-meta-exodus-migration-md5": "94e19d5d30b26306167e9e7bae6b28fd",
-        "x-amz-meta-exodus-migration-src": "original/source",
-        "content-length": "0",
-    }
+    assert r.headers["etag"] == "a1b2c3"
+    assert (
+        r.headers["x-amz-meta-exodus-migration-md5"]
+        == "94e19d5d30b26306167e9e7bae6b28fd"
+    )
+    assert r.headers["x-amz-meta-exodus-migration-src"] == "original/source"
+    assert r.headers["content-length"] == "0"
+    assert r.headers["x-request-id"]
 
 
 async def test_head_nonexistent_key(mock_aws_client, auth_header):

@@ -1,4 +1,3 @@
-import uuid
 from typing import Optional
 
 import pytest
@@ -125,6 +124,8 @@ def test_db_rollback_on_raise_db(db):
 
         # Should fail since an exception was raised
         assert r.status_code == 500
+        assert r.json()["detail"] == "Internal server error"
+        assert len(r.headers["X-Request-ID"]) == 8
 
         # Should not have committed anything since exception was raised
         publishes = db.query(Publish).filter(Publish.id == TEST_UUID)

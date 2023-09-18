@@ -4,7 +4,7 @@ import mock
 from fastapi.testclient import TestClient
 
 from exodus_gw.aws.util import xml_response
-from exodus_gw.deps import get_environment, get_s3_client, get_settings
+from exodus_gw.deps import get_environment, get_s3_client
 from exodus_gw.main import app
 from exodus_gw.routers.upload import multipart_upload
 from exodus_gw.settings import load_settings
@@ -140,6 +140,7 @@ async def test_bad_mpu_call(auth_header):
         b"<Endpoint>/upload/test/b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c</Endpoint>"
         b"</Error>"
     )
+    assert r.headers["X-Request-ID"]
 
 
 async def test_abort_mpu(mock_aws_client, auth_header):

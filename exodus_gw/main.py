@@ -58,8 +58,11 @@ If you are a client looking to make use of exodus-gw, consult your organization'
 internal documentation for advice on which environment(s) you should be using.
 """
 
+from uuid import uuid4
+
 import backoff
 import dramatiq
+from asgi_correlation_id import CorrelationIdMiddleware, correlation_id
 from fastapi import Depends, FastAPI, Request
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.exceptions import RequestValidationError
@@ -97,6 +100,20 @@ app.include_router(upload.router)
 app.include_router(publish.router)
 app.include_router(deploy.router)
 app.include_router(cdn.router)
+
+app.add_middleware(CorrelationIdMiddleware, generator=lambda: uuid4().hex[:8])
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request, exc):
+    return await http_exception_handler(
+        request,
+        StarletteHTTPException(
+            500,
+            "Internal server error",
+            headers={"X-Request-ID": correlation_id.get() or ""},
+        ),
+    )
 
 
 @app.exception_handler(RequestValidationError)

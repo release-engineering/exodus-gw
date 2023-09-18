@@ -270,6 +270,8 @@ def test_update_publish_items_no_uri(db, auth_header):
     # It should have failed with 400
     assert r.status_code == 400
     assert r.json() == {"detail": ["Value error, No URI: %s" % expected_item]}
+    # It should include non-empty request header
+    assert len(r.headers["X-Request-ID"]) == 8
 
 
 def test_update_publish_items_existing_uri(db, auth_header):
@@ -373,6 +375,8 @@ def test_update_publish_items_invalid_item(db, auth_header):
             "Value error, No object key or link target: %s" % expected_item
         ]
     }
+    # It should include non-empty request header
+    assert len(r.headers["X-Request-ID"]) == 8
 
 
 def test_update_publish_items_rejects_autoindex(db, auth_header):
@@ -408,6 +412,8 @@ def test_update_publish_items_rejects_autoindex(db, auth_header):
             "Value error, Invalid URI /foo/bar/.__exodus_autoindex: filename is reserved"
         ]
     }
+    # It should include non-empty request header
+    assert len(r.headers["X-Request-ID"]) == 8
 
 
 def test_update_publish_items_link_and_key(db, auth_header):
@@ -450,6 +456,8 @@ def test_update_publish_items_link_and_key(db, auth_header):
             % expected_item
         ]
     }
+    # It should include non-empty request header
+    assert len(r.headers["X-Request-ID"]) == 8
 
 
 def test_update_publish_items_link_content_type(db, auth_header):
@@ -490,6 +498,8 @@ def test_update_publish_items_link_content_type(db, auth_header):
             "Value error, Content type specified for link: %s" % expected_item
         ]
     }
+    # It should include non-empty request header
+    assert len(r.headers["X-Request-ID"]) == 8
 
 
 def test_update_publish_items_invalid_object_key(db, auth_header):
@@ -531,6 +541,8 @@ def test_update_publish_items_invalid_object_key(db, auth_header):
             % expected_item
         ]
     }
+    # It should include non-empty request header
+    assert len(r.headers["X-Request-ID"]) == 8
 
 
 def test_update_publish_absent_items_with_content_type(db, auth_header):
@@ -573,6 +585,8 @@ def test_update_publish_absent_items_with_content_type(db, auth_header):
             % expected_item
         ]
     }
+    # It should include non-empty request header
+    assert len(r.headers["X-Request-ID"]) == 8
 
 
 def test_update_publish_items_invalid_content_type(db, auth_header):
@@ -612,6 +626,8 @@ def test_update_publish_items_invalid_content_type(db, auth_header):
     assert r.json() == {
         "detail": ["Value error, Invalid content type: %s" % expected_item]
     }
+    # It should include non-empty request header
+    assert len(r.headers["X-Request-ID"]) == 8
 
 
 def test_update_publish_items_no_publish(auth_header):
@@ -690,6 +706,7 @@ def test_commit_publish(deadline, auth_header, db, caplog):
                     "level": "INFO",
                     "logger": "exodus-gw",
                     "time": "2023-04-26 14:43:13.570",
+                    "request_id": r.headers["X-Request-ID"],
                     "message": message,
                     "event": event,
                     "success": True,
