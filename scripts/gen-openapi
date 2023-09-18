@@ -3,6 +3,7 @@
 # during publishing of docs.
 import json
 import os
+import shutil
 
 from exodus_gw.main import app
 
@@ -10,3 +11,6 @@ api = app.openapi()
 
 with open("docs/openapi/openapi.json", "wt") as f:
     json.dump(api, f)
+
+for f in os.listdir("docs/openapi"):
+    shutil.copy("docs/openapi/" + f, "docs/_build/html")
