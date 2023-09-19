@@ -58,6 +58,7 @@ If you are a client looking to make use of exodus-gw, consult your organization'
 internal documentation for advice on which environment(s) you should be using.
 """
 
+import re
 from uuid import uuid4
 
 import backoff
@@ -100,8 +101,6 @@ app.include_router(upload.router)
 app.include_router(publish.router)
 app.include_router(deploy.router)
 app.include_router(cdn.router)
-
-app.add_middleware(CorrelationIdMiddleware, generator=lambda: uuid4().hex[:8])
 
 
 @app.exception_handler(Exception)
@@ -219,3 +218,14 @@ def db_session(request: Request, call_next):
         return response
 
     return db_session_wrap()
+
+
+def request_id_validator(short_uuid: str):
+    return re.match(r"^[0-9a-f]{8}$", short_uuid)
+
+
+app.add_middleware(
+    CorrelationIdMiddleware,
+    generator=lambda: uuid4().hex[:8],
+    validator=request_id_validator,
+)
