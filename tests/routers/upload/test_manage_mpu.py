@@ -1,6 +1,7 @@
 import textwrap
 
 import mock
+from botocore.exceptions import UnseekableStreamError
 from fastapi.testclient import TestClient
 
 from exodus_gw.aws.util import xml_response
@@ -44,14 +45,9 @@ async def test_create_mpu(mock_aws_client, auth_header):
 
 
 async def test_complete_mpu(mock_aws_client):
-    """Completing a multipart upload is delegated correctly to S3."""
-
-    mock_aws_client.complete_multipart_upload.return_value = {
-        "Location": "https://example.com/some-object",
-        "Bucket": "my-bucket",
-        "Key": TEST_KEY,
-        "ETag": "my-better-etag",
-    }
+    """Completing a multipart upload is delegated correctly to S3 and can tolerate
+    intermittent UnseekableStreamErrors.
+    """
 
     env = get_environment("test")
     settings = load_settings()
@@ -79,6 +75,17 @@ async def test_complete_mpu(mock_aws_client):
     request.app.state.settings = settings
     request.app.state.s3_queues = {}
 
+    mock_aws_client.complete_multipart_upload.side_effect = [
+        UnseekableStreamError(stream_object=object()),
+        UnseekableStreamError(stream_object=object()),
+        {
+            "Location": "https://example.com/some-object",
+            "Bucket": "my-bucket",
+            "Key": TEST_KEY,
+            "ETag": "my-better-etag",
+        },
+    ]
+
     s3_client = await get_s3_client(
         request=request, env=env, settings=settings
     ).__anext__()
@@ -93,7 +100,7 @@ async def test_complete_mpu(mock_aws_client):
     )
 
     # It should delegate request to real S3
-    mock_aws_client.complete_multipart_upload.assert_called_once_with(
+    mock_aws_client.complete_multipart_upload.assert_called_with(
         Bucket="my-bucket",
         Key=TEST_KEY,
         UploadId="my-better-upload",
@@ -105,7 +112,10 @@ async def test_complete_mpu(mock_aws_client):
         },
     )
 
-    # It should succeed
+    # Three mpu attempts should've been made
+    assert mock_aws_client.complete_multipart_upload.call_count == 3
+
+    # It should eventually succeed
     assert response.status_code == 200
 
     # It should be XML

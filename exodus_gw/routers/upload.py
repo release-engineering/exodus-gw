@@ -71,7 +71,8 @@ import logging
 import textwrap
 from typing import Dict, Optional
 
-from botocore.exceptions import ClientError
+import backoff
+from botocore.exceptions import ClientError, UnseekableStreamError
 from fastapi import APIRouter, HTTPException, Path, Query, Request, Response
 
 from .. import auth, deps
@@ -206,6 +207,13 @@ async def upload(
     return await multipart_put(s3, env, key, uploadId, partNumber, request)
 
 
+@backoff.on_exception(
+    wait_gen=backoff.expo,
+    exception=UnseekableStreamError,
+    max_tries=Settings().upload_max_tries,
+    logger=LOG,
+    backoff_log_level=logging.DEBUG,
+)
 async def object_put(
     s3: S3ClientWrapper,
     env: Environment,
@@ -230,6 +238,13 @@ async def object_put(
     return Response(headers={"ETag": response["ETag"]})
 
 
+@backoff.on_exception(
+    wait_gen=backoff.expo,
+    exception=UnseekableStreamError,
+    max_tries=Settings().upload_max_tries,
+    logger=LOG,
+    backoff_log_level=logging.DEBUG,
+)
 async def complete_multipart_upload(
     s3: S3ClientWrapper,
     env: Environment,

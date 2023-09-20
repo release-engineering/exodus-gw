@@ -116,6 +116,9 @@ class Settings(BaseSettings):
     db_session_max_tries: int = 3
     """The maximum number of attempts to recreate a DB session within a request."""
 
+    upload_max_tries: int = 10
+    """Maximum put attempts to an S3 bucket."""
+
     item_yield_size: int = 5000
     """Number of publish items to load from the service DB at one time."""
 
@@ -131,6 +134,7 @@ class Settings(BaseSettings):
     """Maximum amount of time (in seconds) to wait for queue items.
     Defaults to 10 minutes.
     """
+
     publish_timeout: int = 24
     """Maximum amount of time (in hours) between updates to a pending publish before
     it will be considered abandoned. Defaults to one day.

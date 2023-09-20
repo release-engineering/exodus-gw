@@ -1,7 +1,6 @@
-from uuid import UUID
-
 import mock
 import pytest
+from botocore.exceptions import UnseekableStreamError
 from fastapi.testclient import TestClient
 
 from exodus_gw.main import app
@@ -12,7 +11,9 @@ TEST_KEY = "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"
 async def test_full_upload(
     mock_aws_client, mock_request_reader, auth_header, monkeypatch
 ):
-    """Uploading a complete object is delegated correctly to S3."""
+    """Uploading a complete object is delegated correctly to S3 and can tolerate
+    intermittent UnseekableStreamErrors.
+    """
 
     monkeypatch.setenv(
         "EXODUS_GW_UPLOAD_META_FIELDS",
@@ -26,7 +27,11 @@ async def test_full_upload(
     }
 
     mock_request_reader.return_value = b"some bytes"
-    mock_aws_client.put_object.return_value = {"ETag": "a1b2c3"}
+    mock_aws_client.put_object.side_effect = [
+        UnseekableStreamError(stream_object=mock_request_reader()),
+        UnseekableStreamError(stream_object=mock_request_reader()),
+        {"ETag": "a1b2c3"},
+    ]
 
     with TestClient(app) as client:
         r = client.put("/upload/test/%s" % TEST_KEY, headers=headers)
@@ -43,7 +48,10 @@ async def test_full_upload(
         },
     )
 
-    # It should succeed
+    # Three put attempts should've been made
+    assert mock_aws_client.put_object.call_count == 3
+
+    # It should eventually succeed
     assert r.status_code == 200
 
     # It should return the correct headers
