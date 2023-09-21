@@ -15,7 +15,7 @@ backoff
 dramatiq[watch]
 pycron
 cryptography
-repo-autoindex>=1.0.2
+repo-autoindex>=1.2.0
 # Needed to get compatible idna between requirements.txt and test-requirements.txt,
 # consider removing when 'requests' no longer requires <4
 idna==3.4
