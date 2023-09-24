@@ -1,8 +1,9 @@
 import gzip
 import hashlib
 import logging
+import tempfile
 from time import monotonic
-from typing import AsyncGenerator, Generator, Optional
+from typing import AsyncGenerator, BinaryIO, Generator, Optional
 
 from repo_autoindex import ContentError, Fetcher, autoindex
 from sqlalchemy import inspect
@@ -37,7 +38,7 @@ class PublishContentFetcher:
         self.s3_client = s3_client
         self.environment = environment
 
-    async def __call__(self, uri: str) -> Optional[str]:
+    async def __call__(self, uri: str) -> Optional[BinaryIO]:
         LOG.debug("Requested to fetch: %s", uri, extra={"event": "publish"})
 
         matched = (
@@ -59,19 +60,29 @@ class PublishContentFetcher:
         )
         LOG.debug("S3 response: %s", response, extra={"event": "publish"})
 
+        # Even though we are only dealing with metadata files here, some of them
+        # can be *large* (there are some primary XML measured in hundreds of MB).
+        #
+        # We don't want to slurp the content all into memory at once, so pump
+        # it into a tempfile and let repo-autoindex use that.
+        out: BinaryIO = tempfile.NamedTemporaryFile(prefix="exodus-gw-autoindex")  # type: ignore
+        while chunk := await response["Body"].read(4096):
+            out.write(chunk)
+        out.flush()
+        out.seek(0)
+
         content_type: str = response["ResponseMetadata"]["HTTPHeaders"][
             "content-type"
         ]
-        content: bytes = await response["Body"].read()
 
         if uri.endswith(".gz") and content_type in (
             "binary/octet-stream",
             "application/octet-stream",
             "application/x-gzip",
         ):
-            content = gzip.decompress(content)
+            out = gzip.GzipFile(fileobj=out)  # type: ignore
 
-        return content.decode("utf-8")
+        return out
 
 
 class AutoindexEnricher:
