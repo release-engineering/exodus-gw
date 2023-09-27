@@ -12,7 +12,7 @@ async def test_client_retries_disabled():
         # passing a config object with retries disabled
         client_call = aioboto3.Session().client.mock_calls[0]
         config = client_call.kwargs["config"]
-        assert config.retries == {"max_attempts": 1}
+        assert config.retries == {"total_max_attempts": 1}
 
 
 async def test_client_redirects_disabled():
@@ -41,5 +41,9 @@ async def test_client_redirects_disabled():
         handlers[0](request_dict=request_dict)
         assert request_dict == {
             "some": "fields",
-            "context": {"foo": "bar", "s3_redirected": True},
+            "context": {
+                "foo": "bar",
+                "s3_redirected": True,
+                "redirected": True,
+            },
         }

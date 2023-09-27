@@ -26,7 +26,7 @@ class S3ClientWrapper:
             # We don't allow any retries - it's not possible since we're streaming
             # request bodies directly to S3, we don't buffer it anywhere, so we
             # can't send it more than once.
-            config=Config(retries={"max_attempts": 1}),
+            config=Config(retries={"total_max_attempts": 1}),
         )
 
     async def __aenter__(self):
@@ -46,7 +46,7 @@ class S3ClientWrapper:
 
     @staticmethod
     def no_redirects(**kwargs):
-        # An event handler for needs-s3.retry.* events which will disable implicit
+        # An event handler for needs-retry.s3.* events which will disable implicit
         # redirects between regions.
         #
         # The S3 client has a built-in feature where, if you do a request to a
@@ -79,6 +79,9 @@ class S3ClientWrapper:
         request_dict = kwargs.get("request_dict") or {}
         context = request_dict.get("context") or {}
         context["s3_redirected"] = True
+        # A newer version, S3RegionRedirectorv2, uses a different key. Let's add it too
+        # since we can't determine or control which version is used.
+        context["redirected"] = True
 
 
 class DynamoDBClientWrapper:
