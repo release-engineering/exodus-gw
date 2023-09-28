@@ -3,7 +3,15 @@ from datetime import datetime
 from typing import Optional
 
 from fastapi import HTTPException
-from sqlalchemy import DateTime, ForeignKey, String, event, func, inspect
+from sqlalchemy import (
+    DateTime,
+    ForeignKey,
+    String,
+    UniqueConstraint,
+    event,
+    func,
+    inspect,
+)
 from sqlalchemy.orm import Bundle, Mapped, mapped_column, relationship
 from sqlalchemy.types import Uuid
 
@@ -18,9 +26,9 @@ class Publish(Base):
         primary_key=True,
         default=lambda: str(uuid.uuid4()),
     )
-    env: Mapped[str] = mapped_column(String, nullable=False)
-    state: Mapped[str] = mapped_column(String, nullable=False)
-    updated: Mapped[datetime] = mapped_column(DateTime())
+    env: Mapped[str] = mapped_column(String)
+    state: Mapped[str] = mapped_column(String)
+    updated: Mapped[Optional[datetime]] = mapped_column(DateTime())
     items = relationship(
         "Item", back_populates="publish", cascade="all, delete-orphan"
     )
@@ -79,18 +87,23 @@ def publish_before_update(_mapper, _connection, publish):
 
 class Item(Base):
     __tablename__ = "items"
+    __table_args__ = (
+        UniqueConstraint(
+            "publish_id", "web_uri", name="items_publish_id_web_uri_key"
+        ),
+    )
 
     id: Mapped[str] = mapped_column(
         Uuid(as_uuid=False),
         primary_key=True,
         default=lambda: str(uuid.uuid4()),
     )
-    web_uri: Mapped[str] = mapped_column(String, nullable=False)
-    object_key: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    content_type: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    link_to: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    web_uri: Mapped[str] = mapped_column(String)
+    object_key: Mapped[Optional[str]] = mapped_column(String)
+    content_type: Mapped[Optional[str]] = mapped_column(String)
+    link_to: Mapped[Optional[str]] = mapped_column(String)
     publish_id: Mapped[str] = mapped_column(
-        Uuid(as_uuid=False), ForeignKey("publishes.id"), nullable=False
+        Uuid(as_uuid=False), ForeignKey("publishes.id")
     )
 
     publish = relationship("Publish", back_populates="items")

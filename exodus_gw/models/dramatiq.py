@@ -25,7 +25,7 @@ class DramatiqMessage(Base):
     # Null means message is not yet assigned.
     # Not a foreign key since consumers can disappear while leaving
     # their messages behind.
-    consumer_id: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    consumer_id: Mapped[Optional[str]] = mapped_column(String)
 
     consumer = relationship(
         "DramatiqConsumer",
@@ -34,13 +34,13 @@ class DramatiqMessage(Base):
     )
 
     # Name of queue (e.g. "default" for most messages)
-    queue: Mapped[str] = mapped_column(String, nullable=False)
+    queue: Mapped[str] = mapped_column(String)
 
     # Name of actor
-    actor: Mapped[str] = mapped_column(String, nullable=False)
+    actor: Mapped[str] = mapped_column(String)
 
     # Full message body.
-    body: Mapped[Dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    body: Mapped[Dict[str, Any]] = mapped_column(JSONB)
 
 
 class DramatiqConsumer(Base):
@@ -58,6 +58,4 @@ class DramatiqConsumer(Base):
     )
 
     # Last time this consumer reported itself to be alive.
-    last_alive: Mapped[datetime.datetime] = mapped_column(
-        DateTime, nullable=False
-    )
+    last_alive: Mapped[datetime.datetime] = mapped_column(DateTime)
