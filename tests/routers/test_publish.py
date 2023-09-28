@@ -8,7 +8,7 @@ from freezegun import freeze_time
 
 from exodus_gw import routers, schemas
 from exodus_gw.main import app
-from exodus_gw.models import Item, Publish, Task
+from exodus_gw.models import CommitTask, Item, Publish, Task
 from exodus_gw.settings import Environment, Settings, get_environment
 
 
@@ -746,7 +746,7 @@ def test_commit_publish_in_progress(mock_commit, fake_publish, db):
     # Simulate that this publish was already committed, assigned to
     # an in-progress task.
     fake_publish.state = schemas.PublishStates.committing
-    task = Task(
+    task = CommitTask(
         id="8d8a4692-c89b-4b57-840f-b3f0166148d2",
         publish_id=fake_publish.id,
         state=schemas.TaskStates.in_progress,

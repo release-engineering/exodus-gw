@@ -36,6 +36,10 @@ def upgrade():
 
 
 def downgrade():
+    # if restoring non-nullable publish_id, tasks with a null
+    # publish_id have to be dropped
+    op.execute("DELETE FROM tasks WHERE publish_id IS NULL")
+
     with op.batch_alter_table("tasks") as batch_op:
         batch_op.alter_column(
             "publish_id", existing_type=Uuid(), nullable=False

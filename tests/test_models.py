@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from exodus_gw.models import Item, Publish, Task
+from exodus_gw.models import CommitTask, Item, Publish
 
 
 def test_Item_init():
@@ -23,7 +23,7 @@ def test_publish_task_before_update(db):
     publish = Publish(id=publish_id, env="test", state="PENDING")
 
     task_id = "8d8a4692-c89b-4b57-840f-b3f0166148d2"
-    task = Task(
+    task = CommitTask(
         id=task_id,
         publish_id=publish_id,
         state="NOT_STARTED",
