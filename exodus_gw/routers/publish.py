@@ -242,10 +242,17 @@ def update_publish_items(
         )
 
     # Convert the list into dict and update each dict with a publish_id.
-    # Each item is also set 'dirty' to ensure it's written to DynamoDB,
-    # even if it was already written before.
+    # Each item's 'dirty' and 'updated' are refreshed to ensure it's
+    # written to DynamoDB with the current update, even if it was already
+    # written before.
+    now = datetime.utcnow()
     items_data = [
-        {**item.model_dump(), "publish_id": db_publish.id, "dirty": True}
+        {
+            **item.model_dump(),
+            "publish_id": db_publish.id,
+            "dirty": True,
+            "updated": now,
+        }
         for item in items
     ]
 
@@ -327,10 +334,10 @@ def commit_publish(
     Commit occurs asynchronously.  This API returns a Task object which may be used
     to monitor the progress of the commit.
 
-    Note that exodus-gw does not resolve conflicts or ensure that any given path is
-    only modified by a single publish. If multiple publish objects covering the same
-    path are being committed concurrently, URIs on the CDN may end up pointing to
-    objects from any of those publishes.
+    Note that exodus-gw does not require that any given path is only modified by
+    a single publish. If multiple publish objects updating the same path are being
+    committed at the same time, after both commits succeed, the path will point
+    at whichever item was updated most recently.
     """
     commit_mode_str = (commit_mode or models.CommitModes.phase2).value
     now = datetime.utcnow()

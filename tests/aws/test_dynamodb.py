@@ -28,7 +28,9 @@ NOW_UTC = str(datetime.now(timezone.utc))
                                     "S": "0bacfc5268f9994065dd858ece3359fd"
                                     "7a99d82af5be84202b8e84c2a5b07ffa"
                                 },
-                                "from_date": {"S": NOW_UTC},
+                                # Note these timestamps come from the canned values
+                                # on fake_publish.items
+                                "from_date": {"S": "2023-10-04 03:52:00"},
                                 "content_type": {"S": None},
                             }
                         }
@@ -41,7 +43,7 @@ NOW_UTC = str(datetime.now(timezone.utc))
                                     "S": "e448a4330ff79a1b20069d436fae9480"
                                     "6a0e2e3a6b309cd31421ef088c6439fb"
                                 },
-                                "from_date": {"S": NOW_UTC},
+                                "from_date": {"S": "2023-10-04 03:52:01"},
                                 "content_type": {"S": None},
                             }
                         }
@@ -54,7 +56,7 @@ NOW_UTC = str(datetime.now(timezone.utc))
                                     "S": "3f449eb3b942af58e9aca4c1cffdef89"
                                     "c3f1552c20787ae8c966767a1fedd3a5"
                                 },
-                                "from_date": {"S": NOW_UTC},
+                                "from_date": {"S": "2023-10-04 03:52:02"},
                                 "content_type": {"S": None},
                             }
                         }
@@ -70,7 +72,7 @@ NOW_UTC = str(datetime.now(timezone.utc))
                         "DeleteRequest": {
                             "Key": {
                                 "web_uri": {"S": "/some/path"},
-                                "from_date": {"S": NOW_UTC},
+                                "from_date": {"S": "2023-10-04 03:52:00"},
                             }
                         }
                     },
@@ -78,7 +80,7 @@ NOW_UTC = str(datetime.now(timezone.utc))
                         "DeleteRequest": {
                             "Key": {
                                 "web_uri": {"S": "/other/path"},
-                                "from_date": {"S": NOW_UTC},
+                                "from_date": {"S": "2023-10-04 03:52:01"},
                             }
                         }
                     },
@@ -86,7 +88,7 @@ NOW_UTC = str(datetime.now(timezone.utc))
                         "DeleteRequest": {
                             "Key": {
                                 "web_uri": {"S": "/to/repomd.xml"},
-                                "from_date": {"S": NOW_UTC},
+                                "from_date": {"S": "2023-10-04 03:52:02"},
                             }
                         }
                     },
