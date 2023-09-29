@@ -6,12 +6,16 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 
-def test_migrations_up_down(tmpdir):
+def test_migrations_up_down(tmpdir, monkeypatch: pytest.MonkeyPatch):
     """Verify that "upgrade" and "downgrade" across all migrations can succeed.
 
     This doesn't verify functional correctness of migrations - only that the
     upgrade/downgrade functions can complete without crashing.
     """
+
+    # Setting this env var allows migrations to insert test data to the
+    # DB before/after upgrades/downgrades.
+    monkeypatch.setenv("EXODUS_GW_TESTING_MIGRATIONS", "1")
 
     db_file = str(tmpdir.join("migration-test.db"))
     db_url = "sqlite:///%s" % db_file
