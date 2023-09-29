@@ -11,4 +11,4 @@ from sqlalchemy.ext.compiler import compiles
 
 @compiles(JSONB, "sqlite")
 def sqlite_jsonb(*_args, **_kwargs):
-    return "JSONB"
+    return "TEXT"

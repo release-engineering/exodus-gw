@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from sqlalchemy import DateTime, String, event
 from sqlalchemy.orm import Mapped, mapped_column
@@ -11,10 +12,10 @@ class Task(Base):
     __tablename__ = "tasks"
 
     id: Mapped[str] = mapped_column(Uuid(as_uuid=False), primary_key=True)
-    publish_id: Mapped[str] = mapped_column(Uuid(as_uuid=False))
-    state: Mapped[str] = mapped_column(String, nullable=False)
-    updated: Mapped[datetime] = mapped_column(DateTime())
-    deadline: Mapped[datetime] = mapped_column(DateTime())
+    publish_id: Mapped[Optional[str]] = mapped_column(Uuid(as_uuid=False))
+    state: Mapped[str] = mapped_column(String)
+    updated: Mapped[Optional[datetime]] = mapped_column(DateTime())
+    deadline: Mapped[Optional[datetime]] = mapped_column(DateTime())
 
 
 @event.listens_for(Task, "before_update")
