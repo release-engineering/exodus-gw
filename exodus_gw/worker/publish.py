@@ -5,7 +5,7 @@ from datetime import datetime
 from os.path import basename
 from queue import Empty, Full, Queue
 from threading import Thread
-from typing import Any, List
+from typing import Any, List, Optional
 
 import dramatiq
 from dramatiq.middleware import CurrentMessage
@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session, lazyload
 
 from exodus_gw.aws.dynamodb import DynamoDB
 from exodus_gw.database import db_engine
-from exodus_gw.models import CommitTask, Item, Publish
+from exodus_gw.models import CommitModes, CommitTask, Item, Publish
 from exodus_gw.schemas import PublishStates, TaskStates
 from exodus_gw.settings import Settings, get_environment
 
@@ -145,7 +145,11 @@ class _BatchWriter:
                 break
 
 
-class Commit:
+class CommitBase:
+    # Acceptable publish states for this type of commit.
+    # Subclasses need to override.
+    PUBLISH_STATES: list[PublishStates] = []
+
     def __init__(
         self,
         publish_id: str,
@@ -156,7 +160,7 @@ class Commit:
     ):
         self.env = env
         self.from_date = from_date
-        self.rollback_item_ids: List[str] = []
+        self.written_item_ids: List[str] = []
         self.settings = settings
         self.db = Session(bind=db_engine(self.settings))
         self.task = self._query_task(actor_msg_id)
@@ -195,16 +199,14 @@ class Commit:
                 task.deadline,
                 extra={"event": "publish", "success": False},
             )
-            # Fail expired task and associated publish
-            self.task.state = TaskStates.failed
-            self.publish.state = PublishStates.failed
+            self.on_failed()
             self.db.commit()
             return False
         return True
 
     @property
     def publish_ready(self) -> bool:
-        if self.publish.state == PublishStates.committing:
+        if self.publish.state in self.PUBLISH_STATES:
             return True
         LOG.warning(
             "Publish %s in unexpected state, '%s'",
@@ -267,21 +269,35 @@ class Commit:
             self.db.commit()
             return False
         if not self.has_items:
-            self.task.state = TaskStates.complete
-            self.publish.state = PublishStates.committed
+            # An empty commit just instantly succeeds...
+            self.on_succeeded()
             self.db.commit()
             return False
         return True
 
-    def write_publish_items(self) -> None:
+    @property
+    def written_item_ids_batched(self):
+        """self.written_item_ids, but batched into chunks."""
+        chunk_size = self.settings.item_yield_size
+        for index in range(0, len(self.written_item_ids), chunk_size):
+            batch = self.written_item_ids[index : index + chunk_size]
+            if batch:
+                yield batch
+
+    def write_publish_items(self) -> list[Item]:
         """Query for publish items, batching and yielding them to
         conserve memory, and submit batch write requests via
         _BatchWriter.
+
+        The implementation on the base class handles phase1 items only
+        and returns the list of uncommitted phase2 items.
+        Subclasses should override this.
         """
 
         statement = (
             select(Item)
-            .where(Item.publish_id == self.publish.id)
+            .where(Item.publish_id == self.publish.id, Item.dirty == True)
+            .with_for_update()
             .execution_options(yield_per=self.settings.item_yield_size)
         )
         partitions = self.db.execute(statement).partitions()
@@ -305,7 +321,7 @@ class Commit:
 
                 # Flatten partition and extract any entry point items.
                 for row in partition:
-                    item = row.Item
+                    item: Item = row.Item
                     if (
                         basename(item.web_uri)
                         in self.settings.entry_point_files
@@ -323,12 +339,87 @@ class Commit:
                 wrote_count += len(items)
 
                 # Submit items to be batched and queued, saving item
-                # IDs in case rollback is needed.
-                self.rollback_item_ids.extend(bw.queue_batches(items))
+                # IDs for rollback and marking as no longer dirty.
+                self.written_item_ids.extend(bw.queue_batches(items))
 
+        return final_items
+
+    def rollback_publish_items(self, exception: Exception) -> None:
+        """Breaks the list of item IDs into chunks and iterates over
+        each, querying corresponding items and submitting batch delete
+        requests.
+        """
+
+        LOG.warning(
+            "Rolling back %d item(s) due to error",
+            len(self.written_item_ids),
+            exc_info=exception,
+            extra={"event": "publish"},
+        )
+
+        for item_ids in self.written_item_ids_batched:
+            with _BatchWriter(
+                self.dynamodb,
+                self.settings,
+                len(item_ids),
+                "Rolling back",
+                delete=True,
+            ) as bw:
+                items = self.db.query(Item).filter(Item.id.in_(item_ids))
+                bw.queue_batches(items)
+
+    def on_succeeded(self):
+        # Called when commit operation has succeeded.
+        # The task has succeeded...
+        self.task.state = TaskStates.complete
+
+        # And any written items are no longer dirty.
+        # We know they can't have been updated while we were running
+        # because we selected them "FOR UPDATE" earlier.
+        for item_ids in self.written_item_ids_batched:
+            self.db.query(Item).filter(Item.id.in_(item_ids)).update(
+                {Item.dirty: False}
+            )
+
+    def on_failed(self):
+        # Called when commit operation has failed.
+        self.task.state = TaskStates.failed
+
+    def pre_write(self):
+        # Any steps prior to DynamoDB write.
+        # Base implementation does nothing.
+        pass
+
+
+class CommitPhase1(CommitBase):
+    # phase1 commit is allowed to proceed in either of these states.
+    PUBLISH_STATES = [PublishStates.committing, PublishStates.pending]
+
+    def write_publish_items(self) -> list[Item]:
+        final_items = super().write_publish_items()
+
+        # In phase1 we don't process the final items, but we'll log
+        # how many have been left for later.
+        LOG.info(
+            "Phase 1: committed %s items, phase 2: %s items remaining",
+            len(self.written_item_ids),
+            len(final_items),
+            extra={"event": "publish"},
+        )
+
+        return []
+
+
+class CommitPhase2(CommitBase):
+    PUBLISH_STATES = [PublishStates.committing]
+
+    def write_publish_items(self) -> list[Item]:
+        final_items = super().write_publish_items()
+
+        # In phase2 we go ahead and write the final items.
         LOG.info(
             "Phase 1: committed %s items, phase 2: committing %s items",
-            wrote_count,
+            len(self.written_item_ids),
             len(final_items),
             extra={"event": "publish"},
         )
@@ -342,40 +433,24 @@ class Commit:
             "Writing phase 2 items",
         ) as bw:
             if final_items:
-                # Submit items to be batched and queued, saving item
-                # IDs in case rollback is needed.
-                self.rollback_item_ids.extend(bw.queue_batches(final_items))
+                self.written_item_ids.extend(bw.queue_batches(final_items))
 
-    def rollback_publish_items(self, exception: Exception) -> None:
-        """Breaks the list of item IDs into chunks and iterates over
-        each, querying corresponding items and submitting batch delete
-        requests.
-        """
+        return []
 
-        LOG.warning(
-            "Rolling back %d item(s) due to error",
-            len(self.rollback_item_ids),
-            exc_info=exception,
-            extra={"event": "publish"},
-        )
-
-        chunk_size = self.settings.item_yield_size
-        for index in range(0, len(self.rollback_item_ids), chunk_size):
-            item_ids = self.rollback_item_ids[index : index + chunk_size]
-            if item_ids:
-                with _BatchWriter(
-                    self.dynamodb,
-                    self.settings,
-                    len(item_ids),
-                    "Rolling back",
-                    delete=True,
-                ) as bw:
-                    items = self.db.query(Item).filter(Item.id.in_(item_ids))
-                    bw.queue_batches(items)
-
-    def autoindex(self):
+    def pre_write(self):
+        # If any index files should be automatically generated for this publish,
+        # generate and add them now before processing the items.
         enricher = AutoindexEnricher(self.publish, self.env, self.settings)
         asyncio.run(enricher.run())
+
+    # phase2 commit also completes the publish, one way or another.
+    def on_succeeded(self):
+        super().on_succeeded()
+        self.publish.state = PublishStates.committed
+
+    def on_failed(self):
+        super().on_failed()
+        self.publish.state = PublishStates.failed
 
 
 @dramatiq.actor(
@@ -383,10 +458,22 @@ class Commit:
     max_backoff=Settings().actor_max_backoff,
 )
 def commit(
-    publish_id: str, env: str, from_date: str, settings: Settings = Settings()
+    publish_id: str,
+    env: str,
+    from_date: str,
+    commit_mode: Optional[str] = None,
+    settings: Settings = Settings(),
 ) -> None:
     actor_msg_id = CurrentMessage.get_current_message().message_id
-    commit_obj = Commit(publish_id, env, from_date, actor_msg_id, settings)
+
+    commit_mode = commit_mode or CommitModes.phase2.value
+    commit_class: type[CommitBase] = {
+        CommitModes.phase1.value: CommitPhase1,
+        CommitModes.phase2.value: CommitPhase2,
+    }[commit_mode]
+    commit_obj = commit_class(
+        publish_id, env, from_date, actor_msg_id, settings
+    )
 
     if not commit_obj.should_write():
         return
@@ -394,16 +481,13 @@ def commit(
     commit_obj.task.state = TaskStates.in_progress
     commit_obj.db.commit()
 
-    # If any index files should be automatically generated for this publish,
-    # generate and add them now.
-    # No DynamoDB writes happen here, so this doesn't need to be covered by
-    # the rollback handler.
-    commit_obj.autoindex()
+    # Do any relevant commit steps prior to the main DynamoDB writes.
+    # Anything which happens here is not covered by rollback.
+    commit_obj.pre_write()
 
     try:
         commit_obj.write_publish_items()
-        commit_obj.task.state = TaskStates.complete
-        commit_obj.publish.state = PublishStates.committed
+        commit_obj.on_succeeded()
         commit_obj.db.commit()
     except Exception as exc_info:  # pylint: disable=broad-except
         LOG.exception(
@@ -414,7 +498,6 @@ def commit(
         try:
             commit_obj.rollback_publish_items(exc_info)
         finally:
-            commit_obj.task.state = TaskStates.failed
-            commit_obj.publish.state = PublishStates.failed
+            commit_obj.on_failed()
             commit_obj.db.commit()
         return

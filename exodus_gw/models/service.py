@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from typing import Optional
 
 from sqlalchemy import DateTime, ForeignKey, String, event
@@ -6,6 +7,11 @@ from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.types import Uuid
 
 from .base import Base
+
+
+class CommitModes(str, Enum):
+    phase1 = "phase1"
+    phase2 = "phase2"
 
 
 class Task(Base):
@@ -30,6 +36,9 @@ class CommitTask(Task):
 
     id: Mapped[str] = mapped_column(ForeignKey("tasks.id"), primary_key=True)
     publish_id: Mapped[str] = mapped_column(Uuid(as_uuid=False))
+    commit_mode: Mapped[str] = mapped_column(
+        String, default=CommitModes.phase2
+    )
 
 
 @event.listens_for(Task, "before_update")

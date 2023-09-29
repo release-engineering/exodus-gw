@@ -5,8 +5,10 @@ from datetime import datetime, timedelta
 
 import mock
 import pytest
+import sqlalchemy.orm
 
 from exodus_gw import models, worker
+from exodus_gw.models import Publish
 from exodus_gw.settings import load_settings
 
 NOW_UTC = datetime.utcnow()
@@ -308,7 +310,7 @@ def test_commit_write_queue_unfinished(
     settings = load_settings()
     settings.write_max_workers = 1
     settings.write_queue_timeout = 1
-    commit_obj = worker.publish.Commit(
+    commit_obj = worker.publish.CommitPhase2(
         fake_publish.id, fake_publish.env, NOW_UTC, task.id, settings
     )
     bw = worker.publish._BatchWriter(
@@ -321,7 +323,7 @@ def test_commit_write_queue_unfinished(
     # getting items from the queue.
     bw.write_batches = mock.MagicMock()
 
-    with mock.patch("exodus_gw.worker.publish.Commit") as patched_commit:
+    with mock.patch("exodus_gw.worker.publish.CommitPhase2") as patched_commit:
         patched_commit.return_value = commit_obj
         with mock.patch("exodus_gw.worker.publish._BatchWriter") as patched_bw:
             patched_bw.return_value = bw
@@ -374,11 +376,11 @@ def test_commit_write_queue_full(
     settings = load_settings()
     settings.write_max_workers = 1
     settings.write_queue_timeout = 1
-    commit_obj = worker.publish.Commit(
+    commit_obj = worker.publish.CommitPhase2(
         fake_publish.id, fake_publish.env, NOW_UTC, task.id, settings
     )
 
-    with mock.patch("exodus_gw.worker.publish.Commit") as patched_commit:
+    with mock.patch("exodus_gw.worker.publish.CommitPhase2") as patched_commit:
         patched_commit.return_value = commit_obj
         with pytest.raises(queue.Full):
             worker.commit(str(fake_publish.id), fake_publish.env, NOW_UTC)
@@ -395,3 +397,120 @@ def test_commit_write_queue_full(
     # It should've set publish state to FAILED.
     db.refresh(fake_publish)
     assert fake_publish.state == "FAILED"
+
+
+@mock.patch("exodus_gw.worker.publish.AutoindexEnricher.run")
+@mock.patch("exodus_gw.worker.publish.CurrentMessage.get_current_message")
+@mock.patch("exodus_gw.worker.publish.DynamoDB.write_batch")
+def test_commit_phase1(
+    mock_write_batch,
+    mock_get_message,
+    mock_autoindex_run,
+    fake_publish: Publish,
+    db: sqlalchemy.orm.Session,
+    caplog: pytest.LogCaptureFixture,
+):
+    """Verifies specific behaviors of a phase1 commit, namely:
+
+    - does not include phase2 items (e.g. entrypoints)
+    - does not include autoindex
+    - does not move the publish into a terminal state
+    - only processes dirty items (and marks them as dirty)
+    """
+
+    task = _task(fake_publish.id)
+    mock_get_message.return_value = mock.Mock(
+        spec=["message_id"],
+        message_id=task.id,
+    )
+
+    db.add(fake_publish)
+    db.add(task)
+
+    # Committing and refreshing to ensure any commit-time defaults are applied.
+    db.commit()
+    db.refresh(fake_publish)
+    db.refresh(task)
+
+    # All the items should initially be dirty.
+    assert [i.dirty for i in fake_publish.items] == [True, True, True]
+
+    # Let's say that DynamoDB write initially fails.
+    mock_write_batch.side_effect = RuntimeError("simulated error")
+
+    # Try the commit.
+    with pytest.raises(RuntimeError):
+        worker.commit(
+            str(fake_publish.id),
+            fake_publish.env,
+            NOW_UTC.isoformat(),
+            commit_mode="phase1",
+        )
+
+    # It should've set task state to FAILED.
+    db.refresh(task)
+    assert task.state == "FAILED"
+
+    # But it should NOT have updated the publish state.
+    db.refresh(fake_publish)
+    assert fake_publish.state == "PENDING"
+
+    # Allow DynamoDB write to succeed, and try again.
+    task.state = "PENDING"
+    db.commit()
+    mock_write_batch.side_effect = None
+    mock_write_batch.return_value = True
+
+    # Do the commit.
+    worker.commit(
+        str(fake_publish.id),
+        fake_publish.env,
+        NOW_UTC.isoformat(),
+        commit_mode="phase1",
+    )
+
+    # It should've set task state to COMPLETE.
+    db.refresh(task)
+    assert task.state == "COMPLETE"
+
+    # But it should still NOT have updated the publish state.
+    db.refresh(fake_publish)
+    assert fake_publish.state == "PENDING"
+
+    # It should only have processed the phase1 items (e.g. not entry points),
+    # which should be reflected in the 'dirty' state:
+    assert sorted(
+        [{"web_uri": i.web_uri, "dirty": i.dirty} for i in fake_publish.items],
+        key=lambda d: d["web_uri"],
+    ) == [
+        {"dirty": False, "web_uri": "/other/path"},
+        {"dirty": False, "web_uri": "/some/path"},
+        # repomd.xml is not yet written and therefore remains dirty
+        {"dirty": True, "web_uri": "/to/repomd.xml"},
+    ]
+
+    # It should have told us how many it wrote and how many remain
+    assert (
+        "Phase 1: committed 2 items, phase 2: 1 items remaining" in caplog.text
+    )
+
+    # Let's do the same commit again...
+    caplog.clear()
+    task.state = "PENDING"
+    db.commit()
+
+    worker.commit(
+        str(fake_publish.id),
+        fake_publish.env,
+        NOW_UTC.isoformat(),
+        commit_mode="phase1",
+    )
+
+    # This time there should not have been any phase1 items processed at all,
+    # as none of them were dirty.
+    assert (
+        "Phase 1: committed 0 items, phase 2: 1 items remaining" in caplog.text
+    )
+
+    # And it should NOT have invoked the autoindex enricher in either commit
+    mock_autoindex_run.assert_not_called()

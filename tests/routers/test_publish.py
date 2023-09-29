@@ -2,6 +2,7 @@ import json
 
 import mock
 import pytest
+import sqlalchemy.orm
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from freezegun import freeze_time
@@ -651,21 +652,28 @@ def test_update_publish_items_no_publish(auth_header):
 
 
 @pytest.mark.parametrize(
-    "deadline",
-    [None, "2022-07-25T15:47:47Z"],
-    ids=["typical", "with deadline"],
+    "deadline,commit_mode",
+    [(None, None), ("2022-07-25T15:47:47Z", None), (None, "phase1")],
+    ids=["typical", "with deadline", "phase1"],
 )
 @freeze_time("2023-04-26 14:43:13.570034+00:00")
-def test_commit_publish(deadline, auth_header, db, caplog):
+def test_commit_publish(deadline, commit_mode, auth_header, db, caplog):
     """Ensure commit_publish delegates to worker and creates task."""
+
+    # server is expected to apply default of phase2 if commit mode was unspecified.
+    expected_commit_mode = commit_mode or "phase2"
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
 
     publish = Publish(id=publish_id, env="test", state="PENDING")
 
     url = "/test/publish/11224567-e89b-12d3-a456-426614174000/commit"
+
+    params = {}
     if deadline:
-        url += "?deadline=%s" % deadline
+        params["deadline"] = deadline
+    if commit_mode:
+        params["commit_mode"] = commit_mode
 
     with TestClient(app) as client:
         # ensure a publish object exists
@@ -673,7 +681,9 @@ def test_commit_publish(deadline, auth_header, db, caplog):
         db.commit()
 
         # Try to commit it
-        r = client.post(url, headers=auth_header(roles=["test-publisher"]))
+        r = client.post(
+            url, params=params, headers=auth_header(roles=["test-publisher"])
+        )
 
     # It should have succeeded
     assert r.status_code == 200
@@ -696,7 +706,7 @@ def test_commit_publish(deadline, auth_header, db, caplog):
             "auth",
         ),
         (
-            "Enqueued commit for '11224567-e89b-12d3-a456-426614174000'",
+            f"Enqueued {expected_commit_mode} commit for '11224567-e89b-12d3-a456-426614174000'",
             "publish",
         ),
     ]:
@@ -714,6 +724,63 @@ def test_commit_publish(deadline, auth_header, db, caplog):
             )
             in caplog.text
         )
+
+
+def test_commit_publish_phase1(
+    auth_header, db: sqlalchemy.orm.Session, caplog
+):
+    """Ensure distinct behaviors of phase1 commit:
+
+    - can be invoked more than once for a single publish
+    - does not cause the publish to change state
+    """
+
+    commit_count = 3
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(id=publish_id, env="test", state="PENDING")
+
+    url = "/test/publish/11224567-e89b-12d3-a456-426614174000/commit"
+
+    task_ids = []
+    with TestClient(app) as client:
+        db.add(publish)
+        db.commit()
+
+        # We should be able to commit this publish *multiple* times
+        # since we're requesting a phase1 commit.
+        for _ in range(0, commit_count):
+            r = client.post(
+                url,
+                params={"commit_mode": "phase1"},
+                headers=auth_header(roles=["test-publisher"]),
+            )
+
+            # It should have succeeded
+            assert r.status_code == 200
+
+            # Keep task IDs for later
+            task_ids.append(r.json()["id"])
+
+    # The publish object should still be PENDING.
+    db.refresh(publish)
+    assert publish.state == "PENDING"
+
+    # Get all the created tasks
+    tasks = db.query(CommitTask).all()
+
+    # It should have made a separate task per commit request
+    assert len(tasks) == commit_count
+
+    # Matching the IDs returned from the API
+    assert sorted([t.id for t in tasks]) == sorted(task_ids)
+
+    for task in tasks:
+        # Should be associated with our publish
+        assert task.publish_id == publish.id
+
+        # Should be marked as a phase1 publish
+        assert task.commit_mode == "phase1"
 
 
 def test_commit_publish_bad_deadline(auth_header, db):
@@ -739,6 +806,29 @@ def test_commit_publish_bad_deadline(auth_header, db):
     )
 
 
+def test_commit_publish_bad_mode(auth_header, db):
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(id=publish_id, env="test", state="PENDING")
+
+    url = "/test/publish/11224567-e89b-12d3-a456-426614174000/commit"
+    url += "?commit_mode=bad"
+
+    with TestClient(app) as client:
+        # ensure a publish object exists
+        db.add(publish)
+        db.commit()
+
+        # Try to commit it
+        r = client.post(url, headers=auth_header(roles=["test-publisher"]))
+
+    # It should tell me the request was invalid
+    assert r.status_code == 400
+
+    # It should tell me why
+    assert r.json()["detail"] == ["Input should be 'phase1' or 'phase2'"]
+
+
 @mock.patch("exodus_gw.worker.commit")
 def test_commit_publish_in_progress(mock_commit, fake_publish, db):
     """Ensure commit_publish is idempotent."""
@@ -760,6 +850,7 @@ def test_commit_publish_in_progress(mock_commit, fake_publish, db):
         publish_id=fake_publish.id,
         db=db,
         settings=Settings(),
+        commit_mode=None,
     )
 
     # It should have returned the task associated with the publish.
@@ -786,6 +877,7 @@ def test_commit_publish_prev_completed(mock_commit, fake_publish, db):
             publish_id=fake_publish.id,
             db=db,
             settings=Settings(),
+            commit_mode=None,
         )
 
     assert exc_info.value.status_code == 409
@@ -842,6 +934,7 @@ def test_commit_publish_linked_items(mock_commit, fake_publish, db):
         publish_id=fake_publish.id,
         db=db,
         settings=Settings(),
+        commit_mode=None,
     )
 
     # Should've filled ln_item1's object_key with that of item1.
@@ -863,6 +956,7 @@ def test_commit_publish_linked_items(mock_commit, fake_publish, db):
                 publish_id="123e4567-e89b-12d3-a456-426614174000",
                 env="test",
                 from_date=mock.ANY,
+                commit_mode="phase2",
             )
         ],
     )
@@ -890,6 +984,7 @@ def test_commit_publish_unresolved_links(mock_commit, fake_publish, db):
             publish_id=fake_publish.id,
             db=db,
             settings=Settings(),
+            commit_mode=None,
         )
 
     assert exc_info.value.status_code == 400
