@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session, lazyload
 
 from exodus_gw.aws.dynamodb import DynamoDB
 from exodus_gw.database import db_engine
-from exodus_gw.models import Item, Publish, Task
+from exodus_gw.models import CommitTask, Item, Publish
 from exodus_gw.schemas import PublishStates, TaskStates
 from exodus_gw.settings import Settings, get_environment
 
@@ -244,7 +244,11 @@ class Commit:
         return False
 
     def _query_task(self, actor_msg_id: str):
-        return self.db.query(Task).filter(Task.id == actor_msg_id).first()
+        return (
+            self.db.query(CommitTask)
+            .filter(CommitTask.id == actor_msg_id)
+            .first()
+        )
 
     def _query_publish(self, publish_id: str):
         publish = (

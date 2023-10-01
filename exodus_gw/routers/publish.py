@@ -242,7 +242,7 @@ def commit_publish(
     deadline: Union[str, None] = Query(
         default=None, examples=["2022-07-25T15:47:47Z"]
     ),
-) -> models.Task:
+) -> models.CommitTask:
     """Commit an existing publish object.
 
     **Required roles**: `{env}-publisher`
@@ -295,8 +295,8 @@ def commit_publish(
     if db_publish.state != "PENDING":
         # Check if there is already an associated task and, if so, return it rather than raise.
         task = (
-            db.query(models.Task)
-            .filter(models.Task.publish_id == publish_id)
+            db.query(models.CommitTask)
+            .filter(models.CommitTask.publish_id == publish_id)
             .first()
         )
         if task:
@@ -323,7 +323,7 @@ def commit_publish(
     )
     db_publish.state = schemas.PublishStates.committing
 
-    task = models.Task(
+    task = models.CommitTask(
         id=msg.message_id,
         publish_id=msg.kwargs["publish_id"],
         state="NOT_STARTED",

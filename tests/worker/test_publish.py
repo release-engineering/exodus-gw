@@ -13,7 +13,7 @@ NOW_UTC = datetime.utcnow()
 
 
 def _task(publish_id):
-    return models.Task(
+    return models.CommitTask(
         id="8d8a4692-c89b-4b57-840f-b3f0166148d2",
         publish_id=publish_id,
         state="NOT_STARTED",

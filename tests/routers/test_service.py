@@ -64,7 +64,7 @@ def test_get_task(db):
     publish_id = "48c67d99-5dd6-4939-ad1c-072639eee35a"
     task_id = "8d8a4692-c89b-4b57-840f-b3f0166148d2"
 
-    task = models.Task(
+    task = models.CommitTask(
         id=task_id,
         publish_id=publish_id,
         state="NOT_STARTED",

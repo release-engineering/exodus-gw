@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import pytest
 from sqlalchemy.orm.exc import ObjectDeletedError
 
-from exodus_gw.models import Item, Publish, Task
+from exodus_gw.models import CommitTask, Item, Publish
 from exodus_gw.schemas import PublishStates, TaskStates
 from exodus_gw.worker import cleanup
 
@@ -55,7 +55,7 @@ def test_cleanup_mixed(caplog, db):
         state=PublishStates.committed,
         updated=None,
     )
-    t1_missing_ts = Task(
+    t1_missing_ts = CommitTask(
         id=str(uuid.uuid4()),
         publish_id=p1_missing_ts.id,
         state=TaskStates.failed,
@@ -79,7 +79,7 @@ def test_cleanup_mixed(caplog, db):
         state=PublishStates.committing,
         updated=thirty_days_ago,
     )
-    t1_abandoned = Task(
+    t1_abandoned = CommitTask(
         id=str(uuid.uuid4()),
         publish_id=p1_abandoned.id,
         state=TaskStates.in_progress,
@@ -103,7 +103,7 @@ def test_cleanup_mixed(caplog, db):
         state=PublishStates.failed,
         updated=thirty_days_ago,
     )
-    t1_old = Task(
+    t1_old = CommitTask(
         id=str(uuid.uuid4()),
         publish_id=p1_old.id,
         state=TaskStates.failed,
@@ -122,7 +122,7 @@ def test_cleanup_mixed(caplog, db):
         state=PublishStates.pending,
         updated=half_day_ago,
     )
-    t1_recent = Task(
+    t1_recent = CommitTask(
         id=str(uuid.uuid4()),
         publish_id=p1_recent.id,
         state=TaskStates.complete,
