@@ -1,15 +1,16 @@
 import gzip
 import hashlib
 import logging
+import os
 import tempfile
 from time import monotonic
 from typing import AsyncGenerator, BinaryIO, Generator, Optional
 
+import aioboto3
 from repo_autoindex import ContentError, Fetcher, autoindex
 from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 
-from exodus_gw.aws.client import S3ClientWrapper
 from exodus_gw.models import Item, Publish
 from exodus_gw.settings import Environment, Settings, get_environment
 
@@ -245,7 +246,12 @@ class AutoindexEnricher:
             extra={"event": "publish"},
         )
 
-        async with S3ClientWrapper(profile=self.env.aws_profile) as s3_client:
+        session = aioboto3.Session(profile_name=self.env.aws_profile)
+
+        async with session.client(
+            "s3",
+            endpoint_url=os.environ.get("EXODUS_GW_S3_ENDPOINT_URL") or None,
+        ) as s3_client:
             fetcher = self.fetcher_for_client(s3_client)
             for base_uri in uris:
                 try:
