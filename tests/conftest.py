@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+from datetime import datetime
 from typing import List
 
 import dramatiq
@@ -189,16 +190,19 @@ def fake_publish():
             web_uri="/some/path",
             object_key="0bacfc5268f9994065dd858ece3359fd7a99d82af5be84202b8e84c2a5b07ffa",
             publish_id=publish.id,
+            updated=datetime(2023, 10, 4, 3, 52, 0),
         ),
         models.Item(
             web_uri="/other/path",
             object_key="e448a4330ff79a1b20069d436fae94806a0e2e3a6b309cd31421ef088c6439fb",
             publish_id=publish.id,
+            updated=datetime(2023, 10, 4, 3, 52, 1),
         ),
         models.Item(
             web_uri="/to/repomd.xml",
             object_key="3f449eb3b942af58e9aca4c1cffdef89c3f1552c20787ae8c966767a1fedd3a5",
             publish_id=publish.id,
+            updated=datetime(2023, 10, 4, 3, 52, 2),
         ),
     ]
     yield publish

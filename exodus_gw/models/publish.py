@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Union
 
 from fastapi import HTTPException
 from sqlalchemy import (
@@ -81,11 +81,6 @@ class Publish(Base):
             ln_item.content_type = match.get("content_type")
 
 
-@event.listens_for(Publish, "before_update")
-def publish_before_update(_mapper, _connection, publish):
-    publish.updated = datetime.utcnow()
-
-
 class Item(Base):
     __tablename__ = "items"
     __table_args__ = (
@@ -107,8 +102,23 @@ class Item(Base):
     dirty: Mapped[bool] = mapped_column(Boolean, default=True)
     """True if item still needs to be written to DynamoDB."""
 
+    updated: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow
+    )
+    """Last modification/creation time of the item.
+
+    This will be eventually persisted as `from_date` on the corresponding
+    DynamoDB item.
+    """
+
     publish_id: Mapped[str] = mapped_column(
         Uuid(as_uuid=False), ForeignKey("publishes.id")
     )
 
     publish = relationship("Publish", back_populates="items")
+
+
+@event.listens_for(Publish, "before_update")
+@event.listens_for(Item, "before_update")
+def set_updated(_mapper, _connection, entity: Union[Publish, Item]):
+    entity.updated = datetime.utcnow()

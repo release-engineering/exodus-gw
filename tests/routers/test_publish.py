@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timedelta
 
 import mock
 import pytest
@@ -275,10 +276,14 @@ def test_update_publish_items_no_uri(db, auth_header):
     assert len(r.headers["X-Request-ID"]) == 8
 
 
+@freeze_time("2023-04-26 14:43:13+00:00")
 def test_update_publish_items_existing_uri(db, auth_header):
     """PUTting an item which item's web_uri already exists creates expected objects in DB."""
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    new_updated = datetime(2023, 4, 26, 14, 43, 13)
+    prev_updated = new_updated - timedelta(hours=2)
 
     publish = Publish(
         id=publish_id,
@@ -289,11 +294,15 @@ def test_update_publish_items_existing_uri(db, auth_header):
                 web_uri="/uri1",
                 object_key="1" * 64,
                 publish_id=publish_id,
+                dirty=False,
+                updated=prev_updated,
             ),
             Item(
                 web_uri="/uri2",
                 object_key="2" * 64,
                 publish_id=publish_id,
+                dirty=False,
+                updated=prev_updated,
             ),
         ],
     )
@@ -326,19 +335,28 @@ def test_update_publish_items_existing_uri(db, auth_header):
         {
             "web_uri": item.web_uri,
             "object_key": item.object_key,
+            "dirty": item.dirty,
+            "updated": item.updated,
         }
         for item in items
     ]
 
-    # Should have stored exactly what we asked for
     assert item_dicts == [
         {
+            # /uri1 was updated, so the object_key/dirty/updated
+            # are all different from before.
             "web_uri": "/uri1",
             "object_key": "3" * 64,
+            "dirty": True,
+            "updated": new_updated,
         },
         {
+            # /uri2 was not updated, so it's not dirty and still
+            # has the old update time.
             "web_uri": "/uri2",
             "object_key": "2" * 64,
+            "dirty": False,
+            "updated": prev_updated,
         },
     ]
 

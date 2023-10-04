@@ -89,6 +89,13 @@ class DynamoDB:
                 uri_aliases.extend(v)
 
         for item in items:
+            # Items carry their own from_date. This effectively resolves
+            # conflicts in the case of two publishes updating the same web_uri
+            # at the same time; commits can be done in either order, and after
+            # both commits complete, the "winner" is whoever had the latest
+            # updated timestamp.
+            from_date = str(item.updated)
+
             web_uri = uri_alias(item.web_uri, uri_aliases)
 
             if delete:
@@ -96,7 +103,7 @@ class DynamoDB:
                     {
                         "DeleteRequest": {
                             "Key": {
-                                "from_date": {"S": self.from_date},
+                                "from_date": {"S": from_date},
                                 "web_uri": {"S": web_uri},
                             }
                         }
@@ -107,7 +114,7 @@ class DynamoDB:
                     {
                         "PutRequest": {
                             "Item": {
-                                "from_date": {"S": self.from_date},
+                                "from_date": {"S": from_date},
                                 "web_uri": {"S": web_uri},
                                 "object_key": {"S": item.object_key},
                                 "content_type": {"S": item.content_type},
