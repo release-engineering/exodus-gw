@@ -4,6 +4,7 @@ from typing import Optional
 
 from fastapi import HTTPException
 from sqlalchemy import (
+    Boolean,
     DateTime,
     ForeignKey,
     String,
@@ -102,6 +103,10 @@ class Item(Base):
     object_key: Mapped[Optional[str]] = mapped_column(String)
     content_type: Mapped[Optional[str]] = mapped_column(String)
     link_to: Mapped[Optional[str]] = mapped_column(String)
+
+    dirty: Mapped[bool] = mapped_column(Boolean, default=True)
+    """True if item still needs to be written to DynamoDB."""
+
     publish_id: Mapped[str] = mapped_column(
         Uuid(as_uuid=False), ForeignKey("publishes.id")
     )
