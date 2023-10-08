@@ -7,6 +7,7 @@ from time import monotonic
 from typing import AsyncGenerator, BinaryIO, Generator, Optional
 
 import aioboto3
+from botocore.exceptions import ClientError
 from repo_autoindex import ContentError, Fetcher, autoindex
 from sqlalchemy import inspect
 from sqlalchemy.orm import Session
@@ -170,6 +171,23 @@ class AutoindexEnricher:
             environment=self.env,
         )
 
+    async def object_exists(self, s3_client, key: str) -> bool:
+        try:
+            await s3_client.head_object(Bucket=self.env.bucket, Key=key)
+            # Any successful response indicates that the object exists.
+            return True
+        except ClientError as exc_info:
+            code = (exc_info.response.get("Error") or {}).get("Code") or 500
+            code = int(code)
+
+            if code == 404:
+                # 404 error is the normal way of reporting that an object
+                # doesn't exist
+                return False
+
+            # Any other error has an unclear cause and should propagate.
+            raise
+
     async def autoindex_items(
         self, s3_client, fetcher: Fetcher, base_uri: str
     ) -> AsyncGenerator[Item, None]:
@@ -181,6 +199,7 @@ class AutoindexEnricher:
         """
         before = monotonic()
         count = 0
+        upload_count = 0
 
         async for idx in autoindex(
             base_uri,
@@ -197,20 +216,23 @@ class AutoindexEnricher:
             content_bytes = idx.content.encode("utf-8")
             content_key = object_key(content_bytes)
 
-            response = await s3_client.put_object(
-                Body=content_bytes,
-                ContentLength=len(content_bytes),
-                Bucket=self.env.bucket,
-                Key=content_key,
-            )
+            if not await self.object_exists(s3_client, content_key):
+                upload_count += 1
 
-            LOG.info(
-                "Uploaded autoindex %s => %s (ETag: %s)",
-                web_uri,
-                content_key,
-                response.get("ETag"),
-                extra={"event": "publish", "success": True},
-            )
+                response = await s3_client.put_object(
+                    Body=content_bytes,
+                    ContentLength=len(content_bytes),
+                    Bucket=self.env.bucket,
+                    Key=content_key,
+                )
+
+                LOG.info(
+                    "Uploaded autoindex %s => %s (ETag: %s)",
+                    web_uri,
+                    content_key,
+                    response.get("ETag"),
+                    extra={"event": "publish", "success": True},
+                )
 
             item = Item(
                 web_uri=web_uri,
@@ -222,9 +244,10 @@ class AutoindexEnricher:
 
         duration = monotonic() - before
         LOG.info(
-            "autoindex of %s generated %s item(s) in %.02f second(s)",
+            "autoindex of %s: generated %s, uploaded %s item(s) in %.02f second(s)",
             base_uri,
             count,
+            upload_count,
             duration,
             extra={"event": "publish", "success": True},
         )
