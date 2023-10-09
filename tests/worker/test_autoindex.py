@@ -2,6 +2,8 @@ import gzip
 from asyncio import StreamReader
 from collections.abc import Mapping
 
+import pytest
+from botocore.exceptions import ClientError
 from pytest import LogCaptureFixture
 from sqlalchemy.orm import Session
 
@@ -225,6 +227,23 @@ async def test_enricher_mixed(
 
     mock_aws_client.put_object.side_effect = put_object
 
+    # head_object will be called per each object we're about to upload.
+    # There are 5 in total. We'll make it so there's a mix of successful
+    # calls and 404 errors (missing objects).
+    mock_aws_client.head_object.side_effect = [
+        {},
+        ClientError(
+            {"Error": {"Code": "404"}},
+            "HeadObject",
+        ),
+        {},
+        ClientError(
+            {"Error": {"Code": "404"}},
+            "HeadObject",
+        ),
+        {},
+    ]
+
     db.commit()
 
     settings = load_settings()
@@ -267,7 +286,15 @@ async def test_enricher_mixed(
         == "existing-index-key"
     )
 
-    # It should log a summary
+    # It should log a per-repo summary which includes how many items
+    # were uploaded
+    assert (
+        "autoindex of /some/yum-repo: generated 4, uploaded 2 item(s)"
+        in caplog.text
+    )
+
+    # It should log a global summary also, covering all items in the publish.
+    # This log does not have access to the upload count.
     assert "autoindex complete: generated 5 item(s)" in caplog.text
 
     # It should warn for the repo which was skipped
@@ -295,3 +322,59 @@ async def test_enricher_mixed(
         b'<a href="walrus-5.21-1.noarch.rpm">walrus-5.21-1.noarch.rpm</a>'
         in put_content
     )
+
+
+async def test_enricher_head_errors(
+    db: Session, caplog: LogCaptureFixture, mock_aws_client
+):
+    """AutoindexEnricher should propagate errors during S3 HEAD requests."""
+
+    caplog.set_level("DEBUG", "exodus-gw")
+
+    publish = Publish(env="test", state="PENDING")
+    db.add(publish)
+    db.commit()
+
+    db.add_all(
+        [
+            Item(
+                publish_id=publish.id,
+                web_uri="/some/file-repo/PULP_MANIFEST",
+                object_key="key1",
+            ),
+        ]
+    )
+
+    # Arrange for some matching content to be available in S3
+    mock_aws_client.get_object.side_effect = FakeS3Getter(
+        expected_bucket="my-bucket",
+        responses={
+            # valid PULP_MANIFEST
+            "key1": (
+                (
+                    b"somefile,fa687b8f847b5301b6da817fdbe612558aa69c65584ec5781f3feb0c19ff8f24,379584512\r\n"
+                    b"anotherfile,eab749310c95b4751ef9df7d7906ae0b8021c8e0dbc280c3efc8e967d5e60e71,4324327424\r\n"
+                ),
+                {"content-type": "text/plain"},
+            ),
+        },
+    )
+
+    head_error = ClientError(
+        {"Error": {"Code": "403"}},
+        "HeadObject",
+    )
+
+    mock_aws_client.head_object.side_effect = head_error
+
+    db.commit()
+
+    settings = load_settings()
+    enricher = AutoindexEnricher(publish, "test", settings)
+
+    # It should fail
+    with pytest.raises(ClientError) as excinfo:
+        await enricher.run()
+
+    # Should have propagated exactly the original error
+    assert excinfo.value is head_error
