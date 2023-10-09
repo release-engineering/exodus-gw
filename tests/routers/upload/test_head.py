@@ -52,7 +52,15 @@ async def test_head_nonexistent_key(mock_aws_client, auth_header):
     """Head handles 404 responses correctly."""
 
     mock_aws_client.head_object.side_effect = ClientError(
-        {"Error": {"Code": "404"}},
+        {
+            "Error": {
+                "Code": "NoSuchKey",
+                "Message": "The resource you requested does not exist",
+            },
+            "ResponseMetadata": {
+                "HTTPStatusCode": 404,
+            },
+        },
         "HeadObject",
     )
 
@@ -63,21 +71,3 @@ async def test_head_nonexistent_key(mock_aws_client, auth_header):
         )
 
     assert r.status_code == 404
-
-
-async def test_head_logs_error(mock_aws_client, auth_header, caplog):
-    """Head logs unexpected errors correctly."""
-
-    mock_aws_client.head_object.side_effect = ClientError(
-        {"Error": {"Code": "501"}},
-        "HeadObject",
-    )
-
-    with TestClient(app) as client:
-        r = client.head(
-            "/upload/test/%s" % TEST_KEY,
-            headers=auth_header(roles=["test-blob-uploader"]),
-        )
-
-    assert r.status_code == 501
-    assert "HEAD to S3 failed" in caplog.text

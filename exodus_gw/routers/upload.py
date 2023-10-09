@@ -71,7 +71,6 @@ import logging
 import textwrap
 from typing import Dict, Optional
 
-from botocore.exceptions import ClientError
 from fastapi import APIRouter, HTTPException, Path, Query, Request, Response
 
 from .. import auth, deps
@@ -368,31 +367,7 @@ async def head(
 
     validate_object_key(key)
 
-    try:
-        response = await s3.head_object(Bucket=env.bucket, Key=key)  # type: ignore
-    except ClientError as exc_info:
-        # According to botocore documentation, it is safe to rely on
-        # the API to throw exceptions for any non-2xx response.
-        code = (exc_info.response.get("Error") or {}).get("Code") or 500
-        code = int(code)
-
-        if code == 404:
-            # This is normal if asked about a nonexistent object
-            LOG.debug(
-                "404 when querying %s %s",
-                env.name,
-                key,
-                exc_info=True,
-                extra={"event": "upload"},
-            )
-        else:
-            # This is cause for concern
-            LOG.exception(
-                "HEAD to S3 failed",
-                extra={"event": "upload", "success": False},
-            )
-
-        return Response(status_code=code)
+    response = await s3.head_object(Bucket=env.bucket, Key=key)  # type: ignore
 
     headers = {"ETag": response["ETag"]}
     for k, v in response["Metadata"].items():
