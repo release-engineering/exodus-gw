@@ -8,7 +8,8 @@ import dramatiq
 from dramatiq import Message, MessageProxy
 from sqlalchemy.orm import Session
 
-from exodus_gw.models import DramatiqConsumer, DramatiqMessage
+from exodus_gw.models import DramatiqConsumer, DramatiqMessage, Task
+from exodus_gw.schemas import TaskStates
 from exodus_gw.settings import Settings
 
 LOG = logging.getLogger("exodus-gw")
@@ -229,14 +230,9 @@ class Consumer(dramatiq.Consumer):
     def nack(self, message):
         # Called when a message failed (after all retries exhausted).
         #
-        # We'll clean it up, and can't really do anything else except log
-        # an error.
+        # We'll clean it up, and can't really do anything else except
+        # mark any associated task as failed and log an error.
         with self.__db_session() as db:
-            db.query(DramatiqMessage).filter(
-                DramatiqMessage.id == message.message_id
-            ).delete()
-            db.commit()
-
             LOG.error(
                 "%s: message failed: %s\n%s",
                 self.__consumer_id,
@@ -244,6 +240,30 @@ class Consumer(dramatiq.Consumer):
                 # Dump whole message in log so there's a permanent record
                 message.asdict(),
             )
+
+            # The message is deleted as there will be no further retries.
+            db.query(DramatiqMessage).filter(
+                DramatiqMessage.id == message.message_id
+            ).delete()
+
+            # If there is any task associated with the message, and the task
+            # is in a non-terminal state, it should be marked as failed.
+            db.query(Task).filter(
+                Task.id == message.message_id,
+                Task.state.in_(
+                    [
+                        TaskStates.not_started.value,
+                        TaskStates.in_progress.value,
+                    ]
+                ),
+            ).update(
+                {
+                    Task.state: TaskStates.failed.value,
+                    Task.updated: datetime.utcnow(),
+                }
+            )
+
+            db.commit()
 
     def close(self):
         if not self.__started:

@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 
 from exodus_gw.dramatiq.broker import Broker
 from exodus_gw.main import app
-from exodus_gw.models import DramatiqMessage
+from exodus_gw.models import CommitTask, DramatiqMessage, Publish
 
 # How many worker threads we use.
 # Some tests need to know this.
@@ -50,6 +50,12 @@ class Actors:
         self.always_fails = dramatiq.actor(
             self.always_fails, broker=broker, max_backoff=0.001, max_retries=1
         )
+        self.always_fails_blocking = dramatiq.actor(
+            self.always_fails_blocking,
+            broker=broker,
+            max_backoff=0.001,
+            max_retries=1,
+        )
         self.succeeds_on_retry = dramatiq.actor(
             self.succeeds_on_retry, broker=broker, max_backoff=0.001
         )
@@ -79,6 +85,11 @@ class Actors:
     def always_fails(self):
         self.record_call("always_fails")
         raise RuntimeError("I always fail!")
+
+    def always_fails_blocking(self):
+        self.blocking_sem.acquire()
+        self.record_call("always_fails_blocking")
+        raise RuntimeError("I always fail (once I'm unblocked)!")
 
     def succeeds_on_retry(self):
         should_fail = "succeeds_on_retry" not in self.actor_calls
@@ -257,6 +268,41 @@ def test_actors_fail(actors, caplog):
 
     # That message should have all the info, including traceback
     assert "I always fail" in failure_message()[0]
+
+
+def test_actors_fail_task(db: Session, actors):
+    """A failing actor marks corresponding Task as failed."""
+
+    msg = actors.always_fails_blocking.send()
+
+    # The actor is going to fail, but it's not allowed to proceed until we
+    # unblock the semaphore. Meanwhile let's set up a Task for that message,
+    # similarly how Commit works for real.
+    publish = Publish(
+        env="test",
+        state="COMMITTING",
+        id="8b844e25-5664-4c31-9a9e-2720182b5db3",
+    )
+    task = CommitTask(
+        id=msg.message_id,
+        publish_id="8b844e25-5664-4c31-9a9e-2720182b5db3",
+        state="IN_PROGRESS",
+    )
+    db.add(publish)
+    db.add(task)
+    db.commit()
+
+    def task_refreshed_state() -> str:
+        db.refresh(task)
+        return task.state
+
+    # Allow the actor to proceed now.
+    # Semaphore released twice since the actor is set up to retry once.
+    actors.blocking_sem.release(2)
+
+    # As a side-effect of the actor failing, the task's state should
+    # transition to FAILED.
+    assert_soon(lambda: task_refreshed_state() == "FAILED")
 
 
 def test_mixed_queues(actors, db):
