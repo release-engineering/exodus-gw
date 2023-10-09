@@ -58,10 +58,12 @@ If you are a client looking to make use of exodus-gw, consult your organization'
 internal documentation for advice on which environment(s) you should be using.
 """
 
+import logging
 import re
 from uuid import uuid4
 
 import backoff
+import botocore.exceptions
 import dramatiq
 from asgi_correlation_id import CorrelationIdMiddleware, correlation_id
 from fastapi import Depends, FastAPI, Request
@@ -102,6 +104,8 @@ app.include_router(publish.router)
 app.include_router(deploy.router)
 app.include_router(cdn.router)
 
+LOG = logging.getLogger("exodus-gw")
+
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request, exc):
@@ -132,10 +136,73 @@ async def custom_http_exception_handler(request, exc):
 
     if path.startswith("/upload"):
         return xml_response(
-            "Error", Code=exc.status_code, Message=exc.detail, Endpoint=path
+            "Error",
+            status_code=exc.status_code,
+            # Note in the real S3, the Code here is meant to be a short
+            # string like "AccessDenied". But in this generic handler
+            # we have no idea what that should be, hence the reusing of
+            # the HTTP status code.
+            #
+            # In most cases an error should be surfacing in the ClientError
+            # handler below instead, which handles things more accurately.
+            Code=exc.status_code,
+            Message=exc.detail,
+            Endpoint=path,
         )
 
     return await http_exception_handler(request, exc)
+
+
+@app.exception_handler(botocore.exceptions.ClientError)
+async def boto_exception_handler(
+    request, exc: botocore.exceptions.ClientError
+):
+    path = request.scope.get("path")
+
+    # The /upload API is the only API where boto is (directly) used internally,
+    # and so is the only API where we expect to reach this handler.
+    #
+    # It's also the only API where the currently implemented behavior makes sense,
+    # as the XML responses are S3-specific. If we manage to get here outside
+    # of "/upload", it's a bug.
+    assert path.startswith("/upload")
+
+    # In the case of the /upload API, we want it to be S3-compatible and to pass
+    # on any errors from the real upstream S3. Extract the error detail from the
+    # exception and return it as an S3-style XML response.
+    #
+    # This is important so that boto or other S3 clients using exodus-gw will get
+    # the expected error handling behavior (e.g. it should retry on certain status
+    # codes and not others).
+    #
+    # Example of the exc.response structure:
+    #
+    # {
+    #     "Error": {
+    #         "Code": "SomeServiceException",
+    #         "Message": "Details/context around the exception or error",
+    #     },
+    #     "ResponseMetadata": {
+    #         "RequestId": "1234567890ABCDEF",
+    #         "HostId": "host ID data will appear here as a hash",
+    #         "HTTPStatusCode": 400,
+    #         "HTTPHeaders": {"header metadata key/values will appear here"},
+    #         "RetryAttempts": 0,
+    #     },
+    # }
+    #
+    # Note, if any parsing of exc.response fails here we'll crash and
+    # the generic 500 internal server error handler will take over.
+    LOG.debug("Processing upload error from boto: %s", exc.response)
+
+    return xml_response(
+        "Error",
+        status_code=exc.response["ResponseMetadata"]["HTTPStatusCode"],
+        Code=exc.response["Error"]["Code"],
+        Message=exc.response["Error"]["Message"],
+        Resource=path,
+        RequestId=correlation_id.get() or "",
+    )
 
 
 def db_init() -> None:

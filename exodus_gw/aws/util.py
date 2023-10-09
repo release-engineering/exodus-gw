@@ -111,7 +111,7 @@ def xml_response(operation: str, **kwargs) -> Response:
     """
     root = Element(operation)
 
-    status_code = kwargs.get("Code", 200)
+    status_code = kwargs.pop("status_code", 200)
 
     for key, value in kwargs.items():
         child = SubElement(root, key)

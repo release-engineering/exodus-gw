@@ -1,7 +1,6 @@
-from uuid import UUID
-
 import mock
 import pytest
+from botocore.exceptions import ClientError
 from fastapi.testclient import TestClient
 
 from exodus_gw.main import app
@@ -117,3 +116,41 @@ async def test_upload_invalid_metadata(
     # It should fail with the correct error
     assert r.status_code == 400
     assert err_msg in r.text
+
+
+async def test_put_error(mock_aws_client, mock_request_reader, auth_header):
+    """An error response on an upload to S3 is passed back to the client correctly."""
+
+    headers = auth_header(roles=["test-blob-uploader"])
+    headers["X-Request-Id"] = "aabbccdd"
+
+    mock_request_reader.return_value = b"some bytes"
+    mock_aws_client.put_object.side_effect = ClientError(
+        {
+            "Error": {
+                "Code": "SomeError",
+                "Message": "A fake error for testing",
+            },
+            "ResponseMetadata": {
+                "HTTPStatusCode": 412,
+            },
+        },
+        "PutObject",
+    )
+
+    with TestClient(app) as client:
+        r = client.put("/upload/test/%s" % TEST_KEY, headers=headers)
+
+    # It should fail, with same status as in the boto error
+    assert r.status_code == 412
+
+    # The body should contain an S3-style XML error similar to:
+    # https://docs.aws.amazon.com/AmazonS3/latest/API/ErrorResponses.html#RESTErrorResponses
+    assert r.text == (
+        "<?xml version='1.0' encoding='UTF-8'?>\n"
+        "<Error><Code>SomeError</Code>"
+        "<Message>A fake error for testing</Message>"
+        "<Resource>/upload/test/b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c</Resource>"
+        "<RequestId>aabbccdd</RequestId>"
+        "</Error>"
+    )
