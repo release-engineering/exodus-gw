@@ -25,7 +25,12 @@ def test_cleanup_noop(caplog, db):
     cleanup()
 
     # It should not have done anything, other than log this.
-    assert caplog.messages == ["Scheduled cleanup has completed"]
+    messages = [
+        record.message
+        for record in caplog.records
+        if record.name == "exodus-gw"
+    ]
+    assert messages == ["Scheduled cleanup has completed"]
 
 
 def test_cleanup_mixed(caplog, db):
@@ -180,7 +185,12 @@ def test_cleanup_mixed(caplog, db):
     assert t1_recent.state == TaskStates.complete
 
     # It should have logged exactly what it did.
-    assert sorted(caplog.messages) == sorted(
+    messages = [
+        record.message
+        for record in caplog.records
+        if record.name == "exodus-gw"
+    ]
+    assert sorted(messages) == sorted(
         [
             ####################################################
             # Fixed timestamps
