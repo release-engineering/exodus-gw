@@ -6,12 +6,12 @@ import tempfile
 from time import monotonic
 from typing import AsyncGenerator, BinaryIO, Generator, Optional
 
-import aioboto3
 from botocore.exceptions import ClientError
 from repo_autoindex import ContentError, Fetcher, autoindex
 from sqlalchemy import inspect
 from sqlalchemy.orm import Session
 
+from exodus_gw.aws.client import aioboto_session
 from exodus_gw.models import Item, Publish
 from exodus_gw.settings import Environment, Settings, get_environment
 
@@ -269,7 +269,7 @@ class AutoindexEnricher:
             extra={"event": "publish"},
         )
 
-        session = aioboto3.Session(profile_name=self.env.aws_profile)
+        session = aioboto_session(profile_name=self.env.aws_profile)
 
         async with session.client(
             "s3",

@@ -4,6 +4,20 @@ import aioboto3
 import boto3.session
 from botocore.config import Config
 
+from .log import add_loggers
+
+
+def boto_session(*args, **kwargs) -> boto3.session.Session:
+    out = boto3.session.Session(*args, **kwargs)
+    add_loggers(out)
+    return out
+
+
+def aioboto_session(*args, **kwargs) -> aioboto3.Session:
+    out = aioboto3.Session(*args, **kwargs)
+    add_loggers(out)
+    return out
+
 
 class S3ClientWrapper:
     """Helper class to obtain preconfigured S3 clients.
@@ -18,7 +32,7 @@ class S3ClientWrapper:
         Note: Session creation will fail if provided profile cannot be found.
         """
 
-        session = aioboto3.Session(profile_name=profile)
+        session = aioboto_session(profile_name=profile)
 
         self._client_context = session.client(
             "s3",
@@ -95,7 +109,7 @@ class DynamoDBClientWrapper:
         Note: Session creation will fail if provided profile cannot be found.
         """
 
-        session = boto3.session.Session(profile_name=profile)
+        session = boto_session(profile_name=profile)
 
         self._client = session.client(
             "dynamodb",
