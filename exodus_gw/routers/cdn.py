@@ -4,9 +4,9 @@ import base64
 import json
 import logging
 import os
-import urllib.parse
 from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
+from urllib.parse import urlparse
 
 from botocore.utils import datetime2timestamp
 from cryptography.hazmat.backends import default_backend
@@ -52,7 +52,30 @@ def cf_b64(data: bytes):
     )
 
 
-def sign_url(url: str, timeout: int, env: Environment):
+def cf_cookie(url: str, env: Environment, expires: datetime, username: str):
+    policy = build_policy(url, expires)
+    signature = rsa_signer(env.cdn_private_key, policy)
+    policy_encoded = cf_b64(policy).decode("utf-8")
+    signature_encoded = cf_b64(signature).decode("utf-8")
+
+    LOG.info(
+        "Generated cookie for: user=%s, key=%s, resource=%s, expires=%s, policy=%s",
+        username,
+        env.cdn_key_id,
+        url,
+        expires,
+        policy_encoded,
+        extra={"event": "cdn", "success": True},
+    )
+
+    return {
+        "CloudFront-Key-Pair-Id": env.cdn_key_id,
+        "CloudFront-Policy": policy_encoded,
+        "CloudFront-Signature": signature_encoded,
+    }
+
+
+def sign_url(url: str, timeout: int, env: Environment, username: str):
     if not env.cdn_url:
         LOG.error(
             "Missing cdn_url in exodus-gw environment settings",
@@ -81,7 +104,7 @@ def sign_url(url: str, timeout: int, env: Environment):
         )
 
     dest_url = os.path.join(env.cdn_url, url)
-    expiration = datetime.now(timezone.utc) + timedelta(seconds=timeout)
+    expires = datetime.now(timezone.utc) + timedelta(seconds=timeout)
 
     LOG.info(
         "redirecting %s to %s. . .",
@@ -90,11 +113,26 @@ def sign_url(url: str, timeout: int, env: Environment):
         extra={"event": "cdn", "success": True},
     )
 
-    policy = build_policy(dest_url, expiration)
+    policy = build_policy(dest_url, expires)
     signature = rsa_signer(env.cdn_private_key, policy)
+
+    cookies = []
+    for resource in ("/content/*", "/origin/*"):
+        parsed_url = urlparse(env.cdn_url)
+        base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+        policy_url = f"{base_url}{resource}"
+        cookie = cf_cookie(policy_url, env, expires, username)
+        append = (
+            f"; Secure; HttpOnly; SameSite=lax; Domain={base_url}; "
+            f"Path={resource}; Max-Age={timeout}"
+        )
+        cookies.extend([f"{k}={v}{append}" for k, v in cookie.items()])
+    cookies_bytes = bytes(json.dumps(cookies), "utf-8")
+
     params = [
-        "Expires=%s" % int(datetime2timestamp(expiration)),
+        "Expires=%s" % int(datetime2timestamp(expires)),
         "Signature=%s" % cf_b64(signature).decode("utf8"),
+        "Set-Cookies=%s" % cf_b64(cookies_bytes).decode("utf-8"),
         "Key-Pair-Id=%s" % env.cdn_key_id,
     ]
     separator = "&" if "?" in url else "?"
@@ -140,6 +178,7 @@ def cdn_redirect(
     url: str = Url,
     settings: Settings = deps.settings,
     env: Environment = deps.env,
+    call_context: auth.CallContext = deps.call_context,
 ):
     """Redirects to a requested URL on the CDN.
 
@@ -151,7 +190,12 @@ def cdn_redirect(
     The URL used in the redirect will become invalid after a server-defined
     timeout, typically less than one hour.
     """
-    signed_url = sign_url(url, settings.cdn_signature_timeout, env)
+    username = (
+        call_context.client.serviceAccountId
+        or call_context.user.internalUsername
+        or "<unknown user>"
+    )
+    signed_url = sign_url(url, settings.cdn_signature_timeout, env, username)
     return Response(
         content=None, headers={"location": signed_url}, status_code=302
     )
@@ -213,42 +257,23 @@ def cdn_access(
             ),
         )
 
-    parsed_url = urllib.parse.urlparse(env.cdn_url)
-    base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
-
-    policy_url = f"{base_url}{resource}"
-    expires = datetime.utcnow() + timedelta(days=expire_days)
-
-    policy = build_policy(policy_url, expires)
-    signature = rsa_signer(env.cdn_private_key, policy)
-    policy_encoded = cf_b64(policy).decode("utf-8")
-
-    components = {
-        "CloudFront-Key-Pair-Id": env.cdn_key_id,
-        "CloudFront-Policy": policy_encoded,
-        "CloudFront-Signature": cf_b64(signature).decode("utf8"),
-    }
-    cookie = "; ".join(f"{key}={value}" for (key, value) in components.items())
-
-    # Log info with sufficient detail so that all cookies in use can be traced
-    # back to the creating user.
     username = (
         call_context.client.serviceAccountId
         or call_context.user.internalUsername
         or "<unknown user>"
     )
-    LOG.info(
-        "Generated cookie for: user=%s, key=%s, resource=%s, expires=%s, policy=%s",
-        username,
-        env.cdn_key_id,
-        policy_url,
-        expires,
-        policy_encoded,
-        extra={"event": "cdn", "success": True},
-    )
+
+    parsed_url = urlparse(env.cdn_url)
+    base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+
+    policy_url = f"{base_url}{resource}"
+    expires = datetime.utcnow() + timedelta(days=expire_days)
+
+    cookie = cf_cookie(policy_url, env, expires, username)
+    cookie_str = "; ".join(f"{key}={value}" for (key, value) in cookie.items())
 
     return {
         "url": base_url,
         "expires": expires.isoformat(timespec="minutes") + "Z",
-        "cookie": cookie,
+        "cookie": cookie_str,
     }
