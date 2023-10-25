@@ -118,9 +118,6 @@ def sign_url(url: str, settings: Settings, env: Environment, username: str):
         extra={"event": "cdn", "success": True},
     )
 
-    policy = build_policy(dest_url, signature_expires)
-    signature = rsa_signer(env.cdn_private_key, policy)
-
     cookies = []
     for resource in ("/content/", "/origin/"):
         parsed_url = urlparse(env.cdn_url)
@@ -131,16 +128,20 @@ def sign_url(url: str, settings: Settings, env: Environment, username: str):
             f"Path={resource}; Max-Age={settings.cdn_cookie_ttl}"
         )
         cookies.extend([f"{k}={v}{append}" for k, v in cookie.items()])
+
     cookies_bytes = bytes(json.dumps(cookies), "utf-8")
+    cookies_encoded = cf_b64(cookies_bytes).decode("utf-8")
+
+    dest_url = f"{dest_url}?CloudFront-Cookies={cookies_encoded}"
+    policy = build_policy(dest_url, signature_expires)
+    signature = rsa_signer(env.cdn_private_key, policy)
 
     params = [
-        "Expires=%s" % int(datetime2timestamp(signature_expires)),
-        "Signature=%s" % cf_b64(signature).decode("utf8"),
-        "CloudFront-Cookies=%s" % cf_b64(cookies_bytes).decode("utf-8"),
-        "Key-Pair-Id=%s" % env.cdn_key_id,
+        f"Expires={int(datetime2timestamp(signature_expires))}",
+        f"Signature={cf_b64(signature).decode('utf8')}",
+        f"Key-Pair-Id={env.cdn_key_id}",
     ]
-    separator = "&" if "?" in url else "?"
-    return dest_url + separator + "&".join(params)
+    return f"{dest_url}&{'&'.join(params)}"
 
 
 Url = Path(
