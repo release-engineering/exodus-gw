@@ -61,42 +61,12 @@ def test_cdn_redirect_(monkeypatch, dummy_private_key, caplog):
         get_r = client.get("/test/cdn/some/url", follow_redirects=False)
         head_r = client.head("/test/cdn/some/url", follow_redirects=False)
 
-    expected_cookies = (
-        "WyJDbG91ZEZyb250LUtleS1QYWlyLUlkPVhYWFhYWFhYWFhYWFhYOyBTZWN1cmU7IEh0d"
-        "HBPbmx5OyBTYW1lU2l0ZT1sYXg7IERvbWFpbj1odHRwOi8vbG9jYWxob3N0OjgwNDk7IF"
-        "BhdGg9L2NvbnRlbnQvKjsgTWF4LUFnZT0xODAwIiwgIkNsb3VkRnJvbnQtUG9saWN5PWV"
-        "5SlRkR0YwWlcxbGJuUWlPbHQ3SWxKbGMyOTFjbU5sSWpvaWFIUjBjRG92TDJ4dlkyRnNh"
-        "Rzl6ZERvNE1EUTVMMk52Ym5SbGJuUXZLaUlzSWtOdmJtUnBkR2x2YmlJNmV5SkVZWFJsV"
-        "EdWemMxUm9ZVzRpT25zaVFWZFRPa1Z3YjJOb1ZHbHRaU0k2TVRZME5EazNNVFF3TUgxOW"
-        "ZWMTk7IFNlY3VyZTsgSHR0cE9ubHk7IFNhbWVTaXRlPWxheDsgRG9tYWluPWh0dHA6Ly9"
-        "sb2NhbGhvc3Q6ODA0OTsgUGF0aD0vY29udGVudC8qOyBNYXgtQWdlPTE4MDAiLCAiQ2xv"
-        "dWRGcm9udC1TaWduYXR1cmU9UjZrLUJHdk5nSlJzMy1HVzBCdmd0ZlF3RUJ0Z1R4R3Z5W"
-        "WRXVTAzZlBDR2xRTUY4RVpWRFdJcVRkSE9Qem5yQ3RuVFlWWnZ2Y3c0VX5WRXNTaWY3NV"
-        "c0eC1xZW9xbn5ZSDlZVmFnMnZOQVlwQkV0d21JMDhNcnZOUGlyQ2dPYmNMdnlXMU9yeEx"
-        "oSFZEeWNzQWRGRmFudW91RUF5a0J0c0dNbkh2bVJvR1JBXzsgU2VjdXJlOyBIdHRwT25s"
-        "eTsgU2FtZVNpdGU9bGF4OyBEb21haW49aHR0cDovL2xvY2FsaG9zdDo4MDQ5OyBQYXRoP"
-        "S9jb250ZW50Lyo7IE1heC1BZ2U9MTgwMCIsICJDbG91ZEZyb250LUtleS1QYWlyLUlkPV"
-        "hYWFhYWFhYWFhYWFhYOyBTZWN1cmU7IEh0dHBPbmx5OyBTYW1lU2l0ZT1sYXg7IERvbWF"
-        "pbj1odHRwOi8vbG9jYWxob3N0OjgwNDk7IFBhdGg9L29yaWdpbi8qOyBNYXgtQWdlPTE4"
-        "MDAiLCAiQ2xvdWRGcm9udC1Qb2xpY3k9ZXlKVGRHRjBaVzFsYm5RaU9sdDdJbEpsYzI5M"
-        "WNtTmxJam9pYUhSMGNEb3ZMMnh2WTJGc2FHOXpkRG80TURRNUwyOXlhV2RwYmk4cUlpd2"
-        "lRMjl1WkdsMGFXOXVJanA3SWtSaGRHVk1aWE56VkdoaGJpSTZleUpCVjFNNlJYQnZZMmh"
-        "VYVcxbElqb3hOalEwT1RjeE5EQXdmWDE5WFgwXzsgU2VjdXJlOyBIdHRwT25seTsgU2Ft"
-        "ZVNpdGU9bGF4OyBEb21haW49aHR0cDovL2xvY2FsaG9zdDo4MDQ5OyBQYXRoPS9vcmlna"
-        "W4vKjsgTWF4LUFnZT0xODAwIiwgIkNsb3VkRnJvbnQtU2lnbmF0dXJlPVFoSFFDZlNWUH"
-        "lGOXJwbDNBY1ZyYkJ0eFBZN3c4Rm55Y0k2V3dKTE5Od0h2MEoxYmM0NGhUQjhpSW53Skd"
-        "IU1U0b3hGQnlFSFUyeFl4akxQSjdSdkJjNGllM3NSQmNXV00wb0hjd0lOdHA2U0FHWVRP"
-        "U3FCN3NDNlZMblIxfmN3SThkcTRGTEZpZElVVElDSGpFbk8taDVrUnBYaTFXbXpsZGVvc"
-        "GZ1ZHR-WV87IFNlY3VyZTsgSHR0cE9ubHk7IFNhbWVTaXRlPWxheDsgRG9tYWluPWh0dH"
-        "A6Ly9sb2NhbGhvc3Q6ODA0OTsgUGF0aD0vb3JpZ2luLyo7IE1heC1BZ2U9MTgwMCJd"
-    )
+    expected_cookies = "WyJDbG91ZEZyb250LUtleS1QYWlyLUlkPVhYWFhYWFhYWFhYWFhYOyBTZWN1cmU7IEh0dHBPbmx5OyBTYW1lU2l0ZT1sYXg7IERvbWFpbj1sb2NhbGhvc3Q6ODA0OTsgUGF0aD0vY29udGVudC87IE1heC1BZ2U9NDMyMDAiLCAiQ2xvdWRGcm9udC1Qb2xpY3k9ZXlKVGRHRjBaVzFsYm5RaU9sdDdJbEpsYzI5MWNtTmxJam9pYUhSMGNEb3ZMMnh2WTJGc2FHOXpkRG80TURRNUwyTnZiblJsYm5RdktpSXNJa052Ym1ScGRHbHZiaUk2ZXlKRVlYUmxUR1Z6YzFSb1lXNGlPbnNpUVZkVE9rVndiMk5vVkdsdFpTSTZNVFkwTlRBeE1qZ3dNSDE5ZlYxOTsgU2VjdXJlOyBIdHRwT25seTsgU2FtZVNpdGU9bGF4OyBEb21haW49bG9jYWxob3N0OjgwNDk7IFBhdGg9L2NvbnRlbnQvOyBNYXgtQWdlPTQzMjAwIiwgIkNsb3VkRnJvbnQtU2lnbmF0dXJlPU5XUGZnb3REdTJEa0g0ZjRkNjhlVWtMTk5hVmZKR2hpenp4UlJleGI1NVh0Y0o3Qzk2cEF4ekd3cX56UWJoNndyMHhhMlh4Zll3UjV5dEs1MmJXQ3JCTGJWVHI5WWd0M2Z3Z3FDZTl1cWl1dnJoU3V-WDd3Z0VPbkVvT053Sng2WGw1VkFERU4yYXBVblBMQ1hJVEQybXYtNnJDaFhmemdaMXg0UER5OGo4MF87IFNlY3VyZTsgSHR0cE9ubHk7IFNhbWVTaXRlPWxheDsgRG9tYWluPWxvY2FsaG9zdDo4MDQ5OyBQYXRoPS9jb250ZW50LzsgTWF4LUFnZT00MzIwMCIsICJDbG91ZEZyb250LUtleS1QYWlyLUlkPVhYWFhYWFhYWFhYWFhYOyBTZWN1cmU7IEh0dHBPbmx5OyBTYW1lU2l0ZT1sYXg7IERvbWFpbj1sb2NhbGhvc3Q6ODA0OTsgUGF0aD0vb3JpZ2luLzsgTWF4LUFnZT00MzIwMCIsICJDbG91ZEZyb250LVBvbGljeT1leUpUZEdGMFpXMWxiblFpT2x0N0lsSmxjMjkxY21ObElqb2lhSFIwY0RvdkwyeHZZMkZzYUc5emREbzRNRFE1TDI5eWFXZHBiaThxSWl3aVEyOXVaR2wwYVc5dUlqcDdJa1JoZEdWTVpYTnpWR2hoYmlJNmV5SkJWMU02UlhCdlkyaFVhVzFsSWpveE5qUTFNREV5T0RBd2ZYMTlYWDBfOyBTZWN1cmU7IEh0dHBPbmx5OyBTYW1lU2l0ZT1sYXg7IERvbWFpbj1sb2NhbGhvc3Q6ODA0OTsgUGF0aD0vb3JpZ2luLzsgTWF4LUFnZT00MzIwMCIsICJDbG91ZEZyb250LVNpZ25hdHVyZT1NaW8za2w5enpCZXE2WUtjREY0aFdHNGlIRFhnLWRwSnV-VmtkWklYZVhPM0lsZzE3OTZUWlFBZGpLLWN6Tm5aQzBUNWVmVzNEbGlKQWVMSmhYd351MVZoTkpSQ0lvUTZmTGJDVnV4MVRHMzAtUC1FVzR-a1JmU2dlWjV2RVcydTBNWXpsQ0pNZndZSUoxQ1ZlejlMdTJ3a2NIMjFQTkNjc2liS25tTmZjbk1fOyBTZWN1cmU7IEh0dHBPbmx5OyBTYW1lU2l0ZT1sYXg7IERvbWFpbj1sb2NhbGhvc3Q6ODA0OTsgUGF0aD0vb3JpZ2luLzsgTWF4LUFnZT00MzIwMCJd"
     expected_url = (
         "http://localhost:8049/_/cookie/some/url?"
+        f"CloudFront-Cookies={expected_cookies}&"
         "Expires=1644971400&"
-        "Signature=QXdMBQNyDLYeIsJzV7bKHnqYQSErcz9OYdJTuIYKVHCDaDiqPOUjqkSXX4f"
-        "m7A-Fi2roZSlWhyd4emrlC8hvNdPLZb3-7LHMVqau1QK9qFlhZz~aP1i4~Zud-kTot4JO"
-        "4ewE8LdCkQL1pda-on~wVTXhiAtB7EaX8aR3dnBZmYo_&"
-        f"Set-Cookies={expected_cookies}&"
+        "Signature=DxQExeKUk0OJ~qafWOIow1OM8Nil9x4JBjpgtODY1AoIuH-FcW4nt~AcAQmJ1WHRqYIuC79INWk9RTyOokj-Ao6e6i5r6AcPKvhTTyOgRkg9Ywfzf~fUdBENi3k9q4sWgbvND5kiZRZwj3DBc4s0bX82rYYuuSGnjNyjshYhlVU_&"
         "Key-Pair-Id=XXXXXXXXXXXXXX"
     )
 
@@ -113,28 +83,26 @@ def test_cdn_redirect_(monkeypatch, dummy_private_key, caplog):
     cookies = json.loads(b64decode(cookies))
     assert cookies == [
         "CloudFront-Key-Pair-Id=XXXXXXXXXXXXXX; Secure; HttpOnly; "
-        "SameSite=lax; Domain=http://localhost:8049; Path=/content/*; Max-Age=1800",
+        "SameSite=lax; Domain=localhost:8049; Path=/content/; Max-Age=43200",
         "CloudFront-Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cDovL2xvY2F"
         "saG9zdDo4MDQ5L2NvbnRlbnQvKiIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsi"
-        "QVdTOkVwb2NoVGltZSI6MTY0NDk3MTQwMH19fV19; Secure; HttpOnly; "
-        "SameSite=lax; Domain=http://localhost:8049; Path=/content/*; Max-Age=1800",
-        "CloudFront-Signature=R6k-BGvNgJRs3-GW0BvgtfQwEBtgTxGvyYdWU03fPCGlQMF8"
-        "EZVDWIqTdHOPznrCtnTYVZvvcw4U~VEsSif75W4x-qeoqn~YH9YVag2vNAYpBEtwmI08M"
-        "rvNPirCgObcLvyW1OrxLhHVDycsAdFFanuouEAykBtsGMnHvmRoGRA_; Secure; "
-        "HttpOnly; SameSite=lax; Domain=http://localhost:8049; Path=/content/*; "
-        "Max-Age=1800",
+        "QVdTOkVwb2NoVGltZSI6MTY0NTAxMjgwMH19fV19; Secure; HttpOnly; "
+        "SameSite=lax; Domain=localhost:8049; Path=/content/; Max-Age=43200",
+        "CloudFront-Signature=NWPfgotDu2DkH4f4d68eUkLNNaVfJGhizzxRRexb55XtcJ7C"
+        "96pAxzGwq~zQbh6wr0xa2XxfYwR5ytK52bWCrBLbVTr9Ygt3fwgqCe9uqiuvrhSu~X7wg"
+        "EOnEoONwJx6Xl5VADEN2apUnPLCXITD2mv-6rChXfzgZ1x4PDy8j80_; Secure; "
+        "HttpOnly; SameSite=lax; Domain=localhost:8049; Path=/content/; "
+        "Max-Age=43200",
         "CloudFront-Key-Pair-Id=XXXXXXXXXXXXXX; Secure; "
-        "HttpOnly; SameSite=lax; Domain=http://localhost:8049; Path=/origin/*; "
-        "Max-Age=1800",
-        "CloudFront-Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cDovL2xvY2F"
-        "saG9zdDo4MDQ5L29yaWdpbi8qIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJB"
-        "V1M6RXBvY2hUaW1lIjoxNjQ0OTcxNDAwfX19XX0_; Secure; HttpOnly; "
-        "SameSite=lax; Domain=http://localhost:8049; Path=/origin/*; Max-Age=1800",
-        "CloudFront-Signature=QhHQCfSVPyF9rpl3AcVrbBtxPY7w8FnycI6WwJLNNwHv0J1b"
-        "c44hTB8iInwJGHSU4oxFByEHU2xYxjLPJ7RvBc4ie3sRBcWWM0oHcwINtp6SAGYTOSqB7"
-        "sC6VLnR1~cwI8dq4FLFidIUTICHjEnO-h5kRpXi1Wmzldeopfudt~Y_; Secure; "
-        "HttpOnly; SameSite=lax; Domain=http://localhost:8049; Path=/origin/*; "
-        "Max-Age=1800",
+        "HttpOnly; SameSite=lax; Domain=localhost:8049; Path=/origin/; "
+        "Max-Age=43200",
+        "CloudFront-Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cDovL2xvY2FsaG9zdDo4MDQ5L29yaWdpbi8qIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNjQ1MDEyODAwfX19XX0_; Secure; HttpOnly; "
+        "SameSite=lax; Domain=localhost:8049; Path=/origin/; Max-Age=43200",
+        "CloudFront-Signature=Mio3kl9zzBeq6YKcDF4hWG4iHDXg-dpJu~VkdZIXeXO3Ilg1"
+        "796TZQAdjK-czNnZC0T5efW3DliJAeLJhXw~u1VhNJRCIoQ6fLbCVux1TG30-P-EW4~kR"
+        "fSgeZ5vEW2u0MYzlCJMfwYIJ1CVez9Lu2wkcH21PNCcsibKnmNfcnM_; Secure; "
+        "HttpOnly; SameSite=lax; Domain=localhost:8049; Path=/origin/; "
+        "Max-Age=43200",
     ]
     # Sanity check at least one policy
     content_policy = b64decode(
@@ -144,7 +112,7 @@ def test_cdn_redirect_(monkeypatch, dummy_private_key, caplog):
         "Statement": [
             {
                 "Resource": "http://localhost:8049/content/*",
-                "Condition": {"DateLessThan": {"AWS:EpochTime": 1644971400}},
+                "Condition": {"DateLessThan": {"AWS:EpochTime": 1645012800}},
             }
         ]
     }

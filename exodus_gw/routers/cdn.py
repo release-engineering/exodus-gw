@@ -75,7 +75,7 @@ def cf_cookie(url: str, env: Environment, expires: datetime, username: str):
     }
 
 
-def sign_url(url: str, timeout: int, env: Environment, username: str):
+def sign_url(url: str, settings: Settings, env: Environment, username: str):
     if not env.cdn_url:
         LOG.error(
             "Missing cdn_url in exodus-gw environment settings",
@@ -104,7 +104,12 @@ def sign_url(url: str, timeout: int, env: Environment, username: str):
         )
 
     dest_url = os.path.join(env.cdn_url, url)
-    expires = datetime.now(timezone.utc) + timedelta(seconds=timeout)
+    signature_expires = datetime.now(timezone.utc) + timedelta(
+        seconds=settings.cdn_signature_timeout
+    )
+    cookie_expires = datetime.now(timezone.utc) + timedelta(
+        seconds=settings.cdn_cookie_ttl
+    )
 
     LOG.info(
         "redirecting %s to %s. . .",
@@ -113,30 +118,30 @@ def sign_url(url: str, timeout: int, env: Environment, username: str):
         extra={"event": "cdn", "success": True},
     )
 
-    policy = build_policy(dest_url, expires)
-    signature = rsa_signer(env.cdn_private_key, policy)
-
     cookies = []
-    for resource in ("/content/*", "/origin/*"):
+    for resource in ("/content/", "/origin/"):
         parsed_url = urlparse(env.cdn_url)
-        base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
-        policy_url = f"{base_url}{resource}"
-        cookie = cf_cookie(policy_url, env, expires, username)
+        policy_url = f"{parsed_url.scheme}://{parsed_url.netloc}{resource}*"
+        cookie = cf_cookie(policy_url, env, cookie_expires, username)
         append = (
-            f"; Secure; HttpOnly; SameSite=lax; Domain={base_url}; "
-            f"Path={resource}; Max-Age={timeout}"
+            f"; Secure; HttpOnly; SameSite=lax; Domain={parsed_url.netloc}; "
+            f"Path={resource}; Max-Age={settings.cdn_cookie_ttl}"
         )
         cookies.extend([f"{k}={v}{append}" for k, v in cookie.items()])
+
     cookies_bytes = bytes(json.dumps(cookies), "utf-8")
+    cookies_encoded = cf_b64(cookies_bytes).decode("utf-8")
+
+    dest_url = f"{dest_url}?CloudFront-Cookies={cookies_encoded}"
+    policy = build_policy(dest_url, signature_expires)
+    signature = rsa_signer(env.cdn_private_key, policy)
 
     params = [
-        "Expires=%s" % int(datetime2timestamp(expires)),
-        "Signature=%s" % cf_b64(signature).decode("utf8"),
-        "Set-Cookies=%s" % cf_b64(cookies_bytes).decode("utf-8"),
-        "Key-Pair-Id=%s" % env.cdn_key_id,
+        f"Expires={int(datetime2timestamp(signature_expires))}",
+        f"Signature={cf_b64(signature).decode('utf8')}",
+        f"Key-Pair-Id={env.cdn_key_id}",
     ]
-    separator = "&" if "?" in url else "?"
-    return dest_url + separator + "&".join(params)
+    return f"{dest_url}&{'&'.join(params)}"
 
 
 Url = Path(
@@ -195,7 +200,7 @@ def cdn_redirect(
         or call_context.user.internalUsername
         or "<unknown user>"
     )
-    signed_url = sign_url(url, settings.cdn_signature_timeout, env, username)
+    signed_url = sign_url(url, settings, env, username)
     return Response(
         content=None, headers={"location": signed_url}, status_code=302
     )
