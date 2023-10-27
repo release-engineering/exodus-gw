@@ -15,6 +15,23 @@ from exodus_gw.settings import get_environment
 
 
 @freeze_time("2022-02-16")
+def test_build_policy():
+    expiration = datetime.now(timezone.utc) + timedelta(seconds=720)
+    url = "https://some.host/path/to/file?token=1234"
+
+    out = cdn.build_policy(url, expiration)
+    assert json.loads(out) == {
+        "Statement": [
+            {
+                # Querystring delimiter should be escaped
+                "Resource": "https://some.host/path/to/file\?token=1234",
+                "Condition": {"DateLessThan": {"AWS:EpochTime": 1644970320}},
+            }
+        ]
+    }
+
+
+@freeze_time("2022-02-16")
 def test_generate_cf_cookies(monkeypatch, dummy_private_key, caplog):
     monkeypatch.setenv("EXODUS_GW_CDN_PRIVATE_KEY_TEST", dummy_private_key)
 
@@ -66,7 +83,7 @@ def test_cdn_redirect_(monkeypatch, dummy_private_key, caplog):
         "http://localhost:8049/_/cookie/some/url?"
         f"CloudFront-Cookies={expected_cookies}&"
         "Expires=1644971400&"
-        "Signature=DxQExeKUk0OJ~qafWOIow1OM8Nil9x4JBjpgtODY1AoIuH-FcW4nt~AcAQmJ1WHRqYIuC79INWk9RTyOokj-Ao6e6i5r6AcPKvhTTyOgRkg9Ywfzf~fUdBENi3k9q4sWgbvND5kiZRZwj3DBc4s0bX82rYYuuSGnjNyjshYhlVU_&"
+        "Signature=AHmdCLzDTcrGZYe4Psdf8bcIeqSPqdEqAzB~b36kUdqdqAgpxEbtxAQSzntt2ZsHPJqOnPv9rRYMBWaIzRlWkYYZwVVJPyeWtiHUPK9R6AaNE9lhoL5J87lw3RpdsasObuGUrw0HTd7z-c2D-r9Nd-ZpS~LYSDH7PaNw0psY65Y_&"
         "Key-Pair-Id=XXXXXXXXXXXXXX"
     )
 
