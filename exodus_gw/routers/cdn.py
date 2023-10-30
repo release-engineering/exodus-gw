@@ -30,8 +30,7 @@ router = APIRouter(tags=[openapi_tag["name"]])
 def build_policy(url: str, expiration: datetime):
     datelessthan = int(datetime2timestamp(expiration))
     condition = {"DateLessThan": {"AWS:EpochTime": datelessthan}}
-    # If URL has querystring, the '?' must be escaped.
-    payload = [("Resource", url.replace("?", "\\?")), ("Condition", condition)]
+    payload = [("Resource", url), ("Condition", condition)]
     policy = {"Statement": [OrderedDict(payload)]}
     return json.dumps(policy, separators=(",", ":")).encode("utf-8")
 
@@ -137,12 +136,12 @@ def sign_url(url: str, settings: Settings, env: Environment, username: str):
     policy = build_policy(dest_url, signature_expires)
     signature = rsa_signer(env.cdn_private_key, policy)
 
-    return (
-        f"{dest_url}"
-        f"&Expires={int(datetime2timestamp(signature_expires))}"
-        f"&Signature={cf_b64(signature).decode('utf8')}"
-        f"&Key-Pair-Id={env.cdn_key_id}"
-    )
+    params = [
+        f"Expires={int(datetime2timestamp(signature_expires))}",
+        f"Signature={cf_b64(signature).decode('utf8')}",
+        f"Key-Pair-Id={env.cdn_key_id}",
+    ]
+    return f"{dest_url}&{'&'.join(params)}"
 
 
 Url = Path(
