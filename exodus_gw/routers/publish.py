@@ -456,11 +456,9 @@ async def get_publish(
     env: Environment = deps.env,
     db: Session = deps.db,
 ):
-    """Return existing publish object from database using given publish ID.
+    """Return an existing publish object from database using the given publish ID.
 
-    Because we don't have a use case for them and implementation would
-    be non-trivial, items belonging to the publish are not loaded/returned.
-    This is achieved using the noload() query option.
+    For performance reasons, the returned item list is always empty.
     """
 
     db_publish = (
