@@ -4,7 +4,7 @@ Wants=network.target
 After=network-online.target exodus-gw-localstack.service
 
 [Service]
-EnvironmentFile=-%S/exodus-gw-dev/.env
+EnvironmentFile=-%E/exodus-gw-dev/.env
 Environment=EXODUS_LAMBDA_SRC_PATH=%h/src/exodus-lambda
 Environment=EXODUS_AWS_ENDPOINT_URL=https://localhost:3377
 Environment=REQUESTS_CA_BUNDLE=/etc/pki/tls/certs/ca-bundle.crt

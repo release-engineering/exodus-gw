@@ -10,7 +10,7 @@ Wants=network.target exodus-gw-uvicorn.service exodus-gw-cert.service
 After=network-online.target
 
 [Service]
-EnvironmentFile=-%S/exodus-gw-dev/.env
+EnvironmentFile=-%E/exodus-gw-dev/.env
 Environment=EXODUS_GW_HTTP_PORT=8000
 Environment=EXODUS_GW_HTTPS_PORT=8010
 Environment=EXODUS_GW_SIDECAR_IMAGE=images.paas.redhat.com/it-platform/platform-sidecar:2.0.4
@@ -19,16 +19,16 @@ Environment=PODMAN_SYSTEMD_UNIT=%n
 Restart=on-failure
 
 # Make properties file
-ExecStartPre=sh -c "cat >%S/exodus-gw-dev/platform-sidecar.yaml <<END\n\
+ExecStartPre=sh -c "cat >%E/exodus-gw-dev/platform-sidecar.yaml <<END\n\
 server.ssl.client-auth: want\n\
 server.port: ${EXODUS_GW_HTTPS_PORT}\n\
 com.redhat.api.platform:\n\
  http.server:\n\
   proxy.target: http://localhost:${EXODUS_GW_HTTP_PORT}\n\
   public-certificate-x509-pem:\
-|\n$(sed -r -e 's|^|    |' %S/exodus-gw-dev/service.pem)\n\
+|\n$(sed -r -e 's|^|    |' %E/exodus-gw-dev/service.pem)\n\
   private-key-pkcs8-pem:\
-|\n$(sed -r -e 's|^|    |' %S/exodus-gw-dev/service-key.pem)\n\
+|\n$(sed -r -e 's|^|    |' %E/exodus-gw-dev/service-key.pem)\n\
  security:\n\
   roles:\n\
    test-blob-uploader:\n\
@@ -52,7 +52,7 @@ ExecStartPre=-/usr/bin/podman rm --ignore -f --cidfile %t/%n-cid
 ExecStartPre=/usr/bin/rm -f %t/%n-pid %t/%n-cid
 ExecStart=/usr/bin/podman run --conmon-pidfile %t/%n-pid --cidfile %t/%n-cid --cgroups=no-conmon -d --name exodus-gw-sidecar --network host\
   --log-driver journald\
-  -v %S/exodus-gw-dev:/opt/app/config:z\
+  -v %E/exodus-gw-dev:/opt/app/config:z\
   ${EXODUS_GW_SIDECAR_IMAGE}
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/%n-cid -t 10
 ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %t/%n-cid
