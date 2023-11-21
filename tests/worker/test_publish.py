@@ -413,6 +413,7 @@ def test_commit_phase1(
     """Verifies specific behaviors of a phase1 commit, namely:
 
     - does not include phase2 items (e.g. entrypoints)
+    - does not include items with unresolved links
     - does not include autoindex
     - does not move the publish into a terminal state
     - only processes dirty items (and marks them as dirty)
@@ -424,6 +425,17 @@ def test_commit_phase1(
         message_id=task.id,
     )
 
+    # Force the publish to include a link item which hasn't been
+    # resolved to a proper object_key yet.
+    fake_publish.items.append(
+        models.Item(
+            web_uri="/some/path/to/link-src",
+            link_to="/some/link-dest",
+            publish_id=fake_publish.id,
+            updated=datetime(2023, 10, 4, 3, 52, 0),
+        )
+    )
+
     db.add(fake_publish)
     db.add(task)
 
@@ -433,7 +445,7 @@ def test_commit_phase1(
     db.refresh(task)
 
     # All the items should initially be dirty.
-    assert [i.dirty for i in fake_publish.items] == [True, True, True]
+    assert [i.dirty for i in fake_publish.items] == [True, True, True, True]
 
     # Let's say that DynamoDB write initially fails.
     mock_write_batch.side_effect = RuntimeError("simulated error")
@@ -485,6 +497,8 @@ def test_commit_phase1(
     ) == [
         {"dirty": False, "web_uri": "/other/path"},
         {"dirty": False, "web_uri": "/some/path"},
+        # the unresolved link is not yet written and therefore remains dirty
+        {"dirty": True, "web_uri": "/some/path/to/link-src"},
         # repomd.xml is not yet written and therefore remains dirty
         {"dirty": True, "web_uri": "/to/repomd.xml"},
     ]
@@ -514,3 +528,62 @@ def test_commit_phase1(
 
     # And it should NOT have invoked the autoindex enricher in either commit
     mock_autoindex_run.assert_not_called()
+
+
+@mock.patch("exodus_gw.worker.publish.AutoindexEnricher.run")
+@mock.patch("exodus_gw.worker.publish.CurrentMessage.get_current_message")
+@mock.patch("exodus_gw.worker.publish.DynamoDB.write_batch")
+def test_commit_missing_object_key(
+    mock_write_batch,
+    mock_get_message,
+    mock_autoindex_run,
+    fake_publish: Publish,
+    db: sqlalchemy.orm.Session,
+    caplog: pytest.LogCaptureFixture,
+):
+    """Commit raises an error if asked to commit an unresolved link."""
+
+    task = _task(fake_publish.id)
+    mock_get_message.return_value = mock.Mock(
+        spec=["message_id"],
+        message_id=task.id,
+    )
+
+    # Force the publish to include a link item which hasn't been
+    # resolved to a proper object_key yet.
+    fake_publish.items.append(
+        models.Item(
+            web_uri="/some/path/to/link-src",
+            link_to="/some/link-dest",
+            publish_id=fake_publish.id,
+            updated=datetime(2023, 10, 4, 3, 52, 0),
+        )
+    )
+
+    fake_publish.state = "COMMITTING"
+
+    db.add(fake_publish)
+    db.add(task)
+
+    # Committing and refreshing to ensure any commit-time defaults are applied.
+    db.commit()
+    db.refresh(fake_publish)
+    db.refresh(task)
+
+    mock_write_batch.side_effect = None
+    mock_write_batch.return_value = True
+
+    # Do the commit.
+    worker.commit(
+        str(fake_publish.id),
+        fake_publish.env,
+        NOW_UTC.isoformat(),
+        commit_mode="phase2",
+    )
+
+    # It should've set task state to FAILED.
+    db.refresh(task)
+    assert task.state == "FAILED"
+
+    # It should've logged the reason why.
+    assert "BUG: missing object_key for /some/path/to/link-src" in caplog.text
