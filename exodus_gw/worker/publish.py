@@ -9,7 +9,7 @@ from typing import Any, List, Optional
 
 import dramatiq
 from dramatiq.middleware import CurrentMessage
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, lazyload
 
 from exodus_gw.aws.dynamodb import DynamoDB
@@ -216,6 +216,28 @@ class CommitBase:
         )
         return False
 
+    def check_item(self, item: Item):
+        # Last chance to verify item before writing to DynamoDB.
+        if not item.object_key:
+            # Incoming items are always verified to have either
+            # object_key OR link_to, with link_to then being resolved to an
+            # object_key at the time commit is enqueued, so there is no
+            # legitimate way to get here.
+            #
+            # If this error is hit, it's always a bug in exodus-gw (and e.g. not
+            # bad input from client). For example, it could be a bug in the
+            # link_to resolution logic.
+            raise ValueError("BUG: missing object_key for %s" % item.web_uri)
+
+    @property
+    def item_select(self):
+        # Returns base of the SELECT query to find all items for commit.
+        #
+        # Can be overridden in subclasses.
+        return select(Item).where(
+            Item.publish_id == self.publish.id, Item.dirty == True
+        )
+
     @property
     def item_count(self):
         # Items included in publish.
@@ -294,11 +316,8 @@ class CommitBase:
         Subclasses should override this.
         """
 
-        statement = (
-            select(Item)
-            .where(Item.publish_id == self.publish.id, Item.dirty == True)
-            .with_for_update()
-            .execution_options(yield_per=self.settings.item_yield_size)
+        statement = self.item_select.with_for_update().execution_options(
+            yield_per=self.settings.item_yield_size
         )
         partitions = self.db.execute(statement).partitions()
 
@@ -322,6 +341,9 @@ class CommitBase:
                 # Flatten partition and extract any entry point items.
                 for row in partition:
                     item: Item = row.Item
+
+                    self.check_item(item)
+
                     if (
                         basename(item.web_uri)
                         in self.settings.entry_point_files
@@ -394,6 +416,19 @@ class CommitBase:
 class CommitPhase1(CommitBase):
     # phase1 commit is allowed to proceed in either of these states.
     PUBLISH_STATES = [PublishStates.committing, PublishStates.pending]
+
+    @property
+    def item_select(self):
+        # Query for items to be handled by phase1 commit.
+        #
+        # During phase1 commit, it is possible that the publish might
+        # have other items still being added as symlinks (i.e.
+        # link_to set but object_key unset) which have not yet been
+        # resolved. We won't be able to publish those yet, so extend
+        # the query to filter them out.
+        return super().item_select.where(
+            func.coalesce(Item.object_key, "") != ""  # pylint: disable=E1102
+        )
 
     def write_publish_items(self) -> list[Item]:
         final_items = super().write_publish_items()
