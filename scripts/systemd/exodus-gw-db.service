@@ -9,7 +9,7 @@ Wants=network.target
 After=network-online.target
 
 [Service]
-EnvironmentFile=-%S/exodus-gw-dev/.env
+EnvironmentFile=-%E/exodus-gw-dev/.env
 Environment=EXODUS_GW_POSTGRES_IMAGE=quay.io/exodus/postgres:12
 Environment=EXODUS_GW_DB_SERVICE_PORT=3355
 
@@ -17,7 +17,7 @@ Environment=PODMAN_SYSTEMD_UNIT=%n
 Restart=on-failure
 
 # Ensure data dir exists
-ExecStartPre=mkdir -p %S/exodus-gw-dev/postgresql
+ExecStartPre=mkdir -p %E/exodus-gw-dev/postgresql
 
 # Remove existing container if it's already there
 ExecStartPre=-/usr/bin/podman rm --ignore -f --cidfile %t/%n-cid
@@ -27,9 +27,9 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/%n-pid --cidfile %t/%n-cid --c
   --name exodus-gw-db\
   --network host\
   --log-driver journald\
-  -v %S/exodus-gw-dev/postgresql:/var/lib/postgresql:z\
-  -v %S/exodus-gw-dev/service.pem:/var/lib/postgresql/service.pem:ro\
-  -v %S/exodus-gw-dev/db-service-key.pem:/var/lib/postgresql/db-service-key.pem:ro\
+  -v %E/exodus-gw-dev/postgresql:/var/lib/postgresql:z\
+  -v %E/exodus-gw-dev/service.pem:/var/lib/postgresql/service.pem:ro\
+  -v %E/exodus-gw-dev/db-service-key.pem:/var/lib/postgresql/db-service-key.pem:ro\
   -e POSTGRES_PASSWORD=exodus-gw\
   -e POSTGRES_USER=exodus-gw\
   -e PGPORT=${EXODUS_GW_DB_SERVICE_PORT}\

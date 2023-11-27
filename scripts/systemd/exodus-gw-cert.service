@@ -5,30 +5,30 @@ Description=exodus-gw development cert
 
 [Service]
 Type=oneshot
-ExecStartPre=mkdir -p %S/exodus-gw-dev
+ExecStartPre=mkdir -p %E/exodus-gw-dev
 
 # Only run if one of the outputs is missing or empty.
 ExecCondition=sh -c '! ( \
-  test -s %S/exodus-gw-dev/ca.crt && \
-  test -s %S/exodus-gw-dev/service.pem && \
-  test -s %S/exodus-gw-dev/service-key.pem \
+  test -s %E/exodus-gw-dev/ca.crt && \
+  test -s %E/exodus-gw-dev/service.pem && \
+  test -s %E/exodus-gw-dev/service-key.pem \
 )'
 
 ExecStart=sscg \
-  --cert-file=%S/exodus-gw-dev/service.pem \
-  --cert-key-file=%S/exodus-gw-dev/service-key.pem \
-  --ca-file=%S/exodus-gw-dev/ca.crt \
+  --cert-file=%E/exodus-gw-dev/service.pem \
+  --cert-key-file=%E/exodus-gw-dev/service-key.pem \
+  --ca-file=%E/exodus-gw-dev/ca.crt \
   --subject-alt-name localhost \
   --force
 
 ExecStartPost=cp \
-  %S/exodus-gw-dev/service-key.pem \
-  %S/exodus-gw-dev/db-service-key.pem
+  %E/exodus-gw-dev/service-key.pem \
+  %E/exodus-gw-dev/db-service-key.pem
 
 # private key file must be owned by the database user or root
 # set postgres(999) as owner of the private key file
 ExecStartPost=/usr/bin/podman unshare \
-  chown 999:999 %S/exodus-gw-dev/db-service-key.pem
+  chown 999:999 %E/exodus-gw-dev/db-service-key.pem
 
 [Install]
 WantedBy=exodus-gw.target
