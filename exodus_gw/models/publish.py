@@ -1,3 +1,4 @@
+import os
 import uuid
 from datetime import datetime
 from typing import Optional, Union
@@ -17,6 +18,22 @@ from sqlalchemy.orm import Bundle, Mapped, mapped_column, relationship
 from sqlalchemy.types import Uuid
 
 from .base import Base
+
+# The resolution of links SHOULD be isolated to within the current publish;
+# this is very important. However, the original implementation of the code
+# did not do that and allowed links to be resolved across any publish,
+# see RHELDST-21893.
+#
+# That is being fixed, but the problem is that clients may have come to
+# rely on it. In particular, if pub/pulp/exodus integration is *disabled*,
+# we rely on it.
+#
+# Thus, this semi-hidden setting acts as an escape hatch to re-enable
+# the old buggy behavior if it turns out to be needed. Not a proper setting.
+#
+# Only set this if you really know it's needed! With any luck, this branch
+# should be removed quickly.
+LINK_ISOLATION = (os.environ.get("EXODUS_GW_LINK_ISOLATION") or "1") == "1"
 
 
 class Publish(Base):
@@ -52,12 +69,18 @@ class Publish(Base):
         match = Bundle(
             "match", Item.web_uri, Item.object_key, Item.content_type
         )
+        query = db.query(match).filter(Item.web_uri.in_(ln_item_paths))
+        if LINK_ISOLATION:
+            # See comments above where LINK_ISOLATION is set.
+            # This path should become the only path ASAP!
+            query = query.filter(Item.publish_id == self.id)
+
         matches = {
             row.match.web_uri: {
                 "object_key": row.match.object_key,
                 "content_type": row.match.content_type,
             }
-            for row in db.query(match).filter(Item.web_uri.in_(ln_item_paths))
+            for row in query
         }
 
         for ln_item in ln_items:
