@@ -155,6 +155,12 @@ async def test_enricher_mixed(
                 web_uri="/some/file-repo/PULP_MANIFEST",
                 object_key="key1",
             ),
+            # A deleted entrypoint on a file repo, should be ignored
+            Item(
+                publish_id=publish.id,
+                web_uri="/some/deleted-file-repo/PULP_MANIFEST",
+                object_key="absent",
+            ),
             # A file repo where an index already exists (usually would mean
             # we were interrupted partway through before)
             Item(
@@ -177,6 +183,12 @@ async def test_enricher_mixed(
                 publish_id=publish.id,
                 web_uri="/some/yum-repo/repodata/3a7a286e13883d497b2e3c7029ceb7c372ff2529bbfa22d0c890285ce6aa3129-primary.xml.gz",
                 object_key="key3",
+            ),
+            # A deleted entrypoint on a yum repo, should be ignored
+            Item(
+                publish_id=publish.id,
+                web_uri="/some/deleted-yum-repo/repodata/repomd.xml",
+                object_key="absent",
             ),
             # An invalid yum repo (we will set up a corrupt primary XML later)
             Item(
@@ -260,6 +272,10 @@ async def test_enricher_mixed(
 
     # All these items should exist (see the added indexes)
     assert sorted(uri_to_key.keys()) == [
+        # Deleted items still exist on the publish, but they obviously
+        # don't get any autoindex created.
+        "/some/deleted-file-repo/PULP_MANIFEST",
+        "/some/deleted-yum-repo/repodata/repomd.xml",
         # added index for the pulp file repo
         "/some/file-repo/.__exodus_autoindex",
         "/some/file-repo/PULP_MANIFEST",
