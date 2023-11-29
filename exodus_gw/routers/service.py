@@ -65,16 +65,18 @@ def healthcheck_worker(
                 "application/json": {
                     "examples": [
                         {
-                            "client": {
-                                "roles": ["someRole", "anotherRole"],
-                                "authenticated": True,
-                                "serviceAccountId": "clientappname",
-                            },
-                            "user": {
-                                "roles": ["viewer"],
-                                "authenticated": True,
-                                "internalUsername": "someuser",
-                            },
+                            "value": {
+                                "client": {
+                                    "roles": ["someRole", "anotherRole"],
+                                    "authenticated": True,
+                                    "serviceAccountId": "clientappname",
+                                },
+                                "user": {
+                                    "roles": ["viewer"],
+                                    "authenticated": True,
+                                    "internalUsername": "someuser",
+                                },
+                            }
                         }
                     ]
                 }
