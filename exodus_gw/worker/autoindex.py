@@ -116,13 +116,15 @@ class AutoindexEnricher:
     @property
     def repomd_xml_items(self) -> list[Item]:
         return self.item_query.filter(
-            Item.web_uri.like("%/repodata/repomd.xml")
+            Item.web_uri.like("%/repodata/repomd.xml"),
+            Item.object_key != "absent",
         ).all()
 
     @property
     def pulp_manifest_items(self) -> list[Item]:
         return self.item_query.filter(
-            Item.web_uri.like("%/PULP_MANIFEST")
+            Item.web_uri.like("%/PULP_MANIFEST"),
+            Item.object_key != "absent",
         ).all()
 
     @property
