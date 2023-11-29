@@ -59,8 +59,8 @@ s3 = boto3.resource('s3',
                     verify='/path/to/bundle.pem',
                     config=Config(client_cert=('client.crt', 'client.key')))
 
-# Bucket name must match one of the section names in exodus-gw.ini without 'env.' prefix
-bucket = s3.Bucket('dev')
+# Bucket name must match one of the environment names
+bucket = s3.Bucket('live')
 
 # Basic APIs such as upload_file now work as usual
 bucket.upload_file('/tmp/hello.txt',
