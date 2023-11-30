@@ -141,13 +141,15 @@ router = APIRouter(tags=[openapi_tag["name"]])
                 "application/json": {
                     "examples": [
                         {
-                            "id": "497f6eca-6276-4993-bfeb-53cbbbba6f08",
-                            "env": "prod",
-                            "links": {
-                                "self": "/prod/publish/497f6eca-6276-4993-bfeb-53cbbbba6f08",
-                                "commit": "/prod/publish/497f6eca-6276-4993-bfeb-53cbbbba6f08/commit",
-                            },
-                            "items": [],
+                            "value": {
+                                "id": "497f6eca-6276-4993-bfeb-53cbbbba6f08",
+                                "env": "live",
+                                "links": {
+                                    "self": "/live/publish/497f6eca-6276-4993-bfeb-53cbbbba6f08",
+                                    "commit": "/live/publish/497f6eca-6276-4993-bfeb-53cbbbba6f08/commit",
+                                },
+                                "items": [],
+                            }
                         }
                     ]
                 }
@@ -432,13 +434,15 @@ def commit_publish(
                 "application/json": {
                     "examples": [
                         {
-                            "id": "497f6eca-6276-4993-bfeb-53cbbbba6f08",
-                            "env": "live",
-                            "links": {
-                                "self": "/live/publish/497f6eca-6276-4993-bfeb-53cbbbba6f08",
-                                "commit": "/live/publish/497f6eca-6276-4993-bfeb-53cbbbba6f08/commit",
-                            },
-                            "items": [],
+                            "value": {
+                                "id": "497f6eca-6276-4993-bfeb-53cbbbba6f08",
+                                "env": "live",
+                                "links": {
+                                    "self": "/live/publish/497f6eca-6276-4993-bfeb-53cbbbba6f08",
+                                    "commit": "/live/publish/497f6eca-6276-4993-bfeb-53cbbbba6f08/commit",
+                                },
+                                "items": [],
+                            }
                         }
                     ]
                 }

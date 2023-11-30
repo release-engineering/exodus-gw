@@ -176,12 +176,17 @@ class Task(BaseModel):
     updated: Optional[datetime] = Field(
         None,
         description="DateTime of last update to this task. None if never updated.",
+        examples=["2019-08-24T14:15:22Z"],
     )
     deadline: Optional[datetime] = Field(
-        None, description="DateTime at which this task should be abandoned."
+        None,
+        description="DateTime at which this task should be abandoned.",
+        examples=["2019-08-24T18:15:22Z"],
     )
     links: Dict[str, str] = Field(
-        {}, description="""URL links related to this task."""
+        {},
+        description="""URL links related to this task.""",
+        examples=[{"self": "/task/497f6eca-6276-4993-bfeb-53cbbbba6f08"}],
     )
 
     @model_validator(mode="after")
