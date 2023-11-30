@@ -42,9 +42,9 @@ internal documentation for advice on how to authenticate with exodus-gw.
 Many APIs in exodus-gw use the concept of an "environment" to control the target system
 of an operation.
 
-The set of environments is configured when exodus-gw is deployed. For example, separate
-"production" and "staging" environments may be configured, making use of separate storage
-backends.
+The set of environments is configured when exodus-gw is deployed.
+A typical scenario is to deploy a "pre" environment for pre-release content and a
+"live" environment for live content.
 
 Different environments will also require the user to hold different roles. For example,
 a client might be permitted only to write to one of the configured environments, or all
