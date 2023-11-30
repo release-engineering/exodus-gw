@@ -399,7 +399,9 @@ def test_update_publish_items_invalid_item(db, auth_header):
 
 
 def test_update_publish_items_rejects_autoindex(db, auth_header):
-    """PUTting an item explicitly using the autoindex filename fails validation."""
+    """PUTting an item explicitly using the autoindex filename fails validation
+    when the object key is not 'absent'.
+    """
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
 
@@ -433,6 +435,42 @@ def test_update_publish_items_rejects_autoindex(db, auth_header):
     }
     # It should include non-empty request header
     assert len(r.headers["X-Request-ID"]) == 8
+
+
+def test_update_publish_items_accepts_absent_autoindex(db, auth_header):
+    """PUTting an item explicitly using the autoindex filename is accepted if
+    the object key is 'absent'.
+    """
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(id=publish_id, env="test", state="PENDING")
+
+    with TestClient(app) as client:
+        # ensure a publish object exists
+        db.add(publish)
+        db.commit()
+
+        # Try to add an item to it
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json=[
+                {
+                    "web_uri": "/foo/bar/.__exodus_autoindex",
+                    "object_key": "absent",
+                }
+            ],
+            headers=auth_header(roles=["test-publisher"]),
+        )
+
+    # It should have succeeded
+    assert r.status_code == 200
+
+    # And should have added the item normally
+    db.refresh(publish)
+    assert [(i.web_uri, i.object_key) for i in publish.items] == [
+        ("/foo/bar/.__exodus_autoindex", "absent")
+    ]
 
 
 def test_update_publish_items_link_and_key(db, auth_header):
