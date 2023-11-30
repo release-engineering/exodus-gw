@@ -85,9 +85,6 @@ from .settings import load_settings
 
 app = FastAPI(
     title="exodus-gw",
-    # This is the API version, which should follow SemVer rules.
-    # The API version is not the same thing as the exodus-gw project version.
-    version="1.0.0",
     description=__doc__,
     openapi_tags=[
         service.openapi_tag,
@@ -98,11 +95,28 @@ app = FastAPI(
     ],
     dependencies=[Depends(log_login)],
 )
+
 app.include_router(service.router)
 app.include_router(upload.router)
 app.include_router(publish.router)
 app.include_router(deploy.router)
 app.include_router(cdn.router)
+
+# Hide version because we do not version our API.
+#
+# Note that FastAPI constructor above does not allow an empty string
+# to be set as the version, but the openapi schema does actually
+# allow it, and redoc is designed to support hiding the version in
+# this case:
+# https://redocly.com/docs/openapi-visual-reference/info/#info
+#
+# Setting the version directly in the openapi schema like this
+# works fine - openapi() method documents that it's OK to modify
+# the returned schema when you need to.
+#
+# This has to happen AFTER all calls to include_router, because
+# the schema is only generated once!
+app.openapi()["info"]["version"] = ""
 
 LOG = logging.getLogger("exodus-gw")
 
