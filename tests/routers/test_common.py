@@ -11,7 +11,11 @@ from exodus_gw.main import app
 
 
 def all_api_routes():
-    return [r for r in app.routes if isinstance(r, APIRoute)]
+    return [
+        r
+        for r in app.routes
+        if isinstance(r, APIRoute) and r.include_in_schema
+    ]
 
 
 @pytest.fixture(params=all_api_routes(), ids=lambda route: route.path)

@@ -2,8 +2,9 @@
 
 import logging
 from datetime import datetime, timedelta
+from typing import Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Header, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from .. import deps, models, schemas
@@ -16,6 +17,24 @@ LOG = logging.getLogger("exodus-gw")
 openapi_tag = {"name": "service", "description": __doc__}
 
 router = APIRouter(tags=[openapi_tag["name"]])
+
+
+@router.get(
+    "/",
+    include_in_schema=False,
+)
+async def redirect(accept: Optional[str] = Header(default=None)):
+    """Redirect from service root to API docs. For browsers only."""
+
+    # We only send the redirect if it seems like the client is a browser.
+    # The point is that this is not a part of the API and we want this to
+    # be more or less hidden to your typical clients like curl, requests.
+    if accept and "text/html" in accept:
+        return Response(
+            content=None, headers={"location": "/redoc"}, status_code=302
+        )
+
+    raise HTTPException(404)
 
 
 @router.get(
