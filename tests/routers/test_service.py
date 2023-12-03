@@ -87,3 +87,29 @@ def test_get_task(db):
     # Last request should have succeeded and returned the correct object.
     assert resp.status_code == 200
     assert resp.json()["publish_id"] == publish_id
+
+
+def test_redirect_to_docs():
+    """Accessing / from a browser redirects to docs."""
+
+    with TestClient(app) as client:
+        resp = client.get(
+            "/",
+            headers={
+                "Accept": "text/html,application/xhtml+xml,application/xml"
+            },
+        )
+
+        # Note the TestClient follows redirects, so this is actually
+        # covering both the fact that a redirect happened and that
+        # the target URL serves up redoc stuff.
+        assert resp.status_code == 200
+        assert '<redoc spec-url="/openapi.json">' in resp.text
+
+
+def test_root_non_browser():
+    """Accessing / from non-browser gives 404."""
+
+    with TestClient(app) as client:
+        resp = client.get("/")
+        assert resp.status_code == 404
