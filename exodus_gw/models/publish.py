@@ -56,6 +56,7 @@ class Publish(Base):
         # Store only publish items with link targets.
         ln_items = (
             db.query(Item)
+            .with_for_update()
             .filter(Item.publish_id == self.id)
             .filter(
                 func.coalesce(Item.link_to, "") != ""  # pylint: disable=E1102
