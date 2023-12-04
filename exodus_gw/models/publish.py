@@ -104,6 +104,9 @@ class Publish(Base):
             ln_item.object_key = match.get("object_key")
             ln_item.content_type = match.get("content_type")
 
+            # The link has been resolved. Wipe it out so it's not resolved again.
+            ln_item.link_to = None
+
 
 class Item(Base):
     __tablename__ = "items"
