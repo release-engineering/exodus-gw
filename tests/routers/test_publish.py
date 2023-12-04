@@ -1003,6 +1003,10 @@ def test_commit_publish_linked_items(mock_commit, fake_publish, db):
     # Should've filled ln_item2's content_type with that of item2.
     assert ln_item2.content_type == "another type"
 
+    # Should've unset the link_to, since links have been resolved.
+    assert ln_item1.link_to is None
+    assert ln_item2.link_to is None
+
     # Should've created and sent task.
     assert isinstance(publish_task, Task)
 
