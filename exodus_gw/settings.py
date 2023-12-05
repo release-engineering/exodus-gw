@@ -160,6 +160,7 @@ class Settings(BaseSettings):
         "repomd.xml",
         "repomd.xml.asc",
         "PULP_MANIFEST",
+        "PULP_MANIFEST.asc",
     ]
     """List of file names that should be saved for last when publishing."""
 
