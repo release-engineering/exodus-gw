@@ -8,6 +8,7 @@ import time
 
 import dramatiq
 import pytest
+from asgi_correlation_id import correlation_id
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
@@ -330,6 +331,23 @@ def test_logs_prefixed(actors, caplog):
         "[log_warning task-abc123] warning from actor: some value"
         in caplog.text
     )
+
+
+def test_logs_request_id(actors, caplog):
+    """Log messages include "request_id", propagated from asgi_correlation_id."""
+
+    token = correlation_id.set("aabbccdd")
+    try:
+        actors.log_warning.send(task_id="task-abc123", value="some value")
+
+        # Ensure actor is invoked
+        assert_soon(lambda: len(actors.actor_calls) == 1)
+        assert sorted(actors.actor_calls) == ["log_warning"]
+
+        # The logged message should have included the correlation id
+        assert '"request_id": "aabbccdd"' in caplog.text
+    finally:
+        correlation_id.reset(token)
 
 
 def test_logs_prefixed_threaded(actors, caplog):
