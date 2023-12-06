@@ -1,4 +1,6 @@
 import dramatiq
+import pytest
+from asgi_correlation_id import correlation_id
 from fastapi.testclient import TestClient
 
 from exodus_gw.dramatiq.broker import Broker
@@ -6,7 +8,23 @@ from exodus_gw.main import app
 from exodus_gw.models import DramatiqMessage
 
 
-def test_enqueue(db):
+@pytest.fixture(params=["7241e3d6", None])
+def test_id(request: pytest.FixtureRequest):
+    # This fixture yields and sets different values for the
+    # current asgi correlation id. Can be used to test cases
+    # where the ID is set vs not set.
+    token = None
+
+    if request.param:
+        token = correlation_id.set(request.param)
+
+    yield request.param
+
+    if token:
+        correlation_id.reset(token)
+
+
+def test_enqueue(test_id, db):
     """Enqueuing a message creates DB record as expected."""
 
     with TestClient(app):
@@ -35,7 +53,7 @@ def test_enqueue(db):
     assert message.body.pop("message_timestamp")
     assert message.body == {
         "args": [1],
-        "kwargs": {"y": "hello"},
+        "kwargs": {"y": "hello", "correlation_id": test_id},
         "options": {},
     }
 

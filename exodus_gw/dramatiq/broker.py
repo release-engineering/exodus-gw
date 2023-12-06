@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from exodus_gw.database import db_engine
 from exodus_gw.dramatiq.consumer import Consumer
 from exodus_gw.dramatiq.middleware import (
+    CorrelationIdMiddleware,
     DatabaseReadyMiddleware,
     LocalNotifyMiddleware,
     LogActorMiddleware,
@@ -51,6 +52,9 @@ class Broker(dramatiq.Broker):  # pylint: disable=abstract-method
         # Enable automatic prefixing of log messages with actor names/identity
         # such as "[commit <publish-id>] the log message..."
         self.add_middleware(LogActorMiddleware())
+
+        # Allow correlation ID to propagate between web and worker
+        self.add_middleware(CorrelationIdMiddleware())
 
         # Ensure all actors can get access to the current settings.
         self.add_middleware(SettingsMiddleware(self.__settings))

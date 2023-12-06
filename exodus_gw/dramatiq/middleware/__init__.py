@@ -1,3 +1,4 @@
+from .correlation_id import CorrelationIdMiddleware
 from .db_ready import DatabaseReadyMiddleware
 from .local_notify import LocalNotifyMiddleware
 from .log_actor import LogActorMiddleware
@@ -10,6 +11,7 @@ __all__ = [
     "PostgresNotifyMiddleware",
     "SchedulerMiddleware",
     "LogActorMiddleware",
+    "CorrelationIdMiddleware",
     "DatabaseReadyMiddleware",
     "SettingsMiddleware",
 ]
