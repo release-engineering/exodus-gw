@@ -8,8 +8,9 @@ from pytest import LogCaptureFixture
 from sqlalchemy.orm import Session
 
 from exodus_gw.models import Item, Publish
+from exodus_gw.schemas import PublishStates
 from exodus_gw.settings import load_settings
-from exodus_gw.worker.autoindex import AutoindexEnricher
+from exodus_gw.worker.autoindex import AutoindexEnricher, autoindex_partial
 
 # Some minimal valid yum repodata XML used in later tests.
 SAMPLE_REPOMD_XML = b"""
@@ -86,60 +87,9 @@ class FakeS3Getter:
         }
 
 
-async def test_enricher_empty(db: Session, caplog: LogCaptureFixture):
-    """AutoindexEnricher should succeed but do nothing on an empty publish."""
-
-    caplog.set_level("INFO", "exodus-gw")
-
-    publish = Publish(env="test", state="PENDING")
-    db.add(publish)
-    db.commit()
-
-    settings = load_settings()
-    enricher = AutoindexEnricher(publish, "test", settings)
-
-    # It should run to completion
-    await enricher.run()
-
-    # But it shouldn't have added anything
-    db.refresh(publish)
-    assert list(publish.items) == []
-
-    # And this is the reason why
-    assert "Found 0 path(s) eligible for autoindex" in caplog.text
-
-
-async def test_enricher_disabled(db: Session, caplog: LogCaptureFixture):
-    """AutoindexEnricher should not do anything if disabled by settings."""
-
-    caplog.set_level("DEBUG", "exodus-gw")
-
-    publish = Publish(env="test", state="PENDING")
-    db.add(publish)
-    db.commit()
-
-    settings = load_settings()
-    settings.autoindex_filename = ""
-    enricher = AutoindexEnricher(publish, "test", settings)
-
-    # It should run to completion
-    await enricher.run()
-
-    # But it shouldn't have added anything
-    db.refresh(publish)
-    assert list(publish.items) == []
-
-    # And this is the reason why
-    assert "autoindex is disabled" in caplog.text
-
-
-async def test_enricher_mixed(
-    db: Session, caplog: LogCaptureFixture, mock_aws_client
-):
-    """AutoindexEnricher should generate indexes for supported content types."""
-
-    caplog.set_level("DEBUG", "exodus-gw")
-
+@pytest.fixture
+def mixed_publish(db: Session, mock_aws_client):
+    # Fixture yields a valid publish object with mixed content of various types.
     publish = Publish(env="test", state="PENDING")
     db.add(publish)
     db.commit()
@@ -258,16 +208,76 @@ async def test_enricher_mixed(
 
     db.commit()
 
+    return publish
+
+
+async def test_enricher_empty(db: Session, caplog: LogCaptureFixture):
+    """AutoindexEnricher should succeed but do nothing on an empty publish."""
+
+    caplog.set_level("INFO", "exodus-gw")
+
+    publish = Publish(env="test", state="PENDING")
+    db.add(publish)
+    db.commit()
+
     settings = load_settings()
     enricher = AutoindexEnricher(publish, "test", settings)
 
     # It should run to completion
     await enricher.run()
 
+    # But it shouldn't have added anything
+    db.refresh(publish)
+    assert list(publish.items) == []
+
+    # And this is the reason why
+    assert "Found 0 path(s) eligible for autoindex" in caplog.text
+
+
+async def test_enricher_disabled(db: Session, caplog: LogCaptureFixture):
+    """AutoindexEnricher should not do anything if disabled by settings."""
+
+    caplog.set_level("DEBUG", "exodus-gw")
+
+    publish = Publish(env="test", state="PENDING")
+    db.add(publish)
+    db.commit()
+
+    settings = load_settings()
+    settings.autoindex_filename = ""
+    enricher = AutoindexEnricher(publish, "test", settings)
+
+    # It should run to completion
+    await enricher.run()
+
+    # But it shouldn't have added anything
+    db.refresh(publish)
+    assert list(publish.items) == []
+
+    # And this is the reason why
+    assert "autoindex is disabled" in caplog.text
+
+
+async def test_enricher_mixed(
+    db: Session,
+    caplog: LogCaptureFixture,
+    mixed_publish: Publish,
+    mock_aws_client,
+):
+    """AutoindexEnricher should generate indexes for supported content types."""
+
+    caplog.set_level("DEBUG", "exodus-gw")
+
+    settings = load_settings()
+    enricher = AutoindexEnricher(mixed_publish, "test", settings)
+
+    # It should run to completion
+    await enricher.run()
+
     # Have a look at the items on the publish now...
     uri_to_key = {}
-    db.refresh(publish)
-    for item in publish.items:
+    db.refresh(mixed_publish)
+    for item in mixed_publish.items:
         uri_to_key[item.web_uri] = item.object_key
 
     # All these items should exist (see the added indexes)
@@ -394,3 +404,72 @@ async def test_enricher_head_errors(
 
     # Should have propagated exactly the original error
     assert excinfo.value is head_error
+
+
+def test_autoindex_partial(
+    db: Session,
+    mixed_publish: Publish,
+):
+    """autoindex_partial should generate indexes for just the requested entry points."""
+
+    # First note all the URIs present on the publish so we can
+    # see what's added later.
+    initial_uris = set([i.web_uri for i in mixed_publish.items])
+
+    # It should succeed
+    settings = load_settings()
+    autoindex_partial(
+        publish_id=mixed_publish.id,
+        entrypoint_paths=["/some/yum-repo/repodata/repomd.xml"],
+        settings=settings,
+    )
+
+    # What was added?
+    added_uris = set()
+    db.refresh(mixed_publish)
+    for item in mixed_publish.items:
+        if item.web_uri not in initial_uris:
+            added_uris.add(item.web_uri)
+
+    # It should have added exactly what we expect:
+    # ONLY the indexes for the one entry point we passed in.
+    assert sorted(added_uris) == [
+        "/some/yum-repo/.__exodus_autoindex",
+        "/some/yum-repo/pkgs/.__exodus_autoindex",
+        "/some/yum-repo/pkgs/w/.__exodus_autoindex",
+        "/some/yum-repo/repodata/.__exodus_autoindex",
+    ]
+
+
+def test_autoindex_partial_bailout(
+    db: Session,
+    mixed_publish: Publish,
+    caplog: pytest.LogCaptureFixture,
+):
+    """autoindex_partial should do nothing if publish is in unexpected state."""
+
+    # Check how many items there were prior to invoking the actor.
+    initial_count = len(mixed_publish.items)
+
+    # Simulate what happens if the publish already got committed by the time
+    # the actor runs.
+    mixed_publish.state = PublishStates.committed
+    db.commit()
+
+    # It should succeed
+    settings = load_settings()
+    autoindex_partial(
+        publish_id=mixed_publish.id,
+        entrypoint_paths=["/some/yum-repo/repodata/repomd.xml"],
+        settings=settings,
+    )
+
+    # But it should not have added any items
+    db.refresh(mixed_publish)
+    assert len(mixed_publish.items) == initial_count
+
+    # And it should have logged about this
+    assert (
+        "Dropping autoindex request for publish in state 'COMMITTED'"
+        in caplog.text
+    )

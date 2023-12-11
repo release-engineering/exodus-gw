@@ -1,18 +1,24 @@
+import asyncio
 import gzip
 import hashlib
 import logging
 import os
 import tempfile
+from datetime import datetime, timezone
 from time import monotonic
 from typing import AsyncGenerator, BinaryIO, Generator, Optional
 
+import dramatiq
 from botocore.exceptions import ClientError
 from repo_autoindex import ContentError, Fetcher, autoindex
 from sqlalchemy import inspect
-from sqlalchemy.orm import Session
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.orm import Session, lazyload
 
 from exodus_gw.aws.client import aioboto_session
+from exodus_gw.database import db_engine
 from exodus_gw.models import Item, Publish
+from exodus_gw.schemas import PublishStates
 from exodus_gw.settings import Environment, Settings, get_environment
 
 LOG = logging.getLogger("exodus-gw")
@@ -95,7 +101,13 @@ class AutoindexEnricher:
     # autoindex pages. When run() completes, the Publish will have had any
     # applicable autoindexes added to it.
 
-    def __init__(self, publish: Publish, env_name: str, settings: Settings):
+    def __init__(
+        self,
+        publish: Publish,
+        env_name: str,
+        settings: Settings,
+        web_uri_filter: Optional[list[str]] = None,
+    ):
         self.publish = publish
         self.env_name = env_name
         self.env = get_environment(env_name, settings)
@@ -112,6 +124,12 @@ class AutoindexEnricher:
         self.item_query = self.db.query(Item).filter(
             Item.publish_id == publish.id
         )
+
+        if web_uri_filter is not None:
+            # autoindex has been requested for specific entry points.
+            self.item_query = self.item_query.filter(
+                Item.web_uri.in_(web_uri_filter)
+            )
 
     @property
     def repomd_xml_items(self) -> list[Item]:
@@ -254,6 +272,32 @@ class AutoindexEnricher:
             extra={"event": "publish", "success": True},
         )
 
+    def upsert_item(self, item: Item):
+        # Add a single autoindex-generated item to the DB.
+        #
+        # Uses upsert semantics because it is possible for multiple autoindex
+        # runs to be happening concurrently which might both decide to add
+        # the same items.
+        statement = insert(Item).values(
+            [
+                {
+                    "web_uri": item.web_uri,
+                    "object_key": item.object_key,
+                    "publish_id": item.publish_id,
+                    "content_type": item.content_type,
+                    "dirty": True,
+                    "updated": datetime.now(tz=timezone.utc),
+                }
+            ]
+        )
+
+        statement = statement.on_conflict_do_update(
+            index_elements=["publish_id", "web_uri"],
+            set_={c.name: c for c in statement.excluded if not c.primary_key},
+        )
+
+        self.db.execute(statement)
+
     async def run(self):
         if not self.settings.autoindex_filename:
             LOG.debug("autoindex is disabled", extra={"event": "publish"})
@@ -283,7 +327,7 @@ class AutoindexEnricher:
                     async for item in self.autoindex_items(
                         s3_client, fetcher, base_uri
                     ):
-                        self.db.add(item)
+                        self.upsert_item(item)
                         # We commit after generation of each object so that, if
                         # interrupted, we won't lose the progress made so far.
                         self.db.commit()
@@ -309,3 +353,58 @@ class AutoindexEnricher:
             duration,
             extra={"event": "publish", "success": True},
         )
+
+
+@dramatiq.actor(
+    time_limit=Settings().actor_time_limit,
+    max_backoff=Settings().actor_max_backoff,
+)
+def autoindex_partial(
+    publish_id: str,
+    entrypoint_paths: list[str],
+    settings: Settings = Settings(),
+) -> None:
+    """Do autoindex on specific entrypoints in a publish.
+
+    The usage of this actor is optional, as autoindex on all entrypoints is
+    guaranteed to happen at commit time. The actor is a hidden implementation
+    detail and it does not update any user-visible task.
+
+    The purpose of this is to speed up final commits by doing the autoindex
+    work earlier whenever practical.
+    """
+
+    db = Session(bind=db_engine(settings))
+
+    # A note on locking:
+    #
+    # We DO NOT lock the publish "FOR UPDATE" here. Because the point of
+    # this actor is to make things faster, requiring a lock on the publish
+    # (while other requests are still working on the publish) is
+    # counterproductive.
+    #
+    # This does mean there is some risk that the publish is moved out of
+    # PENDING state after our check below and before we add the autoindex
+    # items, i.e. it's theoretically possible that this actor would update
+    # autoindex items on the publish *after* the publish has already failed
+    # or been committed. While not ideal, it doesn't seem like this would
+    # have any negative impacts and we really don't want this actor to be
+    # in lock contention with incoming HTTP requests.
+    publish = (
+        db.query(Publish)
+        .filter(Publish.id == publish_id)
+        .options(lazyload(Publish.items))
+        .first()
+    )
+
+    if not publish or publish.state != PublishStates.pending:
+        LOG.warning(
+            "Dropping autoindex request for publish in state '%s'",
+            publish.state if publish else "(nonexistent)",
+        )
+        return
+
+    enricher = AutoindexEnricher(
+        publish, publish.env, settings, web_uri_filter=entrypoint_paths
+    )
+    asyncio.run(enricher.run())
