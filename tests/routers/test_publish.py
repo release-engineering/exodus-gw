@@ -11,6 +11,7 @@ from freezegun import freeze_time
 from exodus_gw import routers, schemas
 from exodus_gw.main import app
 from exodus_gw.models import CommitTask, Item, Publish, Task
+from exodus_gw.models.dramatiq import DramatiqMessage
 from exodus_gw.settings import Environment, Settings, get_environment
 
 
@@ -155,6 +156,67 @@ def test_update_publish_items_typical(db, auth_header):
             "content_type": "",
             "link_to": "",
         },
+    ]
+
+
+def test_update_publish_items_autoindex(db, auth_header):
+    """PUTting items including entry points will trigger a partial autoindex."""
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(id=publish_id, env="test", state="PENDING")
+
+    with TestClient(app) as client:
+        # Ensure a publish object exists
+        db.add(publish)
+        db.commit()
+
+        # Try to add some items to it
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json=[
+                {
+                    "web_uri": "/some/repo1/repodata/repomd.xml",
+                    "object_key": "1" * 64,
+                },
+                {
+                    "web_uri": "/some/repo1/repodata/whatever",
+                    "object_key": "2" * 64,
+                },
+                {
+                    "web_uri": "/some/repo2/repodata/repomd.xml",
+                    "object_key": "3" * 64,
+                },
+                {
+                    "web_uri": "/some/repo3/repodata/repomd.xml",
+                    "object_key": "absent",
+                },
+            ],
+            headers=auth_header(roles=["test-publisher"]),
+        )
+
+    # It should have succeeded
+    assert r.status_code == 200
+
+    # Check the enqueued messages...
+    messages: list[DramatiqMessage] = db.query(DramatiqMessage).all()
+
+    # It should have enqueued one message
+    assert len(messages) == 1
+
+    message = messages[0]
+
+    # Should be a message for the expected actor with
+    # expected args
+    assert message.actor == "autoindex_partial"
+
+    kwargs = message.body["kwargs"]
+    assert kwargs["publish_id"] == publish_id
+    assert kwargs["entrypoint_paths"] == [
+        # autoindex just the paths added by this request,
+        # and filtering out nonexistent objects
+        "/some/repo1/repodata/repomd.xml",
+        "/some/repo2/repodata/repomd.xml",
     ]
 
 

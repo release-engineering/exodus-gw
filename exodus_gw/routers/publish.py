@@ -111,6 +111,7 @@ indefinitely.
 """
 
 import logging
+import os
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Union
 from uuid import uuid4
@@ -207,6 +208,7 @@ def update_publish_items(
     publish_id: str = schemas.PathPublishId,
     env: Environment = deps.env,
     db: Session = deps.db,
+    settings: Settings = deps.settings,
 ) -> Dict[None, None]:
     """Add publish items to an existing publish object.
 
@@ -276,6 +278,50 @@ def update_publish_items(
     )
 
     db.execute(update_statement)
+
+    # If any of the items we just updated are an entry point, we also trigger
+    # autoindex in the background.
+    #
+    # Note that:
+    #
+    # - This is not a critical part of the publish handling. It's done to save
+    #   time by having the indexes already prepared by the time of a later
+    #   commit, but it doesn't matter if this is skipped or fails.
+    #   A full autoindex always happens at commit time, catching anything not
+    #   handled by this process.
+    #
+    # - No task is returned to the client. The client has no idea that this is
+    #   happening, and no way to track the progress.
+    #
+    # - The way of queuing this actor is imperfect: just because the client has
+    #   added an entry point file does not imply that they've also added all the
+    #   files referenced by it. e.g. the client could have added repomd.xml
+    #   without yet adding the *-primary.xml.gz referenced by it. In such cases,
+    #   the autoindexing might fail. This is acknowledged. Per comments above,
+    #   the failure is not critical - it just means the commit which happens
+    #   later will have a bit more work to do.
+    #
+    entrypoint_paths = set()
+    for item in items:
+        if item.object_key == "absent":
+            # deleted items don't get indexed
+            continue
+        basename = os.path.basename(item.web_uri)
+        for entrypoint_basename in settings.entry_point_files:
+            if basename == entrypoint_basename:
+                entrypoint_paths.add(item.web_uri)
+
+    if entrypoint_paths:
+        msg = worker.autoindex_partial.send(
+            publish_id=publish_id,
+            entrypoint_paths=sorted(entrypoint_paths),
+        )
+
+        LOG.info(
+            "Enqueued autoindex on %s for paths: %s",
+            msg.kwargs["publish_id"],
+            ", ".join(sorted(entrypoint_paths)),
+        )
 
     return {}
 
