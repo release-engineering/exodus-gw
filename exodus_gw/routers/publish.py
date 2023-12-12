@@ -245,6 +245,37 @@ def update_publish_items(
             % (db_publish.id, db_publish.state),
         )
 
+    # Resolve links before saving, as much as possible. The point of this is to
+    # pay the cost of link resolution early rather than saving it all up for
+    # commit.
+    #
+    # We want to resolve links on:
+    #
+    # (1) any existing items whose 'link_to' matches one of the 'web_uri' in
+    #     a non-link item about to be saved, and...
+    # (2) any item we're about to save whose 'link_to' matches one of the 'web_uri'
+    #     of a non-link item already in the DB.
+    #
+    resolvable: list[Union[schemas.ItemBase, models.Item]] = []
+    resolvable.extend(items)
+    resolvable.extend(
+        db.query(models.Item)
+        # Items should be locked for update. However, as the point of this early
+        # link resolution is to improve performance, if we would have to wait for
+        # the lock on some items, just skip them instead and leave them to be
+        # handled at commit time.
+        .with_for_update(skip_locked=True)
+        .filter(models.Item.publish_id == publish_id)
+        .filter(
+            models.Item.link_to.in_(
+                [i.web_uri for i in items if not i.link_to]
+            )
+        )
+        .all()
+    )
+
+    db_publish.resolve_links(ln_items=resolvable)
+
     # Convert the list into dict and update each dict with a publish_id.
     # Each item's 'dirty' and 'updated' are refreshed to ensure it's
     # written to DynamoDB with the current update, even if it was already

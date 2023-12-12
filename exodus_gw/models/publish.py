@@ -1,7 +1,8 @@
 import os
 import uuid
+from collections.abc import Sequence
 from datetime import datetime
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from fastapi import HTTPException
 from sqlalchemy import (
@@ -16,6 +17,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Bundle, Mapped, mapped_column, relationship
 from sqlalchemy.types import Uuid
+
+from exodus_gw.schemas import ItemBase
 
 from .base import Base
 
@@ -51,32 +54,67 @@ class Publish(Base):
         "Item", back_populates="publish", cascade="all, delete-orphan"
     )
 
-    def resolve_links(self):
+    def resolve_links(
+        self, ln_items: Optional[Sequence[Union[ItemBase, "Item"]]] = None
+    ):
+        """Resolve links on publish items.
+
+        If `ln_items` is provided, links will be resolved among these specific
+        items only. Note that these can be schemas.ItemBase to resolve links
+        on items on incoming requests, rather than existing items in the DB.
+        Additionally, it is not a fatal error if some links in this list
+        can't be resolved.
+
+        If `ln_items` is not provided, links will be resolved for all items
+        belonging to this publish object, and it's a fatal error if any
+        can't be resolved.
+        """
+
         db = inspect(self).session
-        # Store only publish items with link targets.
-        ln_items = (
-            db.query(Item)
-            .with_for_update()
-            .filter(Item.publish_id == self.id)
-            .filter(
-                func.coalesce(Item.link_to, "") != ""  # pylint: disable=E1102
+        assert db
+
+        # Whether we're doing a partial resolution, meaning it's OK for some
+        # links to remain unresolved afterward.
+        partial = True
+
+        # Additional items to be used as potential link targets, on top of
+        # whatever's currently in the DB.
+        extra_items = []
+
+        if ln_items is None:
+            partial = False
+            ln_items = (
+                db.query(Item)
+                .with_for_update()
+                .filter(Item.publish_id == self.id)
+                .filter(
+                    func.coalesce(Item.link_to, "")  # pylint: disable=E1102
+                    != ""
+                )
+                .all()
             )
-            .all()
-        )
+        else:
+            # Caller has provided specific items.
+            # Divide them up into those using links and those not.
+            # The items NOT using links are held onto, because those
+            # are also potential candidates for link *targets*.
+            extra_items = [i for i in ln_items if not i.link_to]
+            ln_items = [i for i in ln_items if i.link_to]
+
         # Collect link targets of linked items for finding matches.
         ln_item_paths = [item.link_to for item in ln_items]
 
         # Store only necessary fields from matching items to conserve memory.
-        match = Bundle(
+        match_bundle: Bundle[Any] = Bundle(
             "match", Item.web_uri, Item.object_key, Item.content_type
         )
-        query = db.query(match).filter(Item.web_uri.in_(ln_item_paths))
+        query = db.query(match_bundle).filter(Item.web_uri.in_(ln_item_paths))
         if LINK_ISOLATION:
             # See comments above where LINK_ISOLATION is set.
             # This path should become the only path ASAP!
             query = query.filter(Item.publish_id == self.id)
 
-        matches = {
+        matches: dict[str, dict[str, Optional[str]]] = {
             row.match.web_uri: {
                 "object_key": row.match.object_key,
                 "content_type": row.match.content_type,
@@ -84,7 +122,19 @@ class Publish(Base):
             for row in query
         }
 
+        # If there are any extra items, they're used on top of whatever's
+        # returned from the DB. This allows links to be resolved purely
+        # between items provided in 'ln_items' even if the link target was
+        # not saved to the DB yet.
+        for ln_target in extra_items:
+            if ln_target.web_uri in ln_item_paths:
+                matches[ln_target.web_uri] = {
+                    "object_key": ln_target.object_key,
+                    "content_type": ln_target.content_type,
+                }
+
         for ln_item in ln_items:
+            assert ln_item.link_to
             match = matches.get(ln_item.link_to)
 
             if (
@@ -92,6 +142,10 @@ class Publish(Base):
                 or not match.get("object_key")
                 or not match.get("content_type")
             ):
+                if partial:
+                    # Unresolvable links are permitted currently.
+                    continue
+
                 raise HTTPException(
                     status_code=400,
                     detail=(

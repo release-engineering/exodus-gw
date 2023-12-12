@@ -43,7 +43,7 @@ class ItemBase(BaseModel):
         ...,
         description="URI, relative to CDN root, which shall be used to expose this object.",
     )
-    object_key: str = Field(
+    object_key: Optional[str] = Field(
         "",
         description=(
             "Key of blob to be exposed; should be the SHA256 checksum of a previously uploaded "
@@ -53,11 +53,13 @@ class ItemBase(BaseModel):
             "content from the point of view of a CDN consumer."
         ),
     )
-    content_type: str = Field(
+    content_type: Optional[str] = Field(
         "",
         description="Content type of the content associated with this object.",
     )
-    link_to: str = Field("", description="Path of file targeted by symlink.")
+    link_to: Optional[str] = Field(
+        "", description="Path of file targeted by symlink."
+    )
 
     @model_validator(mode="after")
     def validate_item(self) -> "ItemBase":

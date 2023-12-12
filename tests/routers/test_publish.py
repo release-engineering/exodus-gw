@@ -82,11 +82,28 @@ def test_update_publish_items_typical(db, auth_header):
 
     publish = Publish(id=publish_id, env="test", state="PENDING")
 
-    with TestClient(app) as client:
-        # Ensure a publish object exists
-        db.add(publish)
-        db.commit()
+    # Add existing items which will influence link resolution.
+    publish.items.extend(
+        [
+            # existing item used as target of symlink
+            Item(
+                web_uri="/existing-target",
+                object_key="b" * 64,
+                content_type="text/plain",
+            ),
+            # existing unresolved link which can be resolved by upcoming request
+            Item(web_uri="/existing-link-resolvable", link_to="/uri2"),
+            # existing unresolved link which can't be resolved by upcoming request
+            Item(
+                web_uri="/existing-link-unresolvable", link_to="/other-target"
+            ),
+        ]
+    )
 
+    db.add(publish)
+    db.commit()
+
+    with TestClient(app) as client:
         # Try to add some items to it
         r = client.put(
             "/test/publish/%s" % publish_id,
@@ -102,12 +119,22 @@ def test_update_publish_items_typical(db, auth_header):
                     "content_type": "application/octet-stream",
                 },
                 {
+                    # This item links to another item in the same request.
                     "web_uri": "/uri3",
                     "link_to": "/uri1",
                 },
                 {
                     "web_uri": "/uri4",
                     "object_key": "absent",
+                },
+                {
+                    "web_uri": "/uri5",
+                    "link_to": "/unknown-target",
+                },
+                {
+                    # This item links to an existing item in the DB.
+                    "web_uri": "/uri6",
+                    "link_to": "/existing-target",
                 },
             ],
             headers=auth_header(roles=["test-publisher"]),
@@ -130,8 +157,30 @@ def test_update_publish_items_typical(db, auth_header):
         for item in items
     ]
 
-    # Should have stored exactly what we asked for
+    # The update should have stored our passed items, and in some cases,
+    # modified items which already existed
     assert item_dicts == [
+        {
+            # This existing link item was resolved.
+            "web_uri": "/existing-link-resolvable",
+            "object_key": "2" * 64,
+            "content_type": "application/octet-stream",
+            "link_to": None,
+        },
+        {
+            # This existing item remained on the publish unmodified.
+            "web_uri": "/existing-link-unresolvable",
+            "object_key": None,
+            "content_type": None,
+            "link_to": "/other-target",
+        },
+        {
+            # This existing item remained on the publish unmodified.
+            "web_uri": "/existing-target",
+            "object_key": "b" * 64,
+            "content_type": "text/plain",
+            "link_to": None,
+        },
         {
             "web_uri": "/uri1",
             "object_key": "1" * 64,
@@ -145,16 +194,37 @@ def test_update_publish_items_typical(db, auth_header):
             "link_to": "",
         },
         {
+            # For this particular item, it was provided with "link_to",
+            # but the link's target was already available in the same
+            # request and therefore it was resolved immediately.
             "web_uri": "/uri3",
-            "object_key": "",
-            "content_type": "",
-            "link_to": "/uri1",
+            "object_key": "1" * 64,
+            "content_type": "application/octet-stream",
+            "link_to": None,
         },
         {
             "web_uri": "/uri4",
             "object_key": "absent",
             "content_type": "",
             "link_to": "",
+        },
+        {
+            # For this item, it was provided with "link_to" and there's
+            # no existing item for the link's target, so it was stored
+            # as "link_to" for later resolution.
+            "web_uri": "/uri5",
+            "object_key": "",
+            "content_type": "",
+            "link_to": "/unknown-target",
+        },
+        {
+            # For this item, it was provided with "link_to" and there's
+            # an existing item already in the DB, so it should be
+            # resolved immediately.
+            "web_uri": "/uri6",
+            "object_key": "b" * 64,
+            "content_type": "text/plain",
+            "link_to": None,
         },
     ]
 
