@@ -103,7 +103,7 @@ class Actors:
         self.blocking_sem.acquire()
         self.record_call("blocking_fn end")
 
-    def log_warning(self, task_id, value):
+    def log_warning(self, publish_id, value):
         self.record_call("log_warning")
         logging.getLogger("any-logger").warning(
             "warning from actor: %s", value
@@ -316,21 +316,31 @@ def test_mixed_queues(actors, db):
     assert sorted(actors.actor_calls) == ["basic", "basic_other_queue"]
 
 
-def test_logs_prefixed(actors, caplog):
-    """Log messages generated within an actor are prefixed."""
+def test_logs_actor_info(actors, caplog: pytest.LogCaptureFixture):
+    """Log records generated within an actor include info about that
+    actor.
+    """
 
-    actors.log_warning.send(task_id="task-abc123", value="some value")
+    msg = actors.log_warning.send(
+        publish_id="publish-abc123", value="some value"
+    )
 
     # Ensure actor is invoked
     assert_soon(lambda: len(actors.actor_calls) == 1)
     assert sorted(actors.actor_calls) == ["log_warning"]
 
-    # When the warning was logged, it should have automatically embedded
-    # both the actor name and the task id
-    assert (
-        "[log_warning task-abc123] warning from actor: some value"
-        in caplog.text
-    )
+    # Find the log which came from within the actor
+    for record in caplog.records:
+        if "warning from actor" in record.getMessage():
+            break
+    else:
+        raise AssertionError("Can't find expected log record")
+
+    # It should have included info about the actor
+    attrs = record.__dict__
+    assert attrs["actor"] == "log_warning"
+    assert attrs["publish_id"] == "publish-abc123"
+    assert attrs["message_id"] == msg.message_id
 
 
 def test_logs_request_id(actors, caplog):
@@ -338,7 +348,9 @@ def test_logs_request_id(actors, caplog):
 
     token = correlation_id.set("aabbccdd")
     try:
-        actors.log_warning.send(task_id="task-abc123", value="some value")
+        actors.log_warning.send(
+            publish_id="publish-abc123", value="some value"
+        )
 
         # Ensure actor is invoked
         assert_soon(lambda: len(actors.actor_calls) == 1)
@@ -348,27 +360,6 @@ def test_logs_request_id(actors, caplog):
         assert '"request_id": "aabbccdd"' in caplog.text
     finally:
         correlation_id.reset(token)
-
-
-def test_logs_prefixed_threaded(actors, caplog):
-    """Log messages generated within an actor-spawned thread are prefixed
-    (as long as contextvars.Context was propagated).
-    """
-
-    actors.log_warning_from_thread.send(
-        task_id="task-abc123", value="some value"
-    )
-
-    # Ensure actor is invoked
-    assert_soon(lambda: len(actors.actor_calls) == 1)
-    assert sorted(actors.actor_calls) == ["log_warning_from_thread"]
-
-    # When the warning was logged, it should have automatically embedded
-    # both the actor name and the task id
-    assert (
-        "[log_warning_from_thread task-abc123] warning from actor: some value"
-        in caplog.text
-    )
 
 
 def test_queue_backlog(actors, db):
