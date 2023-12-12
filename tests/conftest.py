@@ -101,37 +101,18 @@ def sqlite_in_tests(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def sqlite_broker_in_tests(sqlite_in_tests):
-    """Reset dramatiq broker to a new instance pointing at sqlite DB for duration of
-    tests.
+    """Reset dramatiq broker during test, after settings have been updated to point
+    at sqlite DB.
+
     This is required because the dramatiq design is such that a broker needs to be
     installed at import-time, and actors declared using the decorator will be pointing
     at that broker. Since that happens too early for us to set up our test fixtures,
-    we need to reinstall another broker pointing at our sqlite DB after we've set
-    that up.
+    we need to reset the broker created at import time to point at our test DB.
     """
 
-    old_broker = dramatiq.get_broker()
-
-    new_broker = Broker()
-    dramatiq.set_broker(new_broker)
-
-    # All actors are currently pointing at old_broker which is not using sqlite.
-    # This will break a call to .send() on those actors.
-    # Point them towards new_broker instead which will allow them to work.
-    actors = []
-    for actor in old_broker.actors.values():
-        actors.append(actor)
-        actor.broker = new_broker
-        new_broker.declare_actor(actor)
-
-    # Everything now points at the sqlite-enabled broker, so proceed with test
-    yield
-
-    # Now roll back our changes
-    for actor in actors:
-        actor.broker = old_broker
-
-    dramatiq.set_broker(old_broker)
+    broker = dramatiq.get_broker()
+    assert isinstance(broker, Broker)
+    broker.reset()
 
 
 @pytest.fixture()

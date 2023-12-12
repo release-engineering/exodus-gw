@@ -1,19 +1,27 @@
 import inspect
-from functools import partial, update_wrapper
+from collections.abc import Callable
+from functools import wraps
 
 from dramatiq import Middleware
+
+from exodus_gw.settings import Settings
 
 
 class SettingsMiddleware(Middleware):
     """Middleware to make a Settings object available to all actors."""
 
-    def __init__(self, settings):
+    def __init__(self, settings: Callable[[], Settings]):
         self.__settings = settings
 
     def before_declare_actor(self, broker, actor):
-        sig = inspect.signature(actor.fn)
+        original_fn = actor.fn
+        sig = inspect.signature(original_fn)
 
         if "settings" in sig.parameters:
-            new_fn = partial(actor.fn, settings=self.__settings)
-            update_wrapper(new_fn, actor.fn)
+
+            @wraps(original_fn)
+            def new_fn(*args, **kwargs):
+                kwargs["settings"] = self.__settings()
+                return original_fn(*args, **kwargs)
+
             actor.fn = new_fn
