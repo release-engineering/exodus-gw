@@ -225,7 +225,7 @@ def update_publish_items(
 
     db_publish = (
         db.query(models.Publish)
-        .with_for_update()
+        .with_for_update(read=True)
         .filter(
             models.Publish.id == publish_id,
             models.Publish.env == env.name,
@@ -433,7 +433,9 @@ def commit_publish(
 
     db_publish = (
         db.query(models.Publish)
-        .with_for_update()
+        # Publish should be locked, but if doing a phase1 commit we will only
+        # be reading from the publish and not writing to it.
+        .with_for_update(read=(commit_mode_str == models.CommitModes.phase1))
         .filter(
             models.Publish.id == publish_id,
             models.Publish.env == env.name,
