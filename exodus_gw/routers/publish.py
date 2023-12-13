@@ -298,7 +298,7 @@ def update_publish_items(
         extra={"event": "publish"},
     )
 
-    statement = insert(models.Item).values(items_data)
+    statement = insert(models.Item)
 
     # Update all target table columns, except for the primary_key column.
     update_dict = {c.name: c for c in statement.excluded if not c.primary_key}
@@ -308,7 +308,7 @@ def update_publish_items(
         set_=update_dict,
     )
 
-    db.execute(update_statement)
+    db.execute(update_statement, items_data)
 
     # If any of the items we just updated are an entry point, we also trigger
     # autoindex in the background.
