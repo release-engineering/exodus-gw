@@ -1,6 +1,8 @@
+from collections.abc import Callable
+
 import backoff
 from dramatiq import Middleware
-from sqlalchemy import inspect
+from sqlalchemy import Engine, inspect
 
 
 @backoff.on_predicate(
@@ -15,8 +17,8 @@ def db_table_check(engine, table):
 class DatabaseReadyMiddleware(Middleware):
     """Middleware for checking if DB is ready."""
 
-    def __init__(self, db_engine):
+    def __init__(self, db_engine: Callable[[], Engine]):
         self.__db_engine = db_engine
 
     def after_process_boot(self, broker):
-        db_table_check(self.__db_engine, "dramatiq_consumers")
+        db_table_check(self.__db_engine(), "dramatiq_consumers")

@@ -41,13 +41,17 @@ class Broker(dramatiq.Broker):  # pylint: disable=abstract-method
 
         loggers_init(self.__settings)
 
+        # In the middlewares added below, references to settings and DB engine
+        # are kept indirect so that it's possible to reset these attributes on
+        # the broker and ensure they take effect.
+        get_settings = lambda: self.__settings
+        get_db_engine = lambda: self.__db_engine
+
         # We have some actors using this, so it's always enabled.
         self.add_middleware(CurrentMessage())
 
         # Enable special handling of actors with 'scheduled=True' in options.
-        self.add_middleware(
-            SchedulerMiddleware(self.__settings, self.__db_engine)
-        )
+        self.add_middleware(SchedulerMiddleware(get_settings, get_db_engine))
 
         # Enable automatic prefixing of log messages with actor names/identity
         # such as "[commit <publish-id>] the log message..."
@@ -57,16 +61,26 @@ class Broker(dramatiq.Broker):  # pylint: disable=abstract-method
         self.add_middleware(CorrelationIdMiddleware())
 
         # Ensure all actors can get access to the current settings.
-        self.add_middleware(SettingsMiddleware(self.__settings))
+        self.add_middleware(SettingsMiddleware(get_settings))
 
         self.add_middleware(LocalNotifyMiddleware())
 
         # Enable Database readycheck when booting up a worker.
-        self.add_middleware(DatabaseReadyMiddleware(self.__db_engine))
+        self.add_middleware(DatabaseReadyMiddleware(get_db_engine))
 
-        # This is postgres-specific, so...
-        if "postgresql" in str(self.__db_engine.url):
-            self.add_middleware(PostgresNotifyMiddleware(self.__db_engine))
+        # Enable postgres notify/listen.
+        # This middleware checks internally whether postgres is used.
+        self.add_middleware(PostgresNotifyMiddleware(get_db_engine))
+
+    def reset(self):
+        """Reset the broker, reinitializing settings and DB engine.
+
+        Intended for usage only during tests, as a way of forcing the existing
+        broker to point at a clean database.
+        """
+        self.__settings = load_settings()
+        self.__db_engine = db_engine(self.__settings)
+        self.set_session(None)
 
     def set_session(self, session):
         """Set an sqlalchemy session for use with the broker.

@@ -1,10 +1,11 @@
 import logging
 import select
 import threading
+from collections.abc import Callable
 
 import backoff
 from dramatiq import Middleware
-from sqlalchemy import text
+from sqlalchemy import Engine, text
 
 LOG = logging.getLogger("exodus-gw")
 
@@ -14,16 +15,23 @@ class PostgresNotifyMiddleware(Middleware):
     on certain events.
     """
 
-    def __init__(self, db_engine, interval=5.0):
+    def __init__(self, db_engine: Callable[[], Engine], interval=5.0):
         self.__db_engine = db_engine
         self.__listener = None
         self.__listener_thread = None
         self.__listener_interval = interval
 
+    @property
+    def using_postgres(self):
+        return "postgresql" in str(self.__db_engine().url)
+
     def before_worker_boot(self, broker, worker):
+        if not self.using_postgres:
+            return
+
         # As worker boots, we start a thread which is continuosly doing a LISTEN.
         self.__listener = Listener(
-            broker, self.__db_engine, self.__listener_interval
+            broker, self.__db_engine(), self.__listener_interval
         )
 
         self.__listener_thread = threading.Thread(
@@ -32,12 +40,15 @@ class PostgresNotifyMiddleware(Middleware):
         self.__listener_thread.start()
 
     def do_pg_notify(self, broker):
+        if not self.using_postgres:
+            return
+
         # Do a NOTIFY either using the broker's current session, or our
         # own if needed.
         if broker.session:
             return self.do_notify_with_db(broker.session)
 
-        with self.__db_engine.connect() as connection:
+        with self.__db_engine().connect() as connection:
             return self.do_notify_with_db(connection)
 
     def do_notify_with_db(self, db):
@@ -45,8 +56,9 @@ class PostgresNotifyMiddleware(Middleware):
 
     def before_worker_shutdown(self, broker, worker):
         # As worker shuts down we should shut down the listener thread.
-        self.__listener.running = False
-        self.__listener_thread.join()
+        if self.__listener:
+            self.__listener.running = False
+            self.__listener_thread.join()
 
     def after_ack(self, broker, message):
         self.do_pg_notify(broker)

@@ -40,9 +40,10 @@ def test_listen_thread(caplog):
     logging.getLogger("exodus-gw").setLevel(logging.INFO)
 
     db_engine = mock.MagicMock()
+    db_engine.url = "postgresql://whatever"
     select = FakeSelect()
     broker = FakeBroker()
-    mw = PostgresNotifyMiddleware(db_engine, 0.1)
+    mw = PostgresNotifyMiddleware(lambda: db_engine, 0.1)
     broker.add_middleware(mw)
 
     with mock.patch("select.select", new=select):
@@ -88,9 +89,10 @@ def test_notifies():
     """Middleware executes postgres NOTIFY statements when relevant events occur."""
 
     db_engine = mock.MagicMock()
+    db_engine.url = "postgresql://whatever"
     db_conn = db_engine.connect().__enter__()
     broker = FakeBroker()
-    mw = PostgresNotifyMiddleware(db_engine)
+    mw = PostgresNotifyMiddleware(lambda: db_engine)
     broker.add_middleware(mw)
 
     # These should all result in notifies occurring

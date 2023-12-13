@@ -1,12 +1,14 @@
 import functools
 import logging
 import uuid
+from collections.abc import Callable
 from datetime import datetime
 from typing import Optional
 
 import pycron
 from dramatiq import Middleware
 from dramatiq.common import dq_name
+from sqlalchemy import Engine
 from sqlalchemy.orm import Session
 
 from exodus_gw.models import DramatiqMessage
@@ -21,7 +23,9 @@ class SchedulerMiddleware(Middleware):
     # Arbitrary constant UUID used as namespace when calculating stable message IDs.
     SCHEDULER_NS = uuid.UUID("71f64e5740d428a533429d81c30e899b")
 
-    def __init__(self, settings, db_engine):
+    def __init__(
+        self, settings: Callable[[], Settings], db_engine: Callable[[], Engine]
+    ):
         self.__settings = settings
         self.__db_engine = db_engine
 
@@ -45,10 +49,12 @@ class SchedulerMiddleware(Middleware):
         # Note, scheduled callable doesn't do anything in particular with errors, so
         # those will be processed via the usual retry mechanism.
 
+        settings = self.__settings()
+
         settings_key = "cron_" + actor.actor_name
 
         # It is a bug to define a scheduled actor without a corresponding setting.
-        assert hasattr(self.__settings, settings_key)
+        assert hasattr(settings, settings_key)
 
         actor.options["scheduled_message_id"] = str(
             uuid.uuid5(
@@ -73,7 +79,7 @@ class SchedulerMiddleware(Middleware):
 
         @functools.wraps(unscheduled_fn)
         def new_fn(last_run: Optional[float] = None):
-            cron_rule = getattr(self.__settings, settings_key)
+            cron_rule = getattr(settings, settings_key)
             now = datetime.utcnow()
 
             if not last_run:
@@ -106,7 +112,7 @@ class SchedulerMiddleware(Middleware):
             # Call ourselves again soon.
             actor.send_with_options(
                 kwargs=dict(last_run=now.timestamp()),
-                delay=self.__settings.scheduler_interval * 60 * 1000,
+                delay=settings.scheduler_interval * 60 * 1000,
             )
 
         actor.fn = new_fn
@@ -125,7 +131,7 @@ class SchedulerMiddleware(Middleware):
         # scheduler message in the system for this actor.
         msg = msg.copy(message_id=actor.options["scheduled_message_id"])
 
-        session = Session(bind=self.__db_engine)
+        session = Session(bind=self.__db_engine())
         try:
             broker.set_session(session)
 
