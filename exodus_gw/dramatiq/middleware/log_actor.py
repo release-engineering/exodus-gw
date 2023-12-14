@@ -1,54 +1,108 @@
 import logging
-from contextvars import ContextVar
+from contextvars import ContextVar, copy_context
 from functools import wraps
+from time import monotonic
+from typing import Any
 
-from dramatiq import Middleware
+from dramatiq import Actor, Middleware
+from dramatiq.middleware import CurrentMessage
 
-CURRENT_PREFIX: ContextVar[str] = ContextVar("CURRENT_PREFIX")
+LOG = logging.getLogger("exodus-gw.actor")
 
 
-class PrefixFilter(logging.Filter):
-    # A filter which will add CURRENT_PREFIX onto each message.
+CURRENT_ACTOR: ContextVar[Actor[[], Any]] = ContextVar("CURRENT_ACTOR")
+CURRENT_PUBLISH_ID: ContextVar[str] = ContextVar("CURRENT_PUBLISH_ID")
+CURRENT_MESSAGE_ID: ContextVar[str] = ContextVar("CURRENT_MESSAGE_ID")
+
+
+def in_copied_context(fn):
+    # Returns a function wrapped to always run in a copy of the
+    # current context at time of invocation.
+    #
+    # This means the function can freely set contextvars without
+    # having to worry about resetting them later.
+    @wraps(fn)
+    def new_fn(*args, **kwargs):
+        ctx = copy_context()
+        return ctx.run(fn, *args, **kwargs)
+
+    return new_fn
+
+
+def new_timer():
+    # Returns a callable which returns the number of milliseconds
+    # passed since new_timer() was called.
+    start = monotonic()
+
+    def fn():
+        return int((monotonic() - start) * 1000)
+
+    return fn
+
+
+class ActorFilter(logging.Filter):
+    # A filter which will add extra fields onto each log record
+    # with info about the currently executing actor.
 
     def filter(self, record: logging.LogRecord) -> bool:
-        record.msg = CURRENT_PREFIX.get("") + record.msg
+        if actor := CURRENT_ACTOR.get(None):
+            record.actor = actor.actor_name
+        if publish_id := CURRENT_PUBLISH_ID.get(None):
+            record.publish_id = publish_id
+        if message_id := CURRENT_MESSAGE_ID.get(None):
+            record.message_id = message_id
         return True
 
 
 class LogActorMiddleware(Middleware):
-    """Middleware to prefix every log message with the current actor name."""
+    """Middleware to add certain logging behaviors onto all actors."""
 
     def __init__(self):
-        self.filter = PrefixFilter()
+        self.filter = ActorFilter()
 
     def after_process_boot(self, broker):
         logging.getLogger().handlers[0].addFilter(self.filter)
 
     def before_declare_actor(self, broker, actor):
-        actor.fn = self.wrap_fn_with_prefix(actor.fn)
+        old_fn = actor.fn
 
-    def wrap_fn_with_prefix(self, fn):
-        # Given a function, returns a wrapped version of it which will adjust
-        # CURRENT_PREFIX around the function's invocation.
-
-        @wraps(fn)
+        @wraps(old_fn)
         def new_fn(*args, **kwargs):
-            # We want to show the function name (which is the actor name)...
-            prefix = fn.__name__
+            # Wrapped function sets context vars before execution...
+            CURRENT_ACTOR.set(actor)
 
-            # If the actor takes a publish or task ID as an argument, we want
-            # to show that as well
-            for key in ("publish_id", "task_id"):
-                if key in kwargs:
-                    prefix = f"{prefix} {kwargs[key]}"
-                    break
+            if publish_id := kwargs.get("publish_id"):
+                CURRENT_PUBLISH_ID.set(publish_id)
 
-            prefix = f"[{prefix}] "
+            if message := CurrentMessage.get_current_message():
+                # This is copied into a contextvar because get_current_message()
+                # is a thread-local and not a contextvar, and therefore it
+                # wouldn't be available on log records coming from other
+                # threads if we don't copy it.
+                CURRENT_MESSAGE_ID.set(message.message_id)
 
-            token = CURRENT_PREFIX.set(prefix)
+            # ...and also ensures some consistent logs appear around
+            # the actor invocation: start/stop/error, with timing info.
+            timer = new_timer()
+
+            LOG.info("Starting")
             try:
-                return fn(*args, **kwargs)
-            finally:
-                CURRENT_PREFIX.reset(token)
+                out = old_fn(*args, **kwargs)
+                LOG.info(
+                    "Succeeded",
+                    extra={"duration_ms": timer(), "success": True},
+                )
+                return out
+            except:
+                LOG.warning(
+                    "Failed",
+                    exc_info=True,
+                    extra={"duration_ms": timer(), "success": False},
+                )
+                raise
 
-        return new_fn
+        # Make the function run in a copied context so that it can
+        # freely set contextvars without having to unset them.
+        new_fn = in_copied_context(new_fn)
+
+        actor.fn = new_fn

@@ -60,6 +60,10 @@ class JsonFormatter(logging.Formatter):
             "message": "message",
             "event": "event",
             "success": "success",
+            "actor": "actor",
+            "publish_id": "publish_id",
+            "message_id": "message_id",
+            "duration_ms": "duration_ms",
         }
         self.datefmt = datefmt
 
@@ -81,7 +85,12 @@ class JsonFormatter(logging.Formatter):
         return s
 
     def formatMessage(self, record):
-        return {k: record.__dict__.get(v) for k, v in self.fmt.items()}
+        absent = object()
+        return {
+            k: record.__dict__.get(v)
+            for k, v in self.fmt.items()
+            if record.__dict__.get(v, absent) is not absent
+        }
 
     def format(self, record):
         record.message = record.getMessage()
