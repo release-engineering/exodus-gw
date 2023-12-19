@@ -234,8 +234,10 @@ class CommitBase:
         # Returns base of the SELECT query to find all items for commit.
         #
         # Can be overridden in subclasses.
-        return select(Item).where(
-            Item.publish_id == self.publish.id, Item.dirty == True
+        return (
+            select(Item)
+            .where(Item.publish_id == self.publish.id, Item.dirty == True)
+            .order_by(Item.web_uri)
         )
 
     @property

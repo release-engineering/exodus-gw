@@ -74,6 +74,7 @@ class Publish(Base):
                     func.coalesce(Item.link_to, "")  # pylint: disable=E1102
                     != ""
                 )
+                .order_by(Item.web_uri)
                 .all()
             )
         else:
