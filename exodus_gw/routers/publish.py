@@ -271,6 +271,7 @@ def update_publish_items(
                 [i.web_uri for i in items if not i.link_to]
             )
         )
+        .order_by(models.Item.web_uri)
         .all()
     )
 
@@ -290,6 +291,7 @@ def update_publish_items(
         }
         for item in items
     ]
+    items_data.sort(key=lambda item: item["web_uri"])
 
     LOG.debug(
         "Adding %s items into '%s'",
