@@ -170,6 +170,11 @@ class Settings(BaseSettings):
     Can be set to an empty string to disable generation of indexes.
     """
 
+    autoindex_partial_excludes: List[str] = ["/kickstart/"]
+    """Background processing of autoindexes will be disabled for paths matching
+    any of these values.
+    """
+
     config_cache_ttl: int = 2
     """Time (in minutes) config is expected to live in components that consume it.
 
