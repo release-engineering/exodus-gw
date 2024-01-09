@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import datetime, timedelta
 
 import mock
@@ -288,6 +289,54 @@ def test_update_publish_items_autoindex(db, auth_header):
         "/some/repo1/repodata/repomd.xml",
         "/some/repo2/repodata/repomd.xml",
     ]
+
+
+def test_update_publish_items_autoindex_excluded(
+    db, auth_header, caplog: pytest.LogCaptureFixture
+):
+    """PUTting items including entry points under an excluded path will NOT trigger
+    partial autoindex.
+    """
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(id=publish_id, env="test", state="PENDING")
+
+    with TestClient(app) as client:
+        # Ensure a publish object exists
+        db.add(publish)
+        db.commit()
+
+        # Try to add some items to it
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json=[
+                {
+                    "web_uri": "/some/kickstart/repo1/repodata/repomd.xml",
+                    "object_key": "1" * 64,
+                },
+                {
+                    "web_uri": "/some/kickstart/repo1/other",
+                    "object_key": "2" * 64,
+                },
+            ],
+            headers=auth_header(roles=["test-publisher"]),
+        )
+
+    # It should have succeeded
+    assert r.status_code == 200
+
+    # Check the enqueued messages...
+    messages: list[DramatiqMessage] = db.query(DramatiqMessage).all()
+
+    # It should have enqueued no messages
+    assert len(messages) == 0
+
+    # And it should have logged about the exclusion
+    assert (
+        "/some/kickstart/repo1/repodata/repomd.xml: excluded from partial autoindex"
+        in caplog.text
+    )
 
 
 def test_update_publish_items_path_normalization(db, auth_header):

@@ -339,10 +339,23 @@ def update_publish_items(
         if item.object_key == "absent":
             # deleted items don't get indexed
             continue
+
         basename = os.path.basename(item.web_uri)
         for entrypoint_basename in settings.entry_point_files:
             if basename == entrypoint_basename:
-                entrypoint_paths.add(item.web_uri)
+                if any(
+                    [
+                        exclude in item.web_uri
+                        for exclude in settings.autoindex_partial_excludes
+                    ]
+                ):
+                    # Not eligible for partial autoindex, e.g. /kickstart/ repos
+                    # because the kickstart and yum repodata might arrive separately.
+                    LOG.info(
+                        "%s: excluded from partial autoindex", item.web_uri
+                    )
+                else:
+                    entrypoint_paths.add(item.web_uri)
 
     if entrypoint_paths:
         msg = worker.autoindex_partial.send(
