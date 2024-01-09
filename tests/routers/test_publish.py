@@ -165,7 +165,7 @@ def test_update_publish_items_typical(db, auth_header):
             "web_uri": "/existing-link-resolvable",
             "object_key": "2" * 64,
             "content_type": "application/octet-stream",
-            "link_to": None,
+            "link_to": "",
         },
         {
             # This existing item remained on the publish unmodified.
@@ -200,7 +200,7 @@ def test_update_publish_items_typical(db, auth_header):
             "web_uri": "/uri3",
             "object_key": "1" * 64,
             "content_type": "application/octet-stream",
-            "link_to": None,
+            "link_to": "",
         },
         {
             "web_uri": "/uri4",
@@ -224,7 +224,7 @@ def test_update_publish_items_typical(db, auth_header):
             "web_uri": "/uri6",
             "object_key": "b" * 64,
             "content_type": "text/plain",
-            "link_to": None,
+            "link_to": "",
         },
     ]
 
@@ -318,7 +318,7 @@ def test_update_publish_items_path_normalization(db, auth_header):
     # Publish object should now have matching items
     db.refresh(publish)
 
-    items = sorted(publish.items, key=lambda item: item.link_to)
+    items = sorted(publish.items, key=lambda item: item.web_uri)
     item_dicts = [
         {
             "web_uri": item.web_uri,
@@ -328,14 +328,14 @@ def test_update_publish_items_path_normalization(db, auth_header):
         for item in items
     ]
 
-    # Should have stored normalized web_uri and link_to paths
+    # Should have stored normalized web_uri and link_to paths (update now resolves links as well).
     assert item_dicts == [
-        {"web_uri": "/some/path", "object_key": "1" * 64, "link_to": ""},
         {
             "web_uri": "/link/to/some/path",
-            "object_key": "",
-            "link_to": "/some/path",
+            "object_key": "1" * 64,
+            "link_to": "",
         },
+        {"web_uri": "/some/path", "object_key": "1" * 64, "link_to": ""},
     ]
 
 
@@ -1078,66 +1078,92 @@ def test_commit_publish_prev_completed(mock_commit, fake_publish, db):
 
 
 @mock.patch("exodus_gw.worker.commit")
-def test_commit_publish_linked_items(mock_commit, fake_publish, db):
+def test_commit_publish_linked_items(mock_commit, db):
     """Ensure commit_publish correctly resolves links."""
 
-    # Whole items
-    item1 = Item(
-        web_uri="/the/path",
-        object_key="1" * 64,
-        publish_id=fake_publish.id,
-        link_to=None,  # It should be able to handle None/NULL link_to values...
-        content_type="some type",
+    publish = Publish(
+        id="11224567-e89b-12d3-a456-426614174000", env="test", state="PENDING"
     )
-    item2 = Item(
-        web_uri="/another/path",
-        object_key="2" * 64,
-        publish_id=fake_publish.id,
-        link_to="",  # ...and empty string link_to values...
-        content_type="another type",
-    )
-    item3 = Item(
-        web_uri="/some/different/path",
-        object_key="3" * 64,
-        publish_id=fake_publish.id,
-    )
-    # Linked items
-    ln_item1 = Item(
-        web_uri="/alternate/route/to/the/path",
-        link_to="/the/path",
-        publish_id=fake_publish.id,
-    )
-    ln_item2 = Item(
-        web_uri="/alternate/route/to/another/path",
-        link_to="/another/path",
-        publish_id=fake_publish.id,
-    )
-    fake_publish.items.extend([item1, item2, item3, ln_item1, ln_item2])
 
-    db.add(fake_publish)
+    src_items = [
+        Item(
+            web_uri="/some/path",
+            object_key="0" * 64,
+            publish_id=publish.id,
+            link_to="",  # It should be able to handle empty string link_to values...
+            content_type="some type",
+        ),
+        Item(
+            web_uri="/another/path",
+            object_key="1" * 64,
+            publish_id=publish.id,
+            # ...NoneType link_to values...
+            content_type="another type",
+        ),
+        Item(
+            web_uri="/some/different/path",
+            object_key="2" * 64,
+            publish_id=publish.id,
+            content_type="",  # ...empty string content_type values...
+        ),
+        Item(
+            web_uri="/another/different/path",
+            object_key="3" * 64,
+            publish_id=publish.id,
+            # ...and NoneType content_type values.
+        ),
+    ]
+    ln_items = [
+        Item(
+            web_uri="/alternate/route/to/some/path",
+            link_to="/some/path",
+            publish_id=publish.id,
+        ),
+        Item(
+            web_uri="/alternate/route/to/another/path",
+            link_to="/another/path",
+            publish_id=publish.id,
+        ),
+        Item(
+            web_uri="/alternate/route/to/some/different/path",
+            link_to="/some/different/path",
+            publish_id=publish.id,
+        ),
+        Item(
+            web_uri="/alternate/route/to/another/different/path",
+            link_to="/another/different/path",
+            publish_id=publish.id,
+        ),
+    ]
+    publish.items.extend(src_items)
+    publish.items.extend(ln_items)
+
+    db.add(publish)
     db.commit()
 
     publish_task = routers.publish.commit_publish(
         env=get_environment("test"),
-        publish_id=fake_publish.id,
+        publish_id=publish.id,
         db=db,
         settings=Settings(),
         commit_mode=None,
     )
 
-    # Should've filled ln_item1's object_key with that of item1.
-    assert ln_item1.object_key == "1" * 64
-    # Should've filled ln_item2's object_key with that of item2.
-    assert ln_item2.object_key == "2" * 64
+    # Should've filled object_key, content_type from source item and unset link_to fields.
+    for idx, item in enumerate(ln_items):
+        assert item.object_key == str(idx) * 64
 
-    # Should've filled ln_item1's content_type with that of item1.
-    assert ln_item1.content_type == "some type"
-    # Should've filled ln_item2's content_type with that of item2.
-    assert ln_item2.content_type == "another type"
+        ctype = item.content_type
+        if idx == 0:
+            assert ctype == "some type"
+        elif idx == 1:
+            assert ctype == "another type"
+        if idx == 2:
+            assert ctype == ""
+        if idx == 3:
+            assert ctype == None
 
-    # Should've unset the link_to, since links have been resolved.
-    assert ln_item1.link_to is None
-    assert ln_item2.link_to is None
+        assert item.link_to is ""
 
     # Should've created and sent task.
     assert isinstance(publish_task, Task)
@@ -1145,7 +1171,7 @@ def test_commit_publish_linked_items(mock_commit, fake_publish, db):
     mock_commit.assert_has_calls(
         calls=[
             mock.call.send(
-                publish_id="123e4567-e89b-12d3-a456-426614174000",
+                publish_id=publish.id,
                 env="test",
                 from_date=mock.ANY,
                 commit_mode="phase2",

@@ -119,11 +119,7 @@ class Publish(Base):
             assert ln_item.link_to
             match = matches.get(ln_item.link_to)
 
-            if (
-                not match
-                or not match.get("object_key")
-                or not match.get("content_type")
-            ):
+            if not match or not match.get("object_key"):
                 if partial:
                     # Unresolvable links are permitted currently.
                     continue
@@ -141,7 +137,7 @@ class Publish(Base):
             ln_item.content_type = match.get("content_type")
 
             # The link has been resolved. Wipe it out so it's not resolved again.
-            ln_item.link_to = None
+            ln_item.link_to = ""
 
 
 class Item(Base):
