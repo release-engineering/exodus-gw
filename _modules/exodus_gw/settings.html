@@ -206,6 +206,11 @@
 <span class="sd">    Can be set to an empty string to disable generation of indexes.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">autoindex_partial_excludes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;/kickstart/&quot;</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Background processing of autoindexes will be disabled for paths matching</span>
+<span class="sd">    any of these values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">config_cache_ttl</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Time (in minutes) config is expected to live in components that consume it.</span>
 
