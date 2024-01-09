@@ -161,6 +161,8 @@ class Settings(BaseSettings):
         "repomd.xml.asc",
         "PULP_MANIFEST",
         "PULP_MANIFEST.asc",
+        "treeinfo",
+        "extra_files.json",
     ]
     """List of file names that should be saved for last when publishing."""
 
