@@ -871,9 +871,9 @@ referencing==0.32.1 \
     # via
     #   jsonschema
     #   jsonschema-specifications
-repo-autoindex==1.2.0 \
-    --hash=sha256:ec0074d2fb95310e50c77a7e6096fb82478711dba579980c2a11419233cefb0f \
-    --hash=sha256:f2af445921749d662506edc12501d4be1c31a25921261d44e97331ac9fea5cb4
+repo-autoindex==1.2.1 \
+    --hash=sha256:4f65dc75afd3687247584719434227f25fd5e3116c845523f64955fa22fe2d4d \
+    --hash=sha256:6941669aa4382372296077fde0f9238232bfd72458e186e92f788e4535561a45
     # via -r requirements.in
 rpds-py==0.17.1 \
     --hash=sha256:01f58a7306b64e0a4fe042047dd2b7d411ee82e54240284bab63e325762c1147 \
