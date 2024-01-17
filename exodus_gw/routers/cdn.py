@@ -6,7 +6,7 @@ import logging
 import os
 from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 from botocore.utils import datetime2timestamp
 from cryptography.hazmat.backends import default_backend
@@ -200,6 +200,7 @@ def cdn_redirect(
         or call_context.user.internalUsername
         or "<unknown user>"
     )
+    url = quote(url)
     signed_url = sign_url(url, settings, env, username)
     return Response(
         content=None, headers={"location": signed_url}, status_code=302
