@@ -219,7 +219,9 @@
 <span class="sd">    existing caches to expire and the newly deployed config to take effect.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">worker_health_filepath</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;/tmp/exodus-gw-last-healthy&quot;</span>  <span class="c1"># nosec - Bandit doesn&#39;t like that /tmp is used.</span>
+    <span class="n">worker_health_filepath</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;/tmp/exodus-gw-last-healthy&quot;</span>  <span class="c1"># nosec - Bandit doesn&#39;t like that /tmp is used.</span>
+    <span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The path to a file used to verify healthiness of a worker. Intended to be used by OCP&quot;&quot;&quot;</span>
 
     <span class="n">worker_keepalive_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">5</span>
