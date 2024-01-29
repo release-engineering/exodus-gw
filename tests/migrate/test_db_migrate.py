@@ -1,4 +1,5 @@
 """Testing various modes of db_migrate during app startup."""
+
 import pytest
 from sqlalchemy.exc import OperationalError
 

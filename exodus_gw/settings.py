@@ -184,7 +184,9 @@ class Settings(BaseSettings):
     existing caches to expire and the newly deployed config to take effect.
     """
 
-    worker_health_filepath: str = "/tmp/exodus-gw-last-healthy"  # nosec - Bandit doesn't like that /tmp is used.
+    worker_health_filepath: str = (
+        "/tmp/exodus-gw-last-healthy"  # nosec - Bandit doesn't like that /tmp is used.
+    )
     """The path to a file used to verify healthiness of a worker. Intended to be used by OCP"""
 
     worker_keepalive_timeout: int = 60 * 5
