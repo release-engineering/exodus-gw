@@ -67,6 +67,7 @@ bucket.upload_file('/tmp/hello.txt',
                    'aec070645fe53ee3b3763059376134f058cc337247c978add178b6ccdfb0019f')
 ```
 """
+
 import logging
 import textwrap
 from typing import Dict, Optional
