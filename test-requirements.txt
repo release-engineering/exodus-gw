@@ -136,6 +136,10 @@ attrs==23.2.0 \
     #   aiohttp
     #   jsonschema
     #   referencing
+authlib==1.3.0 \
+    --hash=sha256:959ea62a5b7b5123c5059758296122b57cd2585ae2ed1c0622c21b371ffdae06 \
+    --hash=sha256:9637e4de1fb498310a56900b3e2043a206b03cb11c05422014b0302cbc814be3
+    # via safety
 babel==2.14.0 \
     --hash=sha256:6919867db036398ba21eb5c7a0f6b28ab8cbc3ae7a73a44ebe34ae74a4e7d363 \
     --hash=sha256:efb1a25b7118e67ce3a259bed20545c29cb68be8ad2c784c83689981b7a57287
@@ -317,6 +321,7 @@ click==8.1.7 \
     --hash=sha256:ca9853ad459e787e2192211578cc907e7594e294c7ccc834310722b41b9ca6de
     # via
     #   safety
+    #   typer-slim
     #   uvicorn
 coverage[toml]==6.5.0 \
     --hash=sha256:027018943386e7b942fa832372ebc120155fd970837489896099f5cfa2890f79 \
@@ -409,7 +414,9 @@ cryptography==42.0.5 \
     --hash=sha256:e807b3188f9eb0eaa7bbb579b462c5ace579f1cedb28107ce8b48a9f7ad3679e \
     --hash=sha256:f12764b8fffc7a123f641d7d049d382b73f96a34117e0b637b80643169cec8ac \
     --hash=sha256:f8837fe1d6ac4a8052a9a8ddab256bc006242696f03368a4009be7ee3075cdb7
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   authlib
 defusedxml==0.7.1 \
     --hash=sha256:1bb3032db185915b62d7c6209c5a8792be6a32ab2fedacc84e01b52c51aa3e69 \
     --hash=sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61
@@ -427,10 +434,12 @@ docutils==0.20.1 \
     --hash=sha256:96f387a2c5562db4476f09f13bbab2192e764cac08ebbf3a34a95d9b1e4a59d6 \
     --hash=sha256:f08a4e276c3a1583a86dce3e34aba3fe04d02bba2dd51ed16106244e8a923e3b
     # via sphinx
-dparse==0.6.3 \
-    --hash=sha256:0d8fe18714056ca632d98b24fbfc4e9791d4e47065285ab486182288813a5318 \
-    --hash=sha256:27bb8b4bcaefec3997697ba3f6e06b2447200ba273c0b085c3d012a04571b528
-    # via safety
+dparse==0.6.4b0 \
+    --hash=sha256:592ff183348b8a5ea0a18442a7965e29445d3a26063654ec2c7e8ef42cd5753c \
+    --hash=sha256:f8d49b41a527f3d16a269f854e6665245b325e50e41d2c213810cb984553e5c8
+    # via
+    #   safety
+    #   safety-schemas
 dramatiq[watch]==1.16.0 \
     --hash=sha256:00a676a96d0f47ea4ba59a82018dd3d8885fb8cec7765dc8209142f4b493870e \
     --hash=sha256:650860af82a98905ee03f7cc94b7c356f89528e3008c213aee6a35e2faecde05
@@ -639,9 +648,9 @@ h11==0.14.0 \
     # via
     #   httpcore
     #   uvicorn
-httpcore==1.0.4 \
-    --hash=sha256:ac418c1db41bade2ad53ae2f3834a3a0f5ae76b56cf5aa497d2d033384fc7d73 \
-    --hash=sha256:cb2839ccfcba0d2d3c1131d3c3e26dfc327326fbe7a5dc0dbfe9f6c9151bb022
+httpcore==1.0.5 \
+    --hash=sha256:34a38e2f9291467ee3b44e89dd52615370e152954ba21721378a87b2960f7a61 \
+    --hash=sha256:421f18bac248b25d310f3cacd198d55b8e6125c107797b609ff9b7a6ba7991b5
     # via httpx
 httptools==0.6.1 \
     --hash=sha256:00d5d4b68a717765b1fabfd9ca755bd12bf44105eeb806c03d1962acd9b8e563 \
@@ -719,6 +728,7 @@ jinja2==3.1.3 \
     --hash=sha256:ac8bd6544d4bb2c9792bf3a159e80bba8fda7f07e81bc3aed565432d5925ba90
     # via
     #   repo-autoindex
+    #   safety
     #   sphinx
 jmespath==1.0.1 \
     --hash=sha256:02e2e4cc71b5bcab88332eebf907519190dd9e6e82107fa7f83b1003a6252980 \
@@ -806,6 +816,10 @@ markupsafe==2.1.5 \
     # via
     #   jinja2
     #   mako
+marshmallow==3.21.1 \
+    --hash=sha256:4e65e9e0d80fc9e609574b9983cf32579f305c718afb30d7233ab818571768c3 \
+    --hash=sha256:f085493f79efb0644f270a9bf2892843142d80d7174bbbd2f3713f2a589dc633
+    # via safety
 mccabe==0.7.0 \
     --hash=sha256:348e0240c33b60bbdf4e523192ef919f28cb2c3d7d5c7794f74009290f236325 \
     --hash=sha256:6c2d30ab6be0e4a46919781807b4f0d834ebdd6c6e3dca0bda5a15f863427b6e
@@ -952,8 +966,10 @@ packaging==21.3 \
     #   -r requirements.in
     #   dparse
     #   gunicorn
+    #   marshmallow
     #   pytest
     #   safety
+    #   safety-schemas
     #   sphinx
 pbr==6.0.0 \
     --hash=sha256:4a7317d5e3b17a3dccb6a8cfe67dab65b20551404c52c8ed41279fa4f0cb4cda \
@@ -986,9 +1002,9 @@ psycopg2==2.9.9 \
     --hash=sha256:de80739447af31525feddeb8effd640782cf5998e1a4e9192ebdf829717e3913 \
     --hash=sha256:ff432630e510709564c01dafdbe996cb552e0b9f3f065eb89bdce5bd31fabf4c
     # via -r requirements.in
-pycparser==2.21 \
-    --hash=sha256:8ee45429555515e1f6b185e78100aea234072576aa43ab53aefcae078162fca9 \
-    --hash=sha256:e644fdec12f7872f86c58ff790da456218b10f863970249516d60a5eaca77206
+pycparser==2.22 \
+    --hash=sha256:491c8be9c040f5390f5bf44a5b07752bd07f56edf992381b05c701439eec10f6 \
+    --hash=sha256:c3702b6d3dd8c7abc1afa565d7e63d53a1d0bd86cdc24edd75470f4de499cfcc
     # via cffi
 pycron==3.0.0 \
     --hash=sha256:b916044e3e8253d5409c68df3ac64a3472c4e608dab92f40e8f595e5d3acb3de
@@ -1000,6 +1016,8 @@ pydantic==2.6.4 \
     #   -r requirements.in
     #   fastapi
     #   pydantic-settings
+    #   safety
+    #   safety-schemas
 pydantic-core==2.16.3 \
     --hash=sha256:00ee1c97b5364b84cb0bd82e9bbf645d5e2871fb8c58059d158412fee2d33d8a \
     --hash=sha256:0d32576b1de5a30d9a97f300cc6a3f4694c428d956adbc7e6e2f9cad279e45ed \
@@ -1201,7 +1219,10 @@ requests==2.31.0 \
 rich==13.7.1 \
     --hash=sha256:4edbae314f59eb482f54e9e30bf00d33350aaa94f4bfcd4e9e3110e64d0d7222 \
     --hash=sha256:9be308cb1fe2f1f57d67ce99e95af38a1e2bc71ad9813b0e247cf7ffbcc3a432
-    # via bandit
+    # via
+    #   bandit
+    #   safety
+    #   typer-slim
 rpds-py==0.18.0 \
     --hash=sha256:01e36a39af54a30f28b73096dd39b6802eddd04c90dbe161c1b8dbe22353189f \
     --hash=sha256:044a3e61a7c2dafacae99d1e722cc2d4c05280790ec5a05031b3876809d89a5c \
@@ -1308,7 +1329,9 @@ rpds-py==0.18.0 \
 ruamel-yaml==0.18.6 \
     --hash=sha256:57b53ba33def16c4f3d807c0ccbc00f8a6081827e81ba2491691b76882d0c636 \
     --hash=sha256:8b27e6a217e786c6fbe5634d8f3f11bc63e0f80f6a5890f28863d9c45aac311b
-    # via safety
+    # via
+    #   safety
+    #   safety-schemas
 ruamel-yaml-clib==0.2.8 \
     --hash=sha256:024cfe1fc7c7f4e1aff4a81e718109e13409767e4f871443cbff3dba3578203d \
     --hash=sha256:03d1162b6d1df1caa3a4bd27aa51ce17c9afc2046c31b0ad60a0a96ec22f8001 \
@@ -1365,10 +1388,18 @@ s3transfer==0.10.1 \
     --hash=sha256:5683916b4c724f799e600f41dd9e10a9ff19871bf87623cc8f491cb4f5fa0a19 \
     --hash=sha256:ceb252b11bcf87080fb7850a224fb6e05c8a776bab8f2b64b7f25b969464839d
     # via boto3
-safety==2.3.5 \
-    --hash=sha256:2227fcac1b22b53c1615af78872b48348661691450aa25d6704a5504dbd1f7e2 \
-    --hash=sha256:a60c11f8952f412cbb165d70cb1f673a3b43a2ba9a93ce11f97e6a4de834aa3a
+safety==3.1.0 \
+    --hash=sha256:71f47b82ece153ec2f240e277f7cbfa70d5da2e0d143162c67f63b2f7459a1aa \
+    --hash=sha256:f2ba2d36f15ac1e24751547a73b854509a7d6db31efd30b57f64ffdf9d021934
     # via -r test-requirements.in
+safety-schemas==0.0.2 \
+    --hash=sha256:277c077ce6e53221874a87c29515ffdd2f3773a6db4d035a9f67cc98db3b8c7f \
+    --hash=sha256:7d1b040ec06480f05cff6b45ea7a93e09c8942df864fb0d01ddeb67c323cfa8c
+    # via safety
+shellingham==1.5.4 \
+    --hash=sha256:7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686 \
+    --hash=sha256:8dbca0739d487e5bd35ab3ca4b36e11c4078f3a234bfce294b0a0291363404de
+    # via typer-slim
 six==1.16.0 \
     --hash=sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926 \
     --hash=sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254
@@ -1479,6 +1510,20 @@ tomlkit==0.12.4 \
     --hash=sha256:5cd82d48a3dd89dee1f9d64420aa20ae65cfbd00668d6f094d7578a78efbb77b \
     --hash=sha256:7ca1cfc12232806517a8515047ba66a19369e71edf2439d0f5824f91032b6cc3
     # via pylint
+typer==0.12.0 \
+    --hash=sha256:0441a0bb8962fb4383b8537ada9f7eb2d0deda0caa2cfe7387cc221290f617e4 \
+    --hash=sha256:900fe786ce2d0ea44653d3c8ee4594a22a496a3104370ded770c992c5e3c542d
+    # via safety
+typer-cli==0.12.0 \
+    --hash=sha256:603ed3d5a278827bd497e4dc73a39bb714b230371c8724090b0de2abdcdd9f6e \
+    --hash=sha256:7b7e2dd49f59974bb5a869747045d5444b17bffb851e006cd424f602d3578104
+    # via typer
+typer-slim[standard]==0.12.0 \
+    --hash=sha256:3e8a3f17286b173d76dca0fd4e02651c9a2ce1467b3754876b1ac4bd72572beb \
+    --hash=sha256:ddd7042b29a32140528caa415750bcae54113ba0c32270ca11a6f64069ddadf9
+    # via
+    #   typer
+    #   typer-cli
 typing-extensions==4.10.0 \
     --hash=sha256:69b1a937c3a517342112fb4c6df7e72fc39a38e7891a5730ed4985b5214b5475 \
     --hash=sha256:b0abd7c89e8fb96f98db18d86106ff1d90ab692004eb746cf6eda2682f91b3cb
@@ -1488,13 +1533,17 @@ typing-extensions==4.10.0 \
     #   mypy
     #   pydantic
     #   pydantic-core
+    #   safety
+    #   safety-schemas
     #   sqlalchemy
+    #   typer-slim
 urllib3==2.0.7 \
     --hash=sha256:c97dfde1f7bd43a71c8d2a58e369e9b2bf692d1334ea9f9cae55add7d0dd0f84 \
     --hash=sha256:fdb6d215c776278489906c2f8916e6e7d4f5a9b602ccbcfdf7f016fc8da0596e
     # via
     #   botocore
     #   requests
+    #   safety
 uvicorn[standard]==0.29.0 \
     --hash=sha256:2c2aac7ff4f4365c206fd773a39bf4ebd1047c238f8b8268ad996829323473de \
     --hash=sha256:6a69214c0b6a087462412670b3ef21224fa48cae0e452b5883e8e8bdfdd11dd0
