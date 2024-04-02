@@ -112,3 +112,63 @@ users may specify a logger name and the level at which to set said logger.
   exodus-gw = INFO
   s3 = DEBUG
   ...
+
+CDN cache flush
+...............
+
+exodus-gw supports flushing the cache of an Akamai CDN edge via
+the `Fast Purge API <https://techdocs.akamai.com/purge-cache/reference/api>`_.
+
+This feature is optional. If configuration is not provided, related APIs in
+exodus-gw will continue to function but will skip cache flush operations.
+
+Enabling the feature requires the deployment of two sets of configuration.
+
+Firstly, in the ``exodus-gw.ini`` section for the relevant environment,
+set ``cache_flush_urls`` to enable cache flush by URL and/or
+``cache_flush_arl_templates`` to enable cache flushing by ARL. Both options
+can be used together as needed.
+
+.. code-block:: ini
+
+  [env.live]
+  # Root URL(s) of CDN properties for which to flush cache.
+  # Several can be provided.
+  cache_flush_urls =
+    https://cdn1.example.com
+    https://cdn2.example.com
+
+  # Templates of ARL(s) for which to flush cache.
+  # Templates can use placeholders:
+  # - path: path of a file under CDN root
+  # - ttl (optional): a TTL value will be substituted
+  cache_flush_arl_templates =
+    S/=/123/22334455/{ttl}/cdn1.example.com/{path}
+    S/=/123/22334455/{ttl}/cdn2.example.com/{path}
+
+Secondly, use environment variables to deploy credentials for the
+Fast Purge API, according to the below table. The fields here correspond
+to those used by the `.edgerc file <https://techdocs.akamai.com/developer/docs/set-up-authentication-credentials>`_
+as found in Akamai's documentation.
+
+Note that "<env>" should be replaced with the specific corresponding
+environment name, e.g. ``EXODUS_GW_FASTPURGE_HOST_LIVE`` for a ``live``
+environment.
+
+.. list-table:: Fast Purge credentials
+
+   * - Variable
+     - ``.edgerc`` field
+     - Example
+   * - ``EXODUS_GW_FASTPURGE_CLIENT_SECRET_<env>``
+     - ``client_secret``
+     - ``abcdEcSnaAt123FNkBxy456z25qx9Yp5CPUxlEfQeTDkfh4QA=I``
+   * - ``EXODUS_GW_FASTPURGE_HOST_<env>``
+     - ``host``
+     - ``akab-lmn789n2k53w7qrs10cxy-nfkxaa4lfk3kd6ym.luna.akamaiapis.net``
+   * - ``EXODUS_GW_FASTPURGE_ACCESS_TOKEN_<env>``
+     - ``access_token``
+     - ``akab-zyx987xa6osbli4k-e7jf5ikib5jknes3``
+   * - ``EXODUS_GW_FASTPURGE_CLIENT_TOKEN_<env>``
+     - ``client_token``
+     - ``akab-nomoflavjuc4422-fa2xznerxrm3teg7``

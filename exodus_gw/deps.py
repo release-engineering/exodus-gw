@@ -3,8 +3,9 @@
 import logging
 import sys
 from asyncio import LifoQueue
+from datetime import datetime, timedelta
 
-from fastapi import Depends, Path, Request
+from fastapi import Depends, HTTPException, Path, Query, Request
 
 from .auth import call_context as get_call_context
 from .aws.client import S3ClientWrapper
@@ -87,6 +88,32 @@ async def get_s3_client(
         await queue.put(client)
 
 
+async def get_deadline_from_query(
+    deadline: str | None = Query(
+        default=None,
+        examples=["2022-07-25T15:47:47Z"],
+        description=(
+            "A timestamp by which this task may be abandoned if not completed.\n\n"
+            "When omitted, a server default will apply."
+        ),
+    ),
+    settings: Settings = Depends(get_settings),
+) -> datetime:
+    now = datetime.utcnow()
+
+    if isinstance(deadline, str):
+        try:
+            deadline_obj = datetime.strptime(deadline, "%Y-%m-%dT%H:%M:%SZ")
+        except Exception as exc_info:
+            raise HTTPException(
+                status_code=400, detail=repr(exc_info)
+            ) from exc_info
+    else:
+        deadline_obj = now + timedelta(hours=settings.task_deadline)
+
+    return deadline_obj
+
+
 # These are the preferred objects for use in endpoints,
 # e.g.
 #
@@ -95,5 +122,6 @@ async def get_s3_client(
 db = Depends(get_db)
 call_context = Depends(get_call_context)
 env = Depends(get_environment_from_path)
+deadline = Depends(get_deadline_from_query)
 settings = Depends(get_settings)
 s3_client = Depends(get_s3_client)

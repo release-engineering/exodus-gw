@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+#
+# Flush CDN cache for certain path(s).
+#
+# Example:
+#
+#  $ examples/exodus-flush /some/path /another/path ...
+#
+
+import argparse
+import logging
+import os
+import sys
+import time
+from urllib.parse import urljoin
+
+import requests
+
+LOG = logging.getLogger("exodus-publish")
+
+DEFAULT_URL = "https://localhost:8010"
+
+
+def assert_success(response: requests.Response):
+    """Raise if 'response' was not successful.
+
+    This is the same as response.raise_for_status(), merely wrapping it
+    to ensure the body is logged when possible."""
+
+    try:
+        response.raise_for_status()
+    except Exception as outer:
+        try:
+            body = response.json()
+        except:
+            raise outer
+
+        LOG.error("Unsuccessful response from exodus-gw: %s", body)
+        raise
+
+
+def flush_cache(args):
+    session = requests.Session()
+    if args.cert:
+        session.cert = (args.cert, args.key)
+
+    url = os.path.join(args.url, f"{args.env}/cdn-flush")
+    r = session.post(url, json=[{"web_uri": path} for path in args.path])
+    assert_success(r)
+
+    # We have a task, now wait for it to complete.
+    task = r.json()
+
+    task_id = task["id"]
+    task_url = urljoin(args.url, task["links"]["self"])
+    task_state = task["state"]
+
+    while task_state not in ["COMPLETE", "FAILED"]:
+        LOG.info("Task %s: %s", task_id, task_state)
+        time.sleep(5)
+
+        r = session.get(task_url)
+        assert_success(r)
+
+        task = r.json()
+        task_state = task["state"]
+
+    LOG.info("Task %s: %s", task_id, task_state)
+
+    if task_state == "COMPLETE":
+        LOG.info("Cache flush completed at %s", task["updated"])
+    else:
+        LOG.error("Cache flush failed!")
+        sys.exit(41)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--debug", action="store_true", help="Enable verbose logging"
+    )
+    parser.add_argument("path", nargs="+", help="Path(s) to flush")
+
+    gw = parser.add_argument_group("exodus-gw settings")
+
+    gw.add_argument(
+        "--cert",
+        default=os.path.expandvars("${HOME}/certs/${USER}.crt"),
+        help="Certificate for HTTPS authentication with exodus-gw (must match --key)",
+    )
+    gw.add_argument(
+        "--key",
+        default=os.path.expandvars("${HOME}/certs/${USER}.key"),
+        help="Private key for HTTPS authentication with exodus-gw (must match --cert)",
+    )
+    gw.add_argument("--url", default=DEFAULT_URL)
+    gw.add_argument("--env", default="test")
+
+    args = parser.parse_args()
+
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.WARN, format="%(message)s")
+        LOG.setLevel(logging.INFO)
+
+    return flush_cache(args)
+
+
+if __name__ == "__main__":
+    main()

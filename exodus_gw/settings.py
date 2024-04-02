@@ -7,6 +7,25 @@ from fastapi import HTTPException
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+def split_ini_list(raw: str | None) -> list[str]:
+    # Given a string value from an .ini file, splits it into multiple
+    # strings over line boundaries, using the typical form supported
+    # in .ini files.
+    # e.g.
+    #
+    #    [section]
+    #    my-setting=
+    #      foo
+    #      bar
+    #
+    # => returns ["foo", "bar"]
+
+    if not raw:
+        return []
+
+    return [elem.strip() for elem in raw.split("\n") if elem.strip()]
+
+
 class Environment(object):
     def __init__(
         self,
@@ -17,6 +36,8 @@ class Environment(object):
         config_table,
         cdn_url,
         cdn_key_id,
+        cache_flush_urls=None,
+        cache_flush_arl_templates=None,
     ):
         self.name = name
         self.aws_profile = aws_profile
@@ -25,10 +46,53 @@ class Environment(object):
         self.config_table = config_table
         self.cdn_url = cdn_url
         self.cdn_key_id = cdn_key_id
+        self.cache_flush_urls = split_ini_list(cache_flush_urls)
+        self.cache_flush_arl_templates = split_ini_list(
+            cache_flush_arl_templates
+        )
 
     @property
     def cdn_private_key(self):
         return os.getenv("EXODUS_GW_CDN_PRIVATE_KEY_%s" % self.name.upper())
+
+    @property
+    def fastpurge_enabled(self) -> bool:
+        """True if this environment has fastpurge-based cache flushing enabled.
+
+        When True, it is guaranteed that all needed credentials for fastpurge
+        are available for this environment.
+        """
+        return (
+            # *at least one* URL or ARL template must be set...
+            (self.cache_flush_urls or self.cache_flush_arl_templates)
+            # ... and *all* fastpurge credentials must be set
+            and self.fastpurge_access_token
+            and self.fastpurge_client_secret
+            and self.fastpurge_client_token
+            and self.fastpurge_host
+        )
+
+    @property
+    def fastpurge_client_secret(self):
+        return os.getenv(
+            "EXODUS_GW_FASTPURGE_CLIENT_SECRET_%s" % self.name.upper()
+        )
+
+    @property
+    def fastpurge_host(self):
+        return os.getenv("EXODUS_GW_FASTPURGE_HOST_%s" % self.name.upper())
+
+    @property
+    def fastpurge_access_token(self):
+        return os.getenv(
+            "EXODUS_GW_FASTPURGE_ACCESS_TOKEN_%s" % self.name.upper()
+        )
+
+    @property
+    def fastpurge_client_token(self):
+        return os.getenv(
+            "EXODUS_GW_FASTPURGE_CLIENT_TOKEN_%s" % self.name.upper()
+        )
 
 
 class MigrationMode(str, Enum):
@@ -279,6 +343,10 @@ def load_settings() -> Settings:
         config_table = config.get(env, "config_table", fallback=None)
         cdn_url = config.get(env, "cdn_url", fallback=None)
         cdn_key_id = config.get(env, "cdn_key_id", fallback=None)
+        cache_flush_urls = config.get(env, "cache_flush_urls", fallback=None)
+        cache_flush_arl_templates = config.get(
+            env, "cache_flush_arl_templates", fallback=None
+        )
 
         settings.environments.append(
             Environment(
@@ -289,6 +357,8 @@ def load_settings() -> Settings:
                 config_table=config_table,
                 cdn_url=cdn_url,
                 cdn_key_id=cdn_key_id,
+                cache_flush_urls=cache_flush_urls,
+                cache_flush_arl_templates=cache_flush_arl_templates,
             )
         )
 
