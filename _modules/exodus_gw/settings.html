@@ -34,7 +34,7 @@
 <span></span><span class="kn">import</span> <span class="nn">configparser</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">from</span> <span class="nn">fastapi</span> <span class="kn">import</span> <span class="n">HTTPException</span>
 <span class="kn">from</span> <span class="nn">pydantic_settings</span> <span class="kn">import</span> <span class="n">BaseSettings</span><span class="p">,</span> <span class="n">SettingsConfigDict</span>
@@ -84,22 +84,22 @@
 <span class="sd">    and authorization).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">upload_meta_fields</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">upload_meta_fields</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Permitted metadata field names for s3 uploads and their regex</span>
 <span class="sd">    for validation. E.g., &quot;exodus-migration-md5&quot;: &quot;^[0-9a-f]{32}$&quot;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">log_config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">log_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
         <span class="s2">&quot;incremental&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
         <span class="s2">&quot;disable_existing_loggers&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">}</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Logging configuration in dictConfig schema.&quot;&quot;&quot;</span>
 
-    <span class="n">ini_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">ini_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Path to an exodus-gw.ini config file with additional settings.&quot;&quot;&quot;</span>
 
-    <span class="n">environments</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Environment</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">environments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Environment</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="c1"># List of environment objects derived from exodus-gw.ini.</span>
 
     <span class="n">db_service_user</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;exodus-gw&quot;</span>
@@ -111,7 +111,7 @@
     <span class="n">db_service_port</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;5432&quot;</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;db service port&quot;&quot;&quot;</span>
 
-    <span class="n">db_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">db_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Connection string for database. If set, overrides the ``db_service_*`` settings.&quot;&quot;&quot;</span>
 
     <span class="n">db_reset</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
@@ -191,7 +191,7 @@
 <span class="sd">    off retries. Defaults to five (5) minutes.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">entry_point_files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">entry_point_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s2">&quot;repomd.xml&quot;</span><span class="p">,</span>
         <span class="s2">&quot;repomd.xml.asc&quot;</span><span class="p">,</span>
         <span class="s2">&quot;PULP_MANIFEST&quot;</span><span class="p">,</span>
@@ -207,7 +207,7 @@
 <span class="sd">    Can be set to an empty string to disable generation of indexes.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">autoindex_partial_excludes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;/kickstart/&quot;</span><span class="p">]</span>
+    <span class="n">autoindex_partial_excludes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;/kickstart/&quot;</span><span class="p">]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Background processing of autoindexes will be disabled for paths matching</span>
 <span class="sd">    any of these values.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -331,7 +331,7 @@
     <span class="k">return</span> <span class="n">settings</span>
 
 
-<span class="k">def</span> <span class="nf">get_environment</span><span class="p">(</span><span class="n">env</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">settings</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Settings</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">get_environment</span><span class="p">(</span><span class="n">env</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">settings</span><span class="p">:</span> <span class="n">Settings</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the corresponding environment object for the given environment</span>
 <span class="sd">    name.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
