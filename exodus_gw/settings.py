@@ -1,7 +1,7 @@
 import configparser
 import os
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import HTTPException
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -49,22 +49,22 @@ class Settings(BaseSettings):
     and authorization).
     """
 
-    upload_meta_fields: Dict[str, str] = {}
+    upload_meta_fields: dict[str, str] = {}
     """Permitted metadata field names for s3 uploads and their regex
     for validation. E.g., "exodus-migration-md5": "^[0-9a-f]{32}$"
     """
 
-    log_config: Dict[str, Any] = {
+    log_config: dict[str, Any] = {
         "version": 1,
         "incremental": True,
         "disable_existing_loggers": False,
     }
     """Logging configuration in dictConfig schema."""
 
-    ini_path: Optional[str] = None
+    ini_path: str | None = None
     """Path to an exodus-gw.ini config file with additional settings."""
 
-    environments: List[Environment] = []
+    environments: list[Environment] = []
     # List of environment objects derived from exodus-gw.ini.
 
     db_service_user: str = "exodus-gw"
@@ -76,7 +76,7 @@ class Settings(BaseSettings):
     db_service_port: str = "5432"
     """db service port"""
 
-    db_url: Optional[str] = None
+    db_url: str | None = None
     """Connection string for database. If set, overrides the ``db_service_*`` settings."""
 
     db_reset: bool = False
@@ -156,7 +156,7 @@ class Settings(BaseSettings):
     off retries. Defaults to five (5) minutes.
     """
 
-    entry_point_files: List[str] = [
+    entry_point_files: list[str] = [
         "repomd.xml",
         "repomd.xml.asc",
         "PULP_MANIFEST",
@@ -172,7 +172,7 @@ class Settings(BaseSettings):
     Can be set to an empty string to disable generation of indexes.
     """
 
-    autoindex_partial_excludes: List[str] = ["/kickstart/"]
+    autoindex_partial_excludes: list[str] = ["/kickstart/"]
     """Background processing of autoindexes will be disabled for paths matching
     any of these values.
     """
@@ -295,7 +295,7 @@ def load_settings() -> Settings:
     return settings
 
 
-def get_environment(env: str, settings: Optional[Settings] = None):
+def get_environment(env: str, settings: Settings | None = None):
     """Return the corresponding environment object for the given environment
     name.
     """

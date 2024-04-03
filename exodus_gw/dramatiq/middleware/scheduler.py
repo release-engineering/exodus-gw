@@ -3,7 +3,6 @@ import logging
 import uuid
 from collections.abc import Callable
 from datetime import datetime
-from typing import Optional
 
 import pycron
 from dramatiq import Middleware
@@ -78,7 +77,7 @@ class SchedulerMiddleware(Middleware):
         actor.options["unscheduled_fn"] = unscheduled_fn
 
         @functools.wraps(unscheduled_fn)
-        def new_fn(last_run: Optional[float] = None):
+        def new_fn(last_run: float | None = None):
             cron_rule = getattr(settings, settings_key)
             now = datetime.utcnow()
 

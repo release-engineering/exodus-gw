@@ -2,10 +2,10 @@
 
 import functools
 import os
-import typing
+from collections.abc import Callable
 
 
-def tested_by(data_fn: typing.Callable[[], None]):
+def tested_by(data_fn: Callable[[], None]):
     """A decorator declaring a function which provides test data for
     an upgrade or downgrade operation.
 
@@ -29,7 +29,7 @@ def tested_by(data_fn: typing.Callable[[], None]):
     that migration can complete without crashing.
     """
 
-    def decorator(fn: typing.Callable[[], None]):
+    def decorator(fn: Callable[[], None]):
         @functools.wraps(fn)
         def fn_with_data():
             # Call the data function before the real migration function,

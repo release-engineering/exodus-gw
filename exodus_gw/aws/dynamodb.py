@@ -3,7 +3,7 @@ import logging
 from datetime import datetime
 from itertools import islice
 from threading import Lock
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import backoff
 from botocore.exceptions import EndpointConnectionError
@@ -22,8 +22,8 @@ class DynamoDB:
         env: str,
         settings: Settings,
         from_date: str,
-        env_obj: Optional[Environment] = None,
-        deadline: Optional[datetime] = None,
+        env_obj: Environment | None = None,
+        deadline: datetime | None = None,
     ):
         self.env = env
         self.settings = settings
@@ -45,12 +45,12 @@ class DynamoDB:
                     self._definitions = self.query_definitions()
         return self._definitions
 
-    def query_definitions(self) -> Dict[str, Any]:
+    def query_definitions(self) -> dict[str, Any]:
         """Query the definitions in the config_table. If definitions are found, return them. Otherwise,
         return an empty dictionary."""
 
         # Return an empty dict if a query result is not found
-        out: Dict[str, Any] = {}
+        out: dict[str, Any] = {}
 
         LOG.info(
             "Loading exodus-config as at %s.",
@@ -75,12 +75,12 @@ class DynamoDB:
 
     def create_request(
         self,
-        items: List[models.Item],
+        items: list[models.Item],
         delete: bool = False,
     ):
         """Create the dictionary structure expected by batch_write_item."""
         table_name = self.env_obj.table
-        request: Dict[str, List[Any]] = {table_name: []}
+        request: dict[str, list[Any]] = {table_name: []}
 
         uri_aliases = []
         for k, v in self.definitions.items():
@@ -140,7 +140,7 @@ class DynamoDB:
         }
         return request
 
-    def batch_write(self, request: Dict[str, Any]):
+    def batch_write(self, request: dict[str, Any]):
         """Wrapper for batch_write_item with retries and item count validation.
 
         Item limit of 25 is, at this time, imposed by AWS's boto3 library.
@@ -196,7 +196,7 @@ class DynamoDB:
 
         return _batch_write(request)
 
-    def get_batches(self, items: List[models.Item]):
+    def get_batches(self, items: list[models.Item]):
         """Divide the publish items into batches of size 'write_batch_size'."""
         it = iter(items)
         batches = list(
@@ -204,7 +204,7 @@ class DynamoDB:
         )
         return batches
 
-    def write_batch(self, items: List[models.Item], delete: bool = False):
+    def write_batch(self, items: list[models.Item], delete: bool = False):
         """Submit a batch of given items for writing via batch_write."""
 
         request = self.create_request(list(items), delete)

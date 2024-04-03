@@ -1,6 +1,5 @@
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 from sqlalchemy import DateTime, ForeignKey, String, event
 from sqlalchemy.orm import Mapped, mapped_column
@@ -24,8 +23,8 @@ class Task(Base):
     id: Mapped[str] = mapped_column(Uuid(as_uuid=False), primary_key=True)
     type: Mapped[str]
     state: Mapped[str] = mapped_column(String)
-    updated: Mapped[Optional[datetime]] = mapped_column(DateTime())
-    deadline: Mapped[Optional[datetime]] = mapped_column(DateTime())
+    updated: Mapped[datetime | None] = mapped_column(DateTime())
+    deadline: Mapped[datetime | None] = mapped_column(DateTime())
 
 
 class CommitTask(Task):

@@ -1,5 +1,5 @@
 import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 from sqlalchemy import DateTime, String
 from sqlalchemy.dialects.postgresql import JSONB
@@ -25,7 +25,7 @@ class DramatiqMessage(Base):
     # Null means message is not yet assigned.
     # Not a foreign key since consumers can disappear while leaving
     # their messages behind.
-    consumer_id: Mapped[Optional[str]] = mapped_column(String)
+    consumer_id: Mapped[str | None] = mapped_column(String)
 
     consumer = relationship(
         "DramatiqConsumer",
@@ -40,7 +40,7 @@ class DramatiqMessage(Base):
     actor: Mapped[str] = mapped_column(String)
 
     # Full message body.
-    body: Mapped[Dict[str, Any]] = mapped_column(JSONB)
+    body: Mapped[dict[str, Any]] = mapped_column(JSONB)
 
 
 class DramatiqConsumer(Base):

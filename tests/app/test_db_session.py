@@ -1,5 +1,3 @@
-from typing import Optional
-
 import pytest
 from fastapi import HTTPException, Request
 from fastapi.testclient import TestClient
@@ -17,7 +15,7 @@ TEST_UUID = "12345678-1234-5678-1234-567812345678"
 # A testing endpoint which will create an object and then commit,
 # rollback or raise based on params
 def make_publish(
-    request: Request, mode: Optional[str] = None, db: Session = deps.db
+    request: Request, mode: str | None = None, db: Session = deps.db
 ):
     p = Publish(id=TEST_UUID, env="test", state="PENDING")
     db.add(p)

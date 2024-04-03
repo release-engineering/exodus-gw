@@ -1,6 +1,5 @@
 import io
 from dataclasses import dataclass
-from typing import Optional
 
 import boto3.session
 import botocore
@@ -25,7 +24,7 @@ class AWSResponder:
     # before-send event handler.
     status_code: int = 200
     body: bytes = b""
-    exception: Optional[Exception] = None
+    exception: Exception | None = None
 
     def __call__(self, request: AWSPreparedRequest, **_kwargs):
         if self.exception:

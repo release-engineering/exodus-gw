@@ -2,7 +2,6 @@ import base64
 import json
 import os
 from datetime import datetime
-from typing import List
 
 import dramatiq
 import mock
@@ -191,7 +190,7 @@ def fake_publish():
 
 @pytest.fixture
 def auth_header():
-    def _auth_header(roles: List[str] = []):
+    def _auth_header(roles: list[str] = []):
         raw_context = {
             "user": {
                 "authenticated": True,

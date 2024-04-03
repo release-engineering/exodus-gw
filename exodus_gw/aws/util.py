@@ -1,7 +1,7 @@
 import io
 import logging
 import re
-from typing import AnyStr, Dict
+from typing import AnyStr
 from xml.etree.ElementTree import Element, ElementTree, SubElement
 
 from defusedxml.ElementTree import fromstring
@@ -27,7 +27,7 @@ def extract_request_metadata(request: Request, settings: Settings):
     return metadata
 
 
-def validate_metadata(metadata: Dict[str, str], settings: Settings):
+def validate_metadata(metadata: dict[str, str], settings: Settings):
     valid_meta_fields = settings.upload_meta_fields
     for k, v in metadata.items():
         if k not in valid_meta_fields.keys():
