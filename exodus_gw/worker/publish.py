@@ -5,7 +5,7 @@ from datetime import datetime
 from os.path import basename
 from queue import Empty, Full, Queue
 from threading import Thread
-from typing import Any, List, Optional
+from typing import Any
 
 import dramatiq
 from dramatiq.middleware import CurrentMessage
@@ -42,8 +42,8 @@ class _BatchWriter:
         self.delete = delete
         self.queue: Any = Queue(self.settings.write_queue_size)
         self.sentinel = object()
-        self.threads: List[Thread] = []
-        self.errors: List[Exception] = []
+        self.threads: list[Thread] = []
+        self.errors: list[Exception] = []
         self.progress_logger = ProgressLogger(
             message=message,
             items_total=item_count,
@@ -107,10 +107,10 @@ class _BatchWriter:
         )
         self.errors.append(err)
 
-    def queue_batches(self, items: List[Item]) -> List[str]:
+    def queue_batches(self, items: list[Item]) -> list[str]:
         batches = self.dynamodb.get_batches(items)
         timeout = self.settings.write_queue_timeout
-        queued_item_ids: List[str] = []
+        queued_item_ids: list[str] = []
 
         for batch in batches:
             # Don't attempt to put more items on the queue if error(s)
@@ -160,7 +160,7 @@ class CommitBase:
     ):
         self.env = env
         self.from_date = from_date
-        self.written_item_ids: List[str] = []
+        self.written_item_ids: list[str] = []
         self.settings = settings
         self.db = Session(bind=db_engine(self.settings))
         self.task = self._query_task(actor_msg_id)
@@ -324,7 +324,7 @@ class CommitBase:
         partitions = self.db.execute(statement).partitions()
 
         # Save any entry point items to publish last.
-        final_items: List[Item] = []
+        final_items: list[Item] = []
 
         wrote_count = 0
 
@@ -338,7 +338,7 @@ class CommitBase:
         ) as bw:
             # Being queuing item batches.
             for partition in partitions:
-                items: List[Item] = []
+                items: list[Item] = []
 
                 # Flatten partition and extract any entry point items.
                 for row in partition:
@@ -498,7 +498,7 @@ def commit(
     publish_id: str,
     env: str,
     from_date: str,
-    commit_mode: Optional[str] = None,
+    commit_mode: str | None = None,
     settings: Settings = Settings(),
 ) -> None:
     actor_msg_id = CurrentMessage.get_current_message().message_id

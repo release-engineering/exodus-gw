@@ -113,7 +113,6 @@ indefinitely.
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Union
 from uuid import uuid4
 
 from fastapi import APIRouter, Body, HTTPException, Query
@@ -180,7 +179,7 @@ def publish(
     dependencies=[auth.needs_role("publisher")],
 )
 def update_publish_items(
-    items: List[schemas.ItemBase] = Body(
+    items: list[schemas.ItemBase] = Body(
         ...,
         examples=[
             [
@@ -209,7 +208,7 @@ def update_publish_items(
     env: Environment = deps.env,
     db: Session = deps.db,
     settings: Settings = deps.settings,
-) -> Dict[None, None]:
+) -> dict[None, None]:
     """Add publish items to an existing publish object.
 
     **Required roles**: `{env}-publisher`
@@ -256,7 +255,7 @@ def update_publish_items(
     # (2) any item we're about to save whose 'link_to' matches one of the 'web_uri'
     #     of a non-link item already in the DB.
     #
-    resolvable: list[Union[schemas.ItemBase, models.Item]] = []
+    resolvable: list[schemas.ItemBase | models.Item] = []
     resolvable.extend(items)
     resolvable.extend(
         db.query(models.Item)
@@ -383,10 +382,10 @@ def commit_publish(
     env: Environment = deps.env,
     db: Session = deps.db,
     settings: Settings = deps.settings,
-    deadline: Union[str, None] = Query(
+    deadline: str | None = Query(
         default=None, examples=["2022-07-25T15:47:47Z"]
     ),
-    commit_mode: Optional[models.CommitModes] = Query(
+    commit_mode: models.CommitModes | None = Query(
         default=None,
         title="commit mode",
         description="See: [Two-phase commit](#section/Two-phase-commit)",

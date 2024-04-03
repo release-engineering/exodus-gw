@@ -6,7 +6,7 @@ import os
 import tempfile
 from datetime import datetime, timezone
 from time import monotonic
-from typing import AsyncGenerator, BinaryIO, Generator, Optional
+from typing import AsyncGenerator, BinaryIO, Generator
 
 import dramatiq
 from botocore.exceptions import ClientError
@@ -46,7 +46,7 @@ class PublishContentFetcher:
         self.s3_client = s3_client
         self.environment = environment
 
-    async def __call__(self, uri: str) -> Optional[BinaryIO]:
+    async def __call__(self, uri: str) -> BinaryIO | None:
         LOG.debug("Requested to fetch: %s", uri, extra={"event": "publish"})
 
         matched = (
@@ -59,7 +59,7 @@ class PublishContentFetcher:
             return None
 
         item: Item = matched[0]
-        key: Optional[str] = item.object_key
+        key: str | None = item.object_key
         LOG.debug(
             "%s can be fetched from %s", uri, key, extra={"event": "publish"}
         )
@@ -106,7 +106,7 @@ class AutoindexEnricher:
         publish: Publish,
         env_name: str,
         settings: Settings,
-        web_uri_filter: Optional[list[str]] = None,
+        web_uri_filter: list[str] | None = None,
     ):
         self.publish = publish
         self.env_name = env_name

@@ -1,6 +1,5 @@
 import base64
 import logging
-from typing import List, Optional, Set
 
 from fastapi import Depends, HTTPException, Request
 from pydantic import BaseModel
@@ -14,17 +13,17 @@ LOG = logging.getLogger("exodus-gw")
 class ClientContext(BaseModel):
     """Call context data relating to service accounts / machine users."""
 
-    roles: List[str] = []
+    roles: list[str] = []
     authenticated: bool = False
-    serviceAccountId: Optional[str] = None
+    serviceAccountId: str | None = None
 
 
 class UserContext(BaseModel):
     """Call context data relating to human users."""
 
-    roles: List[str] = []
+    roles: list[str] = []
     authenticated: bool = False
-    internalUsername: Optional[str] = None
+    internalUsername: str | None = None
 
 
 class CallContext(BaseModel):
@@ -79,7 +78,7 @@ async def caller_name(context: CallContext = Depends(call_context)) -> str:
 
 async def caller_roles(
     context: CallContext = Depends(call_context),
-) -> Set[str]:
+) -> set[str]:
     """Returns all roles held by the caller of the current request.
 
     This will be an empty set for unauthenticated requests.
@@ -103,8 +102,8 @@ def needs_role(rolename):
 
     async def check_roles(
         request: Request,
-        env: Optional[str] = None,
-        roles: Set[str] = Depends(caller_roles),
+        env: str | None = None,
+        roles: set[str] = Depends(caller_roles),
         caller_name: str = Depends(caller_name),
     ):
         role = env + "-" + rolename if env else rolename
@@ -134,7 +133,7 @@ def needs_role(rolename):
 
 async def log_login(
     request: Request,
-    roles: Set[str] = Depends(caller_roles),
+    roles: set[str] = Depends(caller_roles),
     caller_name: str = Depends(caller_name),
 ):
     if caller_name != "<anonymous user>":

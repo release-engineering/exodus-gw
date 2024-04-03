@@ -2,7 +2,7 @@
 
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any
 
 import jsonschema
 from fastapi import APIRouter, Body, HTTPException
@@ -113,7 +113,7 @@ CONFIG_SCHEMA = {
     },
 )
 def deploy_config(
-    config: Dict[str, Any] = Body(
+    config: dict[str, Any] = Body(
         ...,
         examples=[
             {

@@ -1,7 +1,7 @@
 """AWS logging utilities."""
 
 import logging
-from typing import Any, Optional, Union
+from typing import Any
 
 import aioboto3
 import boto3.session
@@ -27,9 +27,9 @@ def request_logger(request: AWSPreparedRequest, **_kwargs):
 
 
 def response_logger(
-    response: Optional[tuple[AWSResponse, Any]],
+    response: tuple[AWSResponse, Any] | None,
     request_dict: dict[str, Any],
-    caught_exception: Optional[Exception],
+    caught_exception: Exception | None,
     **_kwargs
 ):
     # Callback for logging responses from AWS.
@@ -55,7 +55,7 @@ def response_logger(
     )
 
 
-def add_loggers(session: Union[boto3.session.Session, aioboto3.Session]):
+def add_loggers(session: boto3.session.Session | aioboto3.Session):
     """Add some custom loggers onto a boto session."""
 
     # Log just before we send requests.

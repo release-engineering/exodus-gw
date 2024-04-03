@@ -2,7 +2,6 @@ import re
 from datetime import datetime
 from enum import Enum
 from os.path import join, normpath
-from typing import Dict, List, Optional
 from uuid import UUID
 
 from fastapi import Path
@@ -43,7 +42,7 @@ class ItemBase(BaseModel):
         ...,
         description="URI, relative to CDN root, which shall be used to expose this object.",
     )
-    object_key: Optional[str] = Field(
+    object_key: str | None = Field(
         "",
         description=(
             "Key of blob to be exposed; should be the SHA256 checksum of a previously uploaded "
@@ -53,11 +52,11 @@ class ItemBase(BaseModel):
             "content from the point of view of a CDN consumer."
         ),
     )
-    content_type: Optional[str] = Field(
+    content_type: str | None = Field(
         "",
         description="Content type of the content associated with this object.",
     )
-    link_to: Optional[str] = Field(
+    link_to: str | None = Field(
         "", description="Path of file targeted by symlink."
     )
 
@@ -129,7 +128,7 @@ class PublishStates(str, Enum):
     failed = "FAILED"
 
     @classmethod
-    def terminal(cls) -> List["PublishStates"]:
+    def terminal(cls) -> list["PublishStates"]:
         return [cls.committed, cls.failed]
 
 
@@ -144,14 +143,14 @@ class Publish(PublishBase):
     state: PublishStates = Field(
         ..., description="Current state of this publish."
     )
-    updated: Optional[datetime] = Field(
+    updated: datetime | None = Field(
         None,
         description="DateTime of last update to this publish. None if never updated.",
     )
-    links: Dict[str, str] = Field(
+    links: dict[str, str] = Field(
         {}, description="""URL links related to this publish."""
     )
-    items: List[Item] = Field(
+    items: list[Item] = Field(
         [],
         description="""All items (pieces of content) included in this publish.""",
     )
@@ -170,27 +169,27 @@ class TaskStates(str, Enum):
     failed = "FAILED"
 
     @classmethod
-    def terminal(cls) -> List["TaskStates"]:
+    def terminal(cls) -> list["TaskStates"]:
         return [cls.failed, cls.complete]
 
 
 class Task(BaseModel):
     id: UUID = Field(..., description="Unique ID of task object.")
-    publish_id: Optional[UUID] = Field(
+    publish_id: UUID | None = Field(
         None, description="Unique ID of publish object handled by this task."
     )
     state: TaskStates = Field(..., description="Current state of this task.")
-    updated: Optional[datetime] = Field(
+    updated: datetime | None = Field(
         None,
         description="DateTime of last update to this task. None if never updated.",
         examples=["2019-08-24T14:15:22Z"],
     )
-    deadline: Optional[datetime] = Field(
+    deadline: datetime | None = Field(
         None,
         description="DateTime at which this task should be abandoned.",
         examples=["2019-08-24T18:15:22Z"],
     )
-    links: Dict[str, str] = Field(
+    links: dict[str, str] = Field(
         {},
         description="""URL links related to this task.""",
         examples=[{"self": "/task/497f6eca-6276-4993-bfeb-53cbbbba6f08"}],

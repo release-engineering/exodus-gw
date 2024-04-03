@@ -1,7 +1,7 @@
 import uuid
 from collections.abc import Sequence
 from datetime import datetime
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 from fastapi import HTTPException
 from sqlalchemy import (
@@ -32,13 +32,13 @@ class Publish(Base):
     )
     env: Mapped[str] = mapped_column(String)
     state: Mapped[str] = mapped_column(String)
-    updated: Mapped[Optional[datetime]] = mapped_column(DateTime())
+    updated: Mapped[datetime | None] = mapped_column(DateTime())
     items = relationship(
         "Item", back_populates="publish", cascade="all, delete-orphan"
     )
 
     def resolve_links(
-        self, ln_items: Optional[Sequence[Union[ItemBase, "Item"]]] = None
+        self, ln_items: Sequence[Union[ItemBase, "Item"]] | None = None
     ):
         """Resolve links on publish items.
 
@@ -96,7 +96,7 @@ class Publish(Base):
             Item.publish_id == self.id, Item.web_uri.in_(ln_item_paths)
         )
 
-        matches: dict[str, dict[str, Optional[str]]] = {
+        matches: dict[str, dict[str, str | None]] = {
             row.match.web_uri: {
                 "object_key": row.match.object_key,
                 "content_type": row.match.content_type,
@@ -154,9 +154,9 @@ class Item(Base):
         default=lambda: str(uuid.uuid4()),
     )
     web_uri: Mapped[str] = mapped_column(String)
-    object_key: Mapped[Optional[str]] = mapped_column(String)
-    content_type: Mapped[Optional[str]] = mapped_column(String)
-    link_to: Mapped[Optional[str]] = mapped_column(String)
+    object_key: Mapped[str | None] = mapped_column(String)
+    content_type: Mapped[str | None] = mapped_column(String)
+    link_to: Mapped[str | None] = mapped_column(String)
 
     dirty: Mapped[bool] = mapped_column(Boolean, default=True)
     """True if item still needs to be written to DynamoDB."""
@@ -179,5 +179,5 @@ class Item(Base):
 
 @event.listens_for(Publish, "before_update")
 @event.listens_for(Item, "before_update")
-def set_updated(_mapper, _connection, entity: Union[Publish, Item]):
+def set_updated(_mapper, _connection, entity: Publish | Item):
     entity.updated = datetime.utcnow()

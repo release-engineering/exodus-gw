@@ -70,7 +70,6 @@ bucket.upload_file('/tmp/hello.txt',
 
 import logging
 import textwrap
-from typing import Dict, Optional
 
 from fastapi import APIRouter, HTTPException, Path, Query, Request, Response
 
@@ -104,7 +103,7 @@ async def multipart_upload(
     env: Environment = deps.env,
     s3: S3ClientWrapper = deps.s3_client,
     key: str = Path(..., description="S3 object key"),
-    uploadId: Optional[str] = Query(
+    uploadId: str | None = Query(
         None,
         description=textwrap.dedent(
             """
@@ -116,7 +115,7 @@ async def multipart_upload(
             Must not be passed together with ``uploads``."""
         ),
     ),
-    uploads: Optional[str] = Query(
+    uploads: str | None = Query(
         None,
         description=textwrap.dedent(
             """
@@ -170,10 +169,10 @@ async def upload(
     env: Environment = deps.env,
     s3: S3ClientWrapper = deps.s3_client,
     key: str = Path(..., description="S3 object key"),
-    uploadId: Optional[str] = Query(
+    uploadId: str | None = Query(
         None, description="ID of an existing multi-part upload."
     ),
-    partNumber: Optional[int] = Query(
+    partNumber: int | None = Query(
         None, description="Part number, where multi-part upload is used."
     ),
     settings: Settings = deps.settings,
@@ -211,7 +210,7 @@ async def object_put(
     env: Environment,
     key: str,
     request: Request,
-    metadata: Dict[str, str],
+    metadata: dict[str, str],
 ):
     # Single-part upload handler: entire object is written via one PUT.
     reader = RequestReader.get_reader(request)
@@ -269,7 +268,7 @@ async def create_multipart_upload(
     s3: S3ClientWrapper,
     env: Environment,
     key: str,
-    metadata: Dict[str, str],
+    metadata: dict[str, str],
 ):
     validate_object_key(key)
 

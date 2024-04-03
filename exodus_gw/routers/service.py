@@ -2,7 +2,6 @@
 
 import logging
 from datetime import datetime, timedelta
-from typing import Optional
 
 from fastapi import APIRouter, Header, HTTPException, Response
 from sqlalchemy.orm import Session
@@ -23,7 +22,7 @@ router = APIRouter(tags=[openapi_tag["name"]])
     "/",
     include_in_schema=False,
 )
-async def redirect(accept: Optional[str] = Header(default=None)):
+async def redirect(accept: str | None = Header(default=None)):
     """Redirect from service root to API docs. For browsers only."""
 
     # We only send the redirect if it seems like the client is a browser.

@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict
+from typing import Any
 
 import dramatiq
 from dramatiq.middleware import CurrentMessage
@@ -47,7 +47,7 @@ def complete_deploy_config_task(task_id: str):
     time_limit=Settings().actor_time_limit,
     max_backoff=Settings().actor_max_backoff,
 )
-def deploy_config(config: Dict[str, Any], env: str, from_date: str):
+def deploy_config(config: dict[str, Any], env: str, from_date: str):
     settings = Settings()
     db = Session(bind=db_engine(settings))
     ddb = DynamoDB(env, settings, from_date)
