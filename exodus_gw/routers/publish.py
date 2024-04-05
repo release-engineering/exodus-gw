@@ -112,7 +112,7 @@ indefinitely.
 
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from uuid import uuid4
 
 from fastapi import APIRouter, Body, HTTPException, Query
@@ -382,9 +382,7 @@ def commit_publish(
     env: Environment = deps.env,
     db: Session = deps.db,
     settings: Settings = deps.settings,
-    deadline: str | None = Query(
-        default=None, examples=["2022-07-25T15:47:47Z"]
-    ),
+    deadline: datetime = deps.deadline,
     commit_mode: models.CommitModes | None = Query(
         default=None,
         title="commit mode",
@@ -434,16 +432,6 @@ def commit_publish(
     """
     commit_mode_str = (commit_mode or models.CommitModes.phase2).value
     now = datetime.utcnow()
-
-    if isinstance(deadline, str):
-        try:
-            deadline_obj = datetime.strptime(deadline, "%Y-%m-%dT%H:%M:%SZ")
-        except Exception as exc_info:
-            raise HTTPException(
-                status_code=400, detail=repr(exc_info)
-            ) from exc_info
-    else:
-        deadline_obj = now + timedelta(hours=settings.task_deadline)
 
     db_publish = (
         db.query(models.Publish)
@@ -508,7 +496,7 @@ def commit_publish(
         id=msg.message_id,
         publish_id=msg.kwargs["publish_id"],
         state="NOT_STARTED",
-        deadline=deadline_obj,
+        deadline=deadline,
         commit_mode=commit_mode,
     )
     db.add(task)

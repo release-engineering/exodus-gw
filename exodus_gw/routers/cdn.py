@@ -12,10 +12,11 @@ from botocore.utils import datetime2timestamp
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
-from fastapi import APIRouter, HTTPException, Path, Query
+from fastapi import APIRouter, Body, HTTPException, Path, Query
 from fastapi.responses import Response
+from sqlalchemy.orm import Session
 
-from exodus_gw import auth, schemas
+from exodus_gw import auth, models, schemas, worker
 
 from .. import deps
 from ..settings import Environment, Settings
@@ -283,3 +284,66 @@ def cdn_access(
         "expires": expires.isoformat(timespec="minutes") + "Z",
         "cookie": cookie_str,
     }
+
+
+@router.post(
+    "/{env}/cdn-flush",
+    summary="Flush cache",
+    status_code=200,
+    dependencies=[auth.needs_role("cdn-flusher")],
+    response_model=schemas.Task,
+)
+def flush_cdn_cache(
+    items: list[schemas.FlushItem] = Body(
+        ...,
+        examples=[
+            [
+                {
+                    "web_uri": "/some/path/i/want/to/flush",
+                },
+                {
+                    "web_uri": "/another/path/i/want/to/flush",
+                },
+            ]
+        ],
+    ),
+    deadline: datetime = deps.deadline,
+    env: Environment = deps.env,
+    db: Session = deps.db,
+) -> models.Task:
+    """Flush given paths from CDN cache(s) corresponding to this environment.
+
+    This API may be used to request CDN edge servers downstream from exodus-gw
+    and exodus-cdn to discard cached versions of content, ensuring that
+    subsequent requests will receive up-to-date content.
+
+    The API is provided for troubleshooting and for scenarios where it's
+    known that explicit cache flushes are needed. It's not necessary to use
+    this API during a typical upload and publish workflow.
+
+    Returns a task. Successful completion of the task indicates that CDN
+    caches have been flushed.
+
+    **Required roles**: `{env}-cdn-flusher`
+    """
+    paths = sorted(set([item.web_uri for item in items]))
+
+    msg = worker.flush_cdn_cache.send(
+        env=env.name,
+        paths=paths,
+    )
+
+    LOG.info(
+        "Enqueued cache flush for %s path(s) (%s, ...)",
+        len(paths),
+        paths[0] if paths else "<empty>",
+    )
+
+    task = models.Task(
+        id=msg.message_id,
+        state="NOT_STARTED",
+        deadline=deadline,
+    )
+    db.add(task)
+
+    return task

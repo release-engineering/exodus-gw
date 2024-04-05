@@ -21,7 +21,12 @@ class SettingsMiddleware(Middleware):
 
             @wraps(original_fn)
             def new_fn(*args, **kwargs):
-                kwargs["settings"] = self.__settings()
+                # Settings are automatically injected if there is no
+                # value present.
+                # If a value is present, it's not overwritten; this allows
+                # calling actors with specific settings during tests.
+                if not kwargs.get("settings"):
+                    kwargs["settings"] = self.__settings()
                 return original_fn(*args, **kwargs)
 
             actor.fn = new_fn

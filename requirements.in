@@ -16,6 +16,7 @@ dramatiq[watch]
 pycron
 cryptography
 repo-autoindex>=1.2.0
+fastpurge
 # Needed to get compatible idna between requirements.txt and test-requirements.txt,
 # consider removing when 'requests' no longer requires <4
 idna==3.4

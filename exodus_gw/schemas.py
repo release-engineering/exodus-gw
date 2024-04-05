@@ -121,6 +121,13 @@ class Item(ItemBase):
     )
 
 
+class FlushItem(BaseModel):
+    web_uri: str = Field(
+        ...,
+        description="URI, relative to CDN root, of which to flush cache",
+    )
+
+
 class PublishStates(str, Enum):
     pending = "PENDING"
     committing = "COMMITTING"
@@ -176,7 +183,8 @@ class TaskStates(str, Enum):
 class Task(BaseModel):
     id: UUID = Field(..., description="Unique ID of task object.")
     publish_id: UUID | None = Field(
-        None, description="Unique ID of publish object handled by this task."
+        None,
+        description="Unique ID of publish object related to this task, if any.",
     )
     state: TaskStates = Field(..., description="Current state of this task.")
     updated: datetime | None = Field(

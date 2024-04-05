@@ -64,6 +64,8 @@ class JsonFormatter(logging.Formatter):
             "publish_id": "publish_id",
             "message_id": "message_id",
             "duration_ms": "duration_ms",
+            "url": "url",
+            "response": "response",
         }
         self.datefmt = datefmt
 
