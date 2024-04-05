@@ -396,6 +396,66 @@ users may specify a logger name and the level at which to set said logger.</p>
 <span class="na">...</span>
 </pre></div>
 </div>
+<section id="cdn-cache-flush">
+<h3>CDN cache flush<a class="headerlink" href="#cdn-cache-flush" title="Link to this heading">¶</a></h3>
+<p>exodus-gw supports flushing the cache of an Akamai CDN edge via
+the <a class="reference external" href="https://techdocs.akamai.com/purge-cache/reference/api">Fast Purge API</a>.</p>
+<p>This feature is optional. If configuration is not provided, related APIs in
+exodus-gw will continue to function but will skip cache flush operations.</p>
+<p>Enabling the feature requires the deployment of two sets of configuration.</p>
+<p>Firstly, in the <code class="docutils literal notranslate"><span class="pre">exodus-gw.ini</span></code> section for the relevant environment,
+set <code class="docutils literal notranslate"><span class="pre">cache_flush_urls</span></code> to enable cache flush by URL and/or
+<code class="docutils literal notranslate"><span class="pre">cache_flush_arl_templates</span></code> to enable cache flushing by ARL. Both options
+can be used together as needed.</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[env.live]</span>
+<span class="c1"># Root URL(s) of CDN properties for which to flush cache.</span>
+<span class="c1"># Several can be provided.</span>
+<span class="na">cache_flush_urls</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">https</span><span class="o">:</span><span class="s">//cdn1.example.com</span>
+<span class="w">  </span><span class="na">https</span><span class="o">:</span><span class="s">//cdn2.example.com</span>
+
+<span class="c1"># Templates of ARL(s) for which to flush cache.</span>
+<span class="c1"># Templates can use placeholders:</span>
+<span class="c1"># - path: path of a file under CDN root</span>
+<span class="c1"># - ttl (optional): a TTL value will be substituted</span>
+<span class="na">cache_flush_arl_templates</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">S/</span><span class="o">=</span><span class="s">/123/22334455/{ttl}/cdn1.example.com/{path}</span>
+<span class="w">  </span><span class="na">S/</span><span class="o">=</span><span class="s">/123/22334455/{ttl}/cdn2.example.com/{path}</span>
+</pre></div>
+</div>
+<p>Secondly, use environment variables to deploy credentials for the
+Fast Purge API, according to the below table. The fields here correspond
+to those used by the <a class="reference external" href="https://techdocs.akamai.com/developer/docs/set-up-authentication-credentials">.edgerc file</a>
+as found in Akamai’s documentation.</p>
+<p>Note that “&lt;env&gt;” should be replaced with the specific corresponding
+environment name, e.g. <code class="docutils literal notranslate"><span class="pre">EXODUS_GW_FASTPURGE_HOST_LIVE</span></code> for a <code class="docutils literal notranslate"><span class="pre">live</span></code>
+environment.</p>
+<table class="docutils align-default" id="id1">
+<caption><span class="caption-text">Fast Purge credentials</span><a class="headerlink" href="#id1" title="Link to this table">¶</a></caption>
+<tbody>
+<tr class="row-odd"><td><p>Variable</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">.edgerc</span></code> field</p></td>
+<td><p>Example</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">EXODUS_GW_FASTPURGE_CLIENT_SECRET_&lt;env&gt;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">client_secret</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">abcdEcSnaAt123FNkBxy456z25qx9Yp5CPUxlEfQeTDkfh4QA=I</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">EXODUS_GW_FASTPURGE_HOST_&lt;env&gt;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">host</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">akab-lmn789n2k53w7qrs10cxy-nfkxaa4lfk3kd6ym.luna.akamaiapis.net</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">EXODUS_GW_FASTPURGE_ACCESS_TOKEN_&lt;env&gt;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">access_token</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">akab-zyx987xa6osbli4k-e7jf5ikib5jknes3</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">EXODUS_GW_FASTPURGE_CLIENT_TOKEN_&lt;env&gt;</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">client_token</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">akab-nomoflavjuc4422-fa2xznerxrm3teg7</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</section>
 </section>
 </section>
 

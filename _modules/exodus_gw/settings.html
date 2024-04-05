@@ -40,6 +40,25 @@
 <span class="kn">from</span> <span class="nn">pydantic_settings</span> <span class="kn">import</span> <span class="n">BaseSettings</span><span class="p">,</span> <span class="n">SettingsConfigDict</span>
 
 
+<span class="k">def</span> <span class="nf">split_ini_list</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="c1"># Given a string value from an .ini file, splits it into multiple</span>
+    <span class="c1"># strings over line boundaries, using the typical form supported</span>
+    <span class="c1"># in .ini files.</span>
+    <span class="c1"># e.g.</span>
+    <span class="c1">#</span>
+    <span class="c1">#    [section]</span>
+    <span class="c1">#    my-setting=</span>
+    <span class="c1">#      foo</span>
+    <span class="c1">#      bar</span>
+    <span class="c1">#</span>
+    <span class="c1"># =&gt; returns [&quot;foo&quot;, &quot;bar&quot;]</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="k">return</span> <span class="p">[</span><span class="n">elem</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">raw</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">elem</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+
+
 <span class="k">class</span> <span class="nc">Environment</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -50,6 +69,8 @@
         <span class="n">config_table</span><span class="p">,</span>
         <span class="n">cdn_url</span><span class="p">,</span>
         <span class="n">cdn_key_id</span><span class="p">,</span>
+        <span class="n">cache_flush_urls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">cache_flush_arl_templates</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">aws_profile</span> <span class="o">=</span> <span class="n">aws_profile</span>
@@ -58,10 +79,53 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">config_table</span> <span class="o">=</span> <span class="n">config_table</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cdn_url</span> <span class="o">=</span> <span class="n">cdn_url</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cdn_key_id</span> <span class="o">=</span> <span class="n">cdn_key_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache_flush_urls</span> <span class="o">=</span> <span class="n">split_ini_list</span><span class="p">(</span><span class="n">cache_flush_urls</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache_flush_arl_templates</span> <span class="o">=</span> <span class="n">split_ini_list</span><span class="p">(</span>
+            <span class="n">cache_flush_arl_templates</span>
+        <span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">cdn_private_key</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;EXODUS_GW_CDN_PRIVATE_KEY_</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fastpurge_enabled</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;True if this environment has fastpurge-based cache flushing enabled.</span>
+
+<span class="sd">        When True, it is guaranteed that all needed credentials for fastpurge</span>
+<span class="sd">        are available for this environment.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="c1"># *at least one* URL or ARL template must be set...</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_flush_urls</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache_flush_arl_templates</span><span class="p">)</span>
+            <span class="c1"># ... and *all* fastpurge credentials must be set</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">fastpurge_access_token</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">fastpurge_client_secret</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">fastpurge_client_token</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">fastpurge_host</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fastpurge_client_secret</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span>
+            <span class="s2">&quot;EXODUS_GW_FASTPURGE_CLIENT_SECRET_</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fastpurge_host</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;EXODUS_GW_FASTPURGE_HOST_</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fastpurge_access_token</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span>
+            <span class="s2">&quot;EXODUS_GW_FASTPURGE_ACCESS_TOKEN_</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fastpurge_client_token</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span>
+            <span class="s2">&quot;EXODUS_GW_FASTPURGE_CLIENT_TOKEN_</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="p">)</span>
 
 
 <span class="k">class</span> <span class="nc">MigrationMode</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
@@ -315,6 +379,10 @@
         <span class="n">config_table</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s2">&quot;config_table&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
         <span class="n">cdn_url</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s2">&quot;cdn_url&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
         <span class="n">cdn_key_id</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s2">&quot;cdn_key_id&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">cache_flush_urls</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s2">&quot;cache_flush_urls&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">cache_flush_arl_templates</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="n">env</span><span class="p">,</span> <span class="s2">&quot;cache_flush_arl_templates&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span>
+        <span class="p">)</span>
 
         <span class="n">settings</span><span class="o">.</span><span class="n">environments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">Environment</span><span class="p">(</span>
@@ -325,6 +393,8 @@
                 <span class="n">config_table</span><span class="o">=</span><span class="n">config_table</span><span class="p">,</span>
                 <span class="n">cdn_url</span><span class="o">=</span><span class="n">cdn_url</span><span class="p">,</span>
                 <span class="n">cdn_key_id</span><span class="o">=</span><span class="n">cdn_key_id</span><span class="p">,</span>
+                <span class="n">cache_flush_urls</span><span class="o">=</span><span class="n">cache_flush_urls</span><span class="p">,</span>
+                <span class="n">cache_flush_arl_templates</span><span class="o">=</span><span class="n">cache_flush_arl_templates</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
 
