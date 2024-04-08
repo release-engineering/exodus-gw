@@ -1,3 +1,4 @@
+import json
 import pathlib
 from datetime import datetime, timedelta
 
@@ -129,6 +130,7 @@ def test_flush_cdn_cache_fastpurge_disabled(
 def test_flush_cdn_cache_typical(
     db: Session,
     caplog: pytest.LogCaptureFixture,
+    mock_boto3_client,
     fake_message_id: str,
     tmp_path: pathlib.Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -178,12 +180,34 @@ cache_flush_arl_templates =
     db.add(task)
     db.commit()
 
+    # Set up some aliases to exercise alias resolution.
+    mock_boto3_client.query.return_value = {
+        "Items": [
+            {
+                "config": {
+                    "S": json.dumps(
+                        {
+                            "origin_alias": [],
+                            "releasever_alias": [
+                                {"src": "/path/one", "dest": "/path/one-dest"},
+                            ],
+                            "rhui_alias": [
+                                {"src": "/path/two", "dest": "/path/two-dest"},
+                            ],
+                        }
+                    )
+                }
+            }
+        ]
+    }
+
     # It should run to completion...
     flush_cdn_cache(
         paths=[
             # Paths here are chosen to exercise:
             # - different TTL values for different types of file
             # - leading "/" vs no leading "/" - both should be tolerated
+            # - alias resolution
             "/path/one/repodata/repomd.xml",
             "path/two/listing",
             "third/path",
@@ -214,19 +238,28 @@ cache_flush_arl_templates =
     # using both the CDN root URLs and the ARL templates
     assert sorted(fp_client._purged_urls) == [
         # Used the ARL templates. Note the different TTL values
-        # for different paths.
+        # for different paths, and also the paths both before and
+        # after alias resolution are flushed.
+        "S/=/123/4567/10m/cdn1.example.com/path/two-dest/listing cid=///",
         "S/=/123/4567/10m/cdn1.example.com/path/two/listing cid=///",
         "S/=/123/4567/30d/cdn1.example.com/third/path cid=///",
+        "S/=/123/4567/4h/cdn1.example.com/path/one-dest/repodata/repomd.xml cid=///",
         "S/=/123/4567/4h/cdn1.example.com/path/one/repodata/repomd.xml cid=///",
+        "S/=/234/6677/10m/cdn2.example.com/other/path/two-dest/listing x/y/z",
         "S/=/234/6677/10m/cdn2.example.com/other/path/two/listing x/y/z",
         "S/=/234/6677/30d/cdn2.example.com/other/third/path x/y/z",
+        "S/=/234/6677/4h/cdn2.example.com/other/path/one-dest/repodata/repomd.xml x/y/z",
         "S/=/234/6677/4h/cdn2.example.com/other/path/one/repodata/repomd.xml x/y/z",
         # Used the CDN URL which didn't have a leading path.
+        "https://cdn1.example.com/path/one-dest/repodata/repomd.xml",
         "https://cdn1.example.com/path/one/repodata/repomd.xml",
+        "https://cdn1.example.com/path/two-dest/listing",
         "https://cdn1.example.com/path/two/listing",
         "https://cdn1.example.com/third/path",
         # Used the CDN URL which had a leading path.
+        "https://cdn2.example.com/root/path/one-dest/repodata/repomd.xml",
         "https://cdn2.example.com/root/path/one/repodata/repomd.xml",
+        "https://cdn2.example.com/root/path/two-dest/listing",
         "https://cdn2.example.com/root/path/two/listing",
         "https://cdn2.example.com/root/third/path",
     ]
