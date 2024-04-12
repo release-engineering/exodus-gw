@@ -112,6 +112,7 @@ indefinitely.
 
 import logging
 import os
+import re
 from datetime import datetime
 from uuid import uuid4
 
@@ -208,6 +209,7 @@ def update_publish_items(
     env: Environment = deps.env,
     db: Session = deps.db,
     settings: Settings = deps.settings,
+    call_context: auth.CallContext = deps.call_context,
 ) -> dict[None, None]:
     """Add publish items to an existing publish object.
 
@@ -275,6 +277,47 @@ def update_publish_items(
     )
 
     db_publish.resolve_links(ln_items=resolvable)
+
+    # Prevent unauthorized users from publishing to restricted paths within
+    # a particular CDN environment.
+    #
+    # Some users only need to publish to certain paths. Allowing those
+    # users to publish to other paths increases the risk of conflicts
+    # between clients, or of accidents with a large impact.
+    username = str(
+        call_context.client.serviceAccountId
+        or call_context.user.internalUsername
+    )
+    path_restrictions = (settings.publish_paths.get(env.name) or {}).get(
+        username
+    ) or [".*"]
+    path_patterns = [re.compile(path) for path in path_restrictions]
+
+    for i in items:
+        # Determine whether the client is authorized to publish to this URI.
+        authorized = False
+        for pattern in path_patterns:
+            if re.match(pattern, i.web_uri):
+                authorized = True
+                break
+        if not authorized:
+            # The URI did not match one of the client's permitted patterns in publish_paths.
+            LOG.error(
+                "User '%s' is not authorized to publish to path '%s'",
+                username,
+                i.web_uri,
+                extra={
+                    "publish_id": publish_id,
+                    "event": "publish",
+                    "success": False,
+                },
+            )
+
+            raise HTTPException(
+                403,
+                detail="User '%s' is not authorized to publish to path '%s'"
+                % (username, i.web_uri),
+            )
 
     # Convert the list into dict and update each dict with a publish_id.
     # Each item's 'dirty' and 'updated' are refreshed to ensure it's

@@ -1357,3 +1357,103 @@ def test_get_publish_not_found(auth_header, fake_publish):
     assert r.json() == {
         "detail": "No publish found for ID %s" % fake_publish.id
     }
+
+
+def test_update_user_authorized_publish_paths(db, auth_header, monkeypatch):
+    """Ensure that a user can successfully publish content to any paths to
+    which they are authorized to publish."""
+
+    monkeypatch.setenv(
+        "EXODUS_GW_PUBLISH_PATHS",
+        json.dumps(
+            {
+                "test": {
+                    "fake-user": [
+                        "^(/content)?/origin/files/sha256/[0-f]{2}/[0-f]{64}/[^/]{1,300}$",
+                        "^/fake-path/[0-f]{64}/[^/]{1,300}$",
+                    ]
+                }
+            }
+        ),
+    )
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(id=publish_id, env="test", state="PENDING")
+
+    db.add(publish)
+    db.commit()
+
+    with TestClient(app) as client:
+        # Try to add some items to it
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json=[
+                {
+                    "web_uri": "/content/origin/files/sha256/00/0044062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/test.rpm",
+                    "object_key": "1" * 64,
+                    "content_type": "application/octet-stream",
+                },
+                {
+                    "web_uri": "/fake-path/0097062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/other-test.rpm",
+                    "object_key": "2" * 64,
+                    "content_type": "application/octet-stream",
+                },
+            ],
+            headers=auth_header(roles=["test-publisher"]),
+        )
+
+    # It should have succeeded
+    assert r.status_code == 200
+
+
+def test_update_user_unauthorized_publish_paths(db, auth_header, monkeypatch):
+    """When a user is only authorized to publish to certain paths in a given
+    CDN environment, ensure that the user is prevented from publishing to any
+    paths to which they are unauthorized to publish."""
+
+    monkeypatch.setenv(
+        "EXODUS_GW_PUBLISH_PATHS",
+        json.dumps(
+            {
+                "test": {
+                    "fake-user": [
+                        "^(/content)?/origin/files/sha256/[0-f]{2}/[0-f]{64}/[^/]{1,300}$",
+                        "/fake-path/[0-f]{64}/[^/]{1,300}$",
+                    ]
+                }
+            }
+        ),
+    )
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(id=publish_id, env="test", state="PENDING")
+
+    db.add(publish)
+    db.commit()
+
+    with TestClient(app) as client:
+        # Try to add some items to it
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json=[
+                {
+                    "web_uri": "/content/origin/files/sha256/00/0044062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/test.rpm",
+                    "object_key": "1" * 64,
+                    "content_type": "application/octet-stream",
+                },
+                {
+                    "web_uri": "/content/origin/uri1",
+                    "object_key": "2" * 64,
+                    "content_type": "application/octet-stream",
+                },
+            ],
+            headers=auth_header(roles=["test-publisher"]),
+        )
+
+    # It should have failed
+    assert r.status_code == 403
+    assert r.json() == {
+        "detail": "User 'fake-user' is not authorized to publish to path '/content/origin/uri1'"
+    }
