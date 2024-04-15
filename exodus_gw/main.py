@@ -1,5 +1,7 @@
 """The exodus-gw service provides APIs for uploading and publishing content on the exodus CDN.
 
+{OVERVIEW}
+
 Available APIs are grouped into the following categories:
 
 - [service](#tag/service): inspect the state of the exodus-gw service.
@@ -25,37 +27,14 @@ A typical content publishing workflow using exodus-gw will consist of:
 
 ## Authentication
 
-The exodus-gw API does not include any direct support for authentication and is
-instead expected to be deployed behind a reverse-proxy implementing any desired
-authentication mechanism.
-
-If you are deploying an instance of exodus-gw, see
-[the deployment guide](https://release-engineering.github.io/exodus-gw/deployment.html)
-for information on how to integrate an authentication mechanism.
-
-If you are a client looking to make use of exodus-gw, consult your organization's
-internal documentation for advice on how to authenticate with exodus-gw.
-
+{AUTHENTICATION}
 
 ## Environments
 
 Many APIs in exodus-gw use the concept of an "environment" to control the target system
 of an operation.
 
-The set of environments is configured when exodus-gw is deployed.
-A typical scenario is to deploy a "pre" environment for pre-release content and a
-"live" environment for live content.
-
-Different environments will also require the user to hold different roles. For example,
-a client might be permitted only to write to one of the configured environments, or all
-of them, depending on the configuration of the server.
-
-If you are deploying an instance of exodus-gw, see
-[the deployment guide](https://release-engineering.github.io/exodus-gw/deployment.html)
-for information on how to configure environments.
-
-If you are a client looking to make use of exodus-gw, consult your organization's
-internal documentation for advice on which environment(s) you should be using.
+{ENVIRONMENTS}
 """
 
 import logging
@@ -75,6 +54,7 @@ from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from . import docs
 from .auth import log_login
 from .aws.util import xml_response
 from .database import db_engine
@@ -85,7 +65,7 @@ from .settings import load_settings
 
 app = FastAPI(
     title="exodus-gw",
-    description=__doc__,
+    description=docs.format_docs(__doc__),
     openapi_tags=[
         service.openapi_tag,
         upload.openapi_tag,
