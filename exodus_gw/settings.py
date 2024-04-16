@@ -118,6 +118,19 @@ class Settings(BaseSettings):
     for validation. E.g., "exodus-migration-md5": "^[0-9a-f]{32}$"
     """
 
+    publish_paths: dict[str, dict[str, list[str]]] = {}
+    """A set of user or service accounts which are only authorized to publish to a
+    particular set of path(s) in a given CDN environment and the regex(es) describing
+    the paths to which the user or service account is authorized to publish. The user or
+    service account will be prevented from publishing to any paths that do not match the
+    defined regular expression(s).
+    E.g., '{"pre": {"fake-user":
+    ["^(/content)?/origin/files/sha256/[0-f]{2}/[0-f]{64}/[^/]{1,300}$"]}}'
+
+    Any user or service account not included in this configuration is considered to have
+    unrestricted publish access (i.e., can publish to any path).
+    """
+
     log_config: dict[str, Any] = {
         "version": 1,
         "incremental": True,
