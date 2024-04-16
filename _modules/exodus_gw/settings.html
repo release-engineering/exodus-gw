@@ -153,6 +153,19 @@
 <span class="sd">    for validation. E.g., &quot;exodus-migration-md5&quot;: &quot;^[0-9a-f]{32}$&quot;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">publish_paths</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A set of user or service accounts which are only authorized to publish to a</span>
+<span class="sd">    particular set of path(s) in a given CDN environment and the regex(es) describing</span>
+<span class="sd">    the paths to which the user or service account is authorized to publish. The user or</span>
+<span class="sd">    service account will be prevented from publishing to any paths that do not match the</span>
+<span class="sd">    defined regular expression(s).</span>
+<span class="sd">    E.g., &#39;{&quot;pre&quot;: {&quot;fake-user&quot;:</span>
+<span class="sd">    [&quot;^(/content)?/origin/files/sha256/[0-f]{2}/[0-f]{64}/[^/]{1,300}$&quot;]}}&#39;</span>
+
+<span class="sd">    Any user or service account not included in this configuration is considered to have</span>
+<span class="sd">    unrestricted publish access (i.e., can publish to any path).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">log_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
         <span class="s2">&quot;incremental&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>

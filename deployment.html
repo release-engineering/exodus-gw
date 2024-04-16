@@ -120,6 +120,20 @@ for validation. E.g., “exodus-migration-md5”: “^[0-9a-f]{32}$”</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="exodus_gw.settings.Settings.publish_paths">
+<span class="sig-name descname"><span class="pre">publish_paths</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#exodus_gw.settings.Settings.publish_paths" title="Link to this definition">¶</a></dt>
+<dd><p>A set of user or service accounts which are only authorized to publish to a
+particular set of path(s) in a given CDN environment and the regex(es) describing
+the paths to which the user or service account is authorized to publish. The user or
+service account will be prevented from publishing to any paths that do not match the
+defined regular expression(s).
+E.g., ‘{“pre”: {“fake-user”:
+[“^(/content)?/origin/files/sha256/[0-f]{2}/[0-f]{64}/[^/]{1,300}$”]}}’</p>
+<p>Any user or service account not included in this configuration is considered to have
+unrestricted publish access (i.e., can publish to any path).</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.log_config">
 <span class="sig-name descname"><span class="pre">log_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.12)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#exodus_gw.settings.Settings.log_config" title="Link to this definition">¶</a></dt>
 <dd><p>Logging configuration in dictConfig schema.</p>
