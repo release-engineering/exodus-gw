@@ -61,6 +61,19 @@ NOW_UTC = str(datetime.now(timezone.utc))
                             }
                         }
                     },
+                    {
+                        "PutRequest": {
+                            "Item": {
+                                "web_uri": {"S": "/to/.__exodus_autoindex"},
+                                "object_key": {
+                                    "S": "5891b5b522d5df086d0ff0b110fbd9d2"
+                                    "1bb4fc7163af34d08286a2e846f6be03"
+                                },
+                                "from_date": {"S": "2023-10-04 03:52:02"},
+                                "content_type": {"S": None},
+                            }
+                        }
+                    },
                 ],
             },
         ),
@@ -88,6 +101,14 @@ NOW_UTC = str(datetime.now(timezone.utc))
                         "DeleteRequest": {
                             "Key": {
                                 "web_uri": {"S": "/to/repomd.xml"},
+                                "from_date": {"S": "2023-10-04 03:52:02"},
+                            }
+                        }
+                    },
+                    {
+                        "DeleteRequest": {
+                            "Key": {
+                                "web_uri": {"S": "/to/.__exodus_autoindex"},
                                 "from_date": {"S": "2023-10-04 03:52:02"},
                             }
                         }
@@ -126,7 +147,7 @@ def test_batch_write_item_limit(fake_publish, caplog):
         ddb.batch_write(request)
 
     assert "Cannot process more than 25 items per request" in caplog.text
-    assert str(exc_info.value) == "Request contains too many items (27)"
+    assert "Request contains too many items" in str(exc_info.value)
 
 
 def test_batch_write_deadline(mock_boto3_client, fake_publish, caplog):

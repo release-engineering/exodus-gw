@@ -184,6 +184,12 @@ def fake_publish():
             publish_id=publish.id,
             updated=datetime(2023, 10, 4, 3, 52, 2),
         ),
+        models.Item(
+            web_uri="/to/.__exodus_autoindex",
+            object_key="5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03",
+            publish_id=publish.id,
+            updated=datetime(2023, 10, 4, 3, 52, 2),
+        ),
     ]
     yield publish
 
