@@ -71,7 +71,15 @@ bucket.upload_file('/tmp/hello.txt',
 import logging
 import textwrap
 
-from fastapi import APIRouter, HTTPException, Path, Query, Request, Response
+from fastapi import (
+    APIRouter,
+    HTTPException,
+    Path,
+    Query,
+    Request,
+    Response,
+    Depends,
+)
 
 from .. import auth, deps
 from ..aws.client import S3ClientWrapper
@@ -126,6 +134,7 @@ async def multipart_upload(
         ),
     ),
     settings: Settings = deps.settings,
+    caller_name: str = Depends(auth.caller_name),
 ):
     """Create or complete a multi-part upload.
 
@@ -144,6 +153,8 @@ async def multipart_upload(
     if uploads == "" and uploadId is None:
         # Means a new upload is requested
         metadata = extract_request_metadata(request, settings)
+        # add uploader info in the metadata to track the object modifying entity
+        metadata["gw-uploader"] = caller_name
         return await create_multipart_upload(s3, env, key, metadata)
 
     if uploads is None and uploadId:
@@ -176,6 +187,7 @@ async def upload(
         None, description="Part number, where multi-part upload is used."
     ),
     settings: Settings = deps.settings,
+    caller_name: str = Depends(auth.caller_name),
 ):
     """Write to an object, either as a standalone operation or within a multi-part upload.
 
@@ -196,6 +208,8 @@ async def upload(
     if uploadId is None and partNumber is None:
         # Single-part upload
         metadata = extract_request_metadata(request, settings)
+        # add uploader info in the metadata to track the object modifying entity
+        metadata["gw-uploader"] = caller_name
         return await object_put(s3, env, key, request, metadata)
 
     # If either is set, both must be set.
