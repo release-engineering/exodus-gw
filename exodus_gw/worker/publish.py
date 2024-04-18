@@ -325,6 +325,9 @@ class CommitBase:
 
         # Save any entry point items to publish last.
         final_items: list[Item] = []
+        final_basenames = self.settings.entry_point_files + [
+            self.settings.autoindex_filename
+        ]
 
         wrote_count = 0
 
@@ -346,10 +349,7 @@ class CommitBase:
 
                     self.check_item(item)
 
-                    if (
-                        basename(item.web_uri)
-                        in self.settings.entry_point_files
-                    ):
+                    if basename(item.web_uri) in final_basenames:
                         LOG.debug(
                             "Delayed write for %s",
                             item.web_uri,

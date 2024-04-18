@@ -187,7 +187,7 @@ def test_commit_write_entry_point_items_fail(
     )
     # It should've logged messages.
     assert "Exception while submitting batch write(s)" in caplog.text
-    assert "Rolling back 3 item(s) due to error" in caplog.text
+    assert "Rolling back 4 item(s) due to error" in caplog.text
     # It should've set task state to FAILED.
     db.refresh(task)
     assert task.state == "FAILED"
@@ -445,7 +445,9 @@ def test_commit_phase1(
     db.refresh(task)
 
     # All the items should initially be dirty.
-    assert [i.dirty for i in fake_publish.items] == [True, True, True, True]
+    assert [i.dirty for i in fake_publish.items] == [True] * len(
+        fake_publish.items
+    )
 
     # Let's say that DynamoDB write initially fails.
     mock_write_batch.side_effect = RuntimeError("simulated error")
@@ -499,13 +501,15 @@ def test_commit_phase1(
         {"dirty": False, "web_uri": "/some/path"},
         # the unresolved link is not yet written and therefore remains dirty
         {"dirty": True, "web_uri": "/some/path/to/link-src"},
-        # repomd.xml is not yet written and therefore remains dirty
+        # autoindex and repomd.xml are both entrypoints, not yet written,
+        # and therefore remain dirty
+        {"dirty": True, "web_uri": "/to/.__exodus_autoindex"},
         {"dirty": True, "web_uri": "/to/repomd.xml"},
     ]
 
     # It should have told us how many it wrote and how many remain
     assert (
-        "Phase 1: committed 2 items, phase 2: 1 items remaining" in caplog.text
+        "Phase 1: committed 2 items, phase 2: 2 items remaining" in caplog.text
     )
 
     # Let's do the same commit again...
@@ -523,7 +527,7 @@ def test_commit_phase1(
     # This time there should not have been any phase1 items processed at all,
     # as none of them were dirty.
     assert (
-        "Phase 1: committed 0 items, phase 2: 1 items remaining" in caplog.text
+        "Phase 1: committed 0 items, phase 2: 2 items remaining" in caplog.text
     )
 
     # And it should NOT have invoked the autoindex enricher in either commit
