@@ -38,11 +38,6 @@ close as possible to atomic behavior:
   minimal impact in the case that a commit is interrupted.
   See "two-phase commit" below for a more in-depth explanation of this.
 
-It should be noted that the atomicity discussed here applies only to the interaction
-between exodus-gw and its underlying data store. exodus-gw does not contain any CDN
-cache purging logic; the impact of CDN caching must also be considered when evaluating
-the semantics of a publish from the CDN client's point of view.
-
 ## Two-phase commit
 
 All published content is categorized into two phases, phase 1 and phase 2,

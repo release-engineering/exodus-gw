@@ -2,7 +2,7 @@ import asyncio
 import contextvars
 import logging
 from datetime import datetime
-from os.path import basename
+from os.path import basename, dirname
 from queue import Empty, Full, Queue
 from threading import Thread
 from typing import Any
@@ -19,6 +19,7 @@ from exodus_gw.schemas import PublishStates, TaskStates
 from exodus_gw.settings import Settings, get_environment
 
 from .autoindex import AutoindexEnricher
+from .cache import Flusher
 from .progress import ProgressLogger
 
 LOG = logging.getLogger("exodus-gw")
@@ -450,6 +451,33 @@ class CommitPhase1(CommitBase):
 class CommitPhase2(CommitBase):
     PUBLISH_STATES = [PublishStates.committing]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.flush_paths: list[str] = []
+
+    def flush_cache(self) -> None:
+        if self.settings.cdn_flush_on_commit:
+            flusher = Flusher(
+                self.flush_paths,
+                self.settings,
+                self.env,
+                self.dynamodb.definitions,
+            )
+            flusher.run()
+
+    def add_flush_paths(self, paths: list[str]):
+        for path in paths:
+            if basename(path) == self.settings.autoindex_filename:
+                # For an autoindex, we need to flush cache for the "directory"
+                # containing the index, not the autoindex file itself.
+                # e.g. if we just published "/some/dir/<autoindex>"
+                # then we need to flush "/some/dir/".
+                path = dirname(path)
+                if not path.endswith("/"):
+                    path = path + "/"
+            self.flush_paths.append(path)
+
     def write_publish_items(self) -> list[Item]:
         final_items = super().write_publish_items()
 
@@ -471,8 +499,19 @@ class CommitPhase2(CommitBase):
         ) as bw:
             if final_items:
                 self.written_item_ids.extend(bw.queue_batches(final_items))
+                self.add_flush_paths([item.web_uri for item in final_items])
+
+        # Flush cache for what we've just written.
+        self.flush_cache()
 
         return []
+
+    def rollback_publish_items(self, exception: Exception) -> None:
+        super().rollback_publish_items(exception)
+
+        # If we've rolled back, we should also attempt to flush cache
+        # to restore CDN edge as close as possible back to the prior state.
+        self.flush_cache()
 
     def pre_write(self):
         # If any index files should be automatically generated for this publish,
