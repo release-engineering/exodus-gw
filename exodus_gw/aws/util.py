@@ -1,6 +1,7 @@
 import io
 import logging
 import re
+from collections.abc import Iterable
 from typing import AnyStr
 from xml.etree.ElementTree import Element, ElementTree, SubElement
 
@@ -160,24 +161,24 @@ class RequestReader:
         return cls(request)
 
 
-def uri_alias(uri, aliases):
+def uri_alias(uri: str, aliases: list[tuple[str, str]]):
     # Resolve every alias between paths within the uri (e.g.
     # allow RHUI paths to be aliased to non-RHUI).
     #
     # Aliases are expected to come from cdn-definitions.
 
     new_uri = ""
-    remaining = aliases
+    remaining: list[tuple[str, str]] = aliases
 
     # We do multiple passes here to ensure that nested aliases
     # are resolved correctly, regardless of the order in which
     # they're provided.
     while remaining:
-        processed = []
+        processed: list[tuple[str, str]] = []
 
-        for alias in remaining:
-            if uri.startswith(alias["src"] + "/") or uri == alias["src"]:
-                new_uri = uri.replace(alias["src"], alias["dest"], 1)
+        for src, dest in remaining:
+            if uri.startswith(src + "/") or uri == src:
+                new_uri = uri.replace(src, dest, 1)
                 LOG.debug(
                     "Resolved alias:\n\tsrc: %s\n\tdest: %s",
                     uri,
@@ -185,7 +186,7 @@ def uri_alias(uri, aliases):
                     extra={"event": "publish", "success": True},
                 )
                 uri = new_uri
-                processed.append(alias)
+                processed.append((src, dest))
 
         if not processed:
             # We didn't resolve any alias, then we're done processing.
@@ -197,3 +198,23 @@ def uri_alias(uri, aliases):
         remaining = [r for r in remaining if r not in processed]
 
     return uri
+
+
+def uris_with_aliases(
+    uris: Iterable[str], aliases: list[tuple[str, str]]
+) -> list[str]:
+    # Given a collection of uris and aliases, returns a new collection of uris
+    # post alias resolution, including *both* sides of each alias when applicable.
+    out: set[str] = set()
+
+    for uri in uris:
+        # We accept inputs both with and without leading '/', normalize.
+        uri = "/" + uri.removeprefix("/")
+
+        # This always goes into the set we'll process.
+        out.add(uri)
+
+        # The value after alias resolution also goes into the set.
+        out.add(uri_alias(uri, aliases))
+
+    return sorted(out)

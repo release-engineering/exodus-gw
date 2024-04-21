@@ -219,6 +219,11 @@ class Settings(BaseSettings):
     passed. Defaults to two weeks.
     """
 
+    path_history_timeout: int = 700
+    """Maximum amount of time (in days) to retain data on published paths for
+    the purpose of cache flushing.
+    """
+
     task_deadline: int = 2
     """Maximum amount of time (in hours) a task should remain viable. Defaults to two
     hours.

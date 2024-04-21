@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 import pytest
 from sqlalchemy.orm.exc import ObjectDeletedError
 
-from exodus_gw.models import CommitTask, Item, Publish
+from exodus_gw.models import CommitTask, Item, Publish, PublishedPath
 from exodus_gw.schemas import PublishStates, TaskStates
 from exodus_gw.worker import cleanup
 
@@ -46,6 +46,7 @@ def test_cleanup_mixed(caplog, db):
     two_days_ago = now - timedelta(days=2)
     eight_days_ago = now - timedelta(days=8)
     thirty_days_ago = now - timedelta(days=30)
+    two_years_ago = now - timedelta(days=365 * 2)
 
     # Some objects with missing timestamps.
     p1_missing_ts = Publish(
@@ -114,6 +115,18 @@ def test_cleanup_mixed(caplog, db):
         state=TaskStates.failed,
         updated=thirty_days_ago,
     )
+    path1_old = PublishedPath(
+        id=100,
+        env="test",
+        web_uri="/some/published/path1",
+        updated=two_years_ago,
+    )
+    path2_old = PublishedPath(
+        id=101,
+        env="test",
+        web_uri="/some/published/path2",
+        updated=two_years_ago,
+    )
     # (Because these objects will be deleted, we need to keep their ids separately.)
     p1_old_id = p1_old.id
     p2_old_id = p2_old.id
@@ -133,6 +146,12 @@ def test_cleanup_mixed(caplog, db):
         state=TaskStates.complete,
         updated=two_days_ago,
     )
+    path1_recent = PublishedPath(
+        id=200,
+        env="test",
+        web_uri="/some/recently-published/path1",
+        updated=thirty_days_ago,
+    )
 
     db.add_all(
         [
@@ -145,8 +164,11 @@ def test_cleanup_mixed(caplog, db):
             p1_old,
             p2_old,
             t1_old,
+            path1_old,
+            path2_old,
             p1_recent,
             t1_recent,
+            path1_recent,
         ]
     )
     db.commit()
@@ -175,6 +197,10 @@ def test_cleanup_mixed(caplog, db):
         p2_old.id
     with pytest.raises(ObjectDeletedError):
         t1_old.id
+    with pytest.raises(ObjectDeletedError):
+        path1_old.id
+    with pytest.raises(ObjectDeletedError):
+        path2_old.id
 
     for item in p1_old_items:
         with pytest.raises(ObjectDeletedError):
@@ -183,6 +209,7 @@ def test_cleanup_mixed(caplog, db):
     # Other objects should still exist as they were.
     assert p1_recent.state == PublishStates.pending
     assert t1_recent.state == TaskStates.complete
+    assert path1_recent.web_uri == "/some/recently-published/path1"
 
     # It should have logged exactly what it did.
     messages = [
@@ -213,6 +240,10 @@ def test_cleanup_mixed(caplog, db):
             % (p1_old_id, thirty_days_ago),
             "Publish %s: cleaning old data (last updated: %s)"
             % (p2_old_id, thirty_days_ago),
+            "PublishedPath ('test', '/some/published/path1'): cleaning old data (last updated: %s)"
+            % two_years_ago,
+            "PublishedPath ('test', '/some/published/path2'): cleaning old data (last updated: %s)"
+            % two_years_ago,
             ####################################################
             # Completed cleanup
             "Scheduled cleanup has completed",

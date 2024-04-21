@@ -45,6 +45,30 @@ class DynamoDB:
                     self._definitions = self.query_definitions()
         return self._definitions
 
+    def _aliases(self, alias_types: list[str]) -> list[tuple[str, str]]:
+        out: list[tuple[str, str]] = []
+
+        for k, v in self.definitions.items():
+            if k in alias_types:
+                for alias in v:
+                    out.append((alias["src"], alias["dest"]))
+
+        return out
+
+    @property
+    def aliases_for_write(self) -> list[tuple[str, str]]:
+        # Aliases used when writing items to DynamoDB.
+        #
+        # Exclude rhui aliases (for now? RHELDST-18849).
+        return self._aliases(["origin_alias", "releasever_alias"])
+
+    @property
+    def aliases_for_flush(self) -> list[tuple[str, str]]:
+        # Aliases used when flushing cache.
+        return self._aliases(
+            ["origin_alias", "releasever_alias", "rhui_alias"]
+        )
+
     def query_definitions(self) -> dict[str, Any]:
         """Query the definitions in the config_table. If definitions are found, return them. Otherwise,
         return an empty dictionary."""
@@ -81,12 +105,7 @@ class DynamoDB:
         """Create the dictionary structure expected by batch_write_item."""
         table_name = self.env_obj.table
         request: dict[str, list[Any]] = {table_name: []}
-
-        uri_aliases = []
-        for k, v in self.definitions.items():
-            # Exclude rhui aliases (for now? RHELDST-18849).
-            if k in ("origin_alias", "releasever_alias"):
-                uri_aliases.extend(v)
+        uri_aliases = self.aliases_for_write
 
         for item in items:
             # Items carry their own from_date. This effectively resolves
