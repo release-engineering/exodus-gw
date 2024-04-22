@@ -5,7 +5,7 @@ import dramatiq
 from sqlalchemy.orm import Session, noload
 
 from exodus_gw.database import db_engine
-from exodus_gw.models import Item, Publish, Task
+from exodus_gw.models import Item, Publish, PublishedPath, Task
 from exodus_gw.schemas import PublishStates, TaskStates
 from exodus_gw.settings import Settings
 
@@ -21,7 +21,8 @@ class Janitor:
     def run(self):
         self.fix_timestamps()
         self.fix_abandoned()
-        self.clean_old_data()
+        self.clean_old_publishes()
+        self.clean_old_paths()
 
         self.db.commit()
 
@@ -86,8 +87,8 @@ class Janitor:
                 )
                 instance.state = states.failed
 
-    def clean_old_data(self):
-        # Find any objects of transient types in terminal states which have not
+    def clean_old_publishes(self):
+        # Find any tasks and publishes in terminal states which have not
         # been updated for the configured period of time and delete them.
         #
         # This helps enforce the design that exodus-gw contains no persistent
@@ -122,6 +123,26 @@ class Janitor:
                     ).delete()
 
                 self.db.delete(instance)
+
+    def clean_old_paths(self):
+        # Deletes PublishedPath history older than the configured timeout.
+        threshold = self.now - timedelta(
+            days=self.settings.path_history_timeout
+        )
+
+        # Note: we could do this as a single SQL 'DELETE' query, but it's nice
+        # to explicitly log every record being deleted here.
+        for instance in self.db.query(PublishedPath).filter(
+            PublishedPath.updated < threshold,
+        ):
+            LOG.info(
+                "PublishedPath %s: cleaning old data (last updated: %s)",
+                (instance.env, instance.web_uri),
+                instance.updated,
+                extra={"event": "cleanup"},
+            )
+
+            self.db.delete(instance)
 
 
 @dramatiq.actor(scheduled=True)

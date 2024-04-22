@@ -2,7 +2,6 @@ import logging
 import os
 import re
 from datetime import datetime
-from typing import Any
 
 import dramatiq
 import fastpurge
@@ -11,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from exodus_gw import models
 from exodus_gw.aws.dynamodb import DynamoDB
-from exodus_gw.aws.util import uri_alias
+from exodus_gw.aws.util import uris_with_aliases
 from exodus_gw.database import db_engine
 from exodus_gw.schemas import TaskStates
 from exodus_gw.settings import Settings, get_environment
@@ -25,25 +24,17 @@ class Flusher:
         paths: list[str],
         settings: Settings,
         env: str,
-        cdn_definitions: dict[str, Any],
+        aliases: list[tuple[str, str]],
     ):
         self.paths = paths
         self.settings = settings
-        self.cdn_definitions = cdn_definitions
+        self.aliases = aliases
 
         for environment in settings.environments:
             if environment.name == env:
                 self.env = environment
 
         assert self.env
-
-    @property
-    def aliases(self):
-        uri_aliases = []
-        for k, v in self.cdn_definitions.items():
-            if k in ("origin_alias", "releasever_alias", "rhui_alias"):
-                uri_aliases.extend(v)
-        return uri_aliases
 
     def arl_ttl(self, path: str):
         # Return an appropriate TTL value for certain paths.
@@ -70,25 +61,13 @@ class Flusher:
     def urls_for_flush(self):
         out: list[str] = []
 
-        paths = set()
-
-        # Use aliases to inflate the paths.
-        # e.g. if there is a path of /foo/bar/8/baz and there is an alias
-        # of /foo/bar/8 => /foo/bar/8.9, then 'paths' should contain both
-        # sides of that alias.
-        for path in self.paths:
-            # We accept paths both with and without leading '/', normalize.
-            path = path.removeprefix("/")
-
-            # This path always goes into the set we'll process.
-            paths.add(path)
-
-            # The path after alias resolution also goes into the set.
-            # Alias resolution needs the leading '/'.
-            path_resolved = uri_alias("/" + path, self.aliases)
-            paths.add(path_resolved.removeprefix("/"))
-
-        path_list = sorted(paths)
+        # Get all paths for flush, resolving aliases.
+        # Paths should have "/" removed because we're going to format
+        # them with the CDN base URL and with ARL templates.
+        path_list = [
+            p.removeprefix("/")
+            for p in uris_with_aliases(self.paths, self.aliases)
+        ]
 
         for cdn_base_url in self.env.cache_flush_urls:
             for path in path_list:
@@ -189,13 +168,12 @@ def flush_cdn_cache(
         from_date=str(datetime.utcnow()),
         env_obj=get_environment(env, settings),
     )
-    definitions = ddb.query_definitions()
 
     flusher = Flusher(
         paths=paths,
         settings=settings,
         env=env,
-        cdn_definitions=definitions,
+        aliases=ddb.aliases_for_flush,
     )
     flusher.run()
 

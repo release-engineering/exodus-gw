@@ -11,18 +11,15 @@ from exodus_gw.aws.util import uri_alias
         (
             "/content/origin/rpms/path/to/file.iso",
             [
-                {"dest": "/origin", "src": "/content/origin"},
-                {"dest": "/origin/rpms", "src": "/origin/rpm"},
+                ("/content/origin", "/origin"),
+                ("/origin/rpm", "/origin/rpms"),
             ],
             "/origin/rpms/path/to/file.iso",
         ),
         (
             "/content/dist/rhel8/8/path/to/file.rpm",
             [
-                {
-                    "src": "/content/dist/rhel8/8",
-                    "dest": "/content/dist/rhel8/8.5",
-                }
+                ("/content/dist/rhel8/8", "/content/dist/rhel8/8.5"),
             ],
             "/content/dist/rhel8/8.5/path/to/file.rpm",
         ),

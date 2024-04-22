@@ -1,7 +1,7 @@
 import asyncio
 import contextvars
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from os.path import basename, dirname
 from queue import Empty, Full, Queue
 from threading import Thread
@@ -10,11 +10,19 @@ from typing import Any
 import dramatiq
 from dramatiq.middleware import CurrentMessage
 from sqlalchemy import func, select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, lazyload
 
 from exodus_gw.aws.dynamodb import DynamoDB
+from exodus_gw.aws.util import uris_with_aliases
 from exodus_gw.database import db_engine
-from exodus_gw.models import CommitModes, CommitTask, Item, Publish
+from exodus_gw.models import (
+    CommitModes,
+    CommitTask,
+    Item,
+    Publish,
+    PublishedPath,
+)
 from exodus_gw.schemas import PublishStates, TaskStates
 from exodus_gw.settings import Settings, get_environment
 
@@ -462,7 +470,7 @@ class CommitPhase2(CommitBase):
                 self.flush_paths,
                 self.settings,
                 self.env,
-                self.dynamodb.definitions,
+                self.dynamodb.aliases_for_flush,
             )
             flusher.run()
 
@@ -522,6 +530,27 @@ class CommitPhase2(CommitBase):
     # phase2 commit also completes the publish, one way or another.
     def on_succeeded(self):
         super().on_succeeded()
+
+        # Record info on the published paths using an upsert.
+        updated_paths = uris_with_aliases(
+            self.flush_paths, self.dynamodb.aliases_for_flush
+        )
+        if updated_paths:
+            now = datetime.now(tz=timezone.utc)
+            statement = insert(PublishedPath).values(
+                [
+                    {"env": self.env, "web_uri": path, "updated": now}
+                    for path in updated_paths
+                ]
+            )
+            statement = statement.on_conflict_do_update(
+                index_elements=["env", "web_uri"],
+                set_={
+                    c.name: c for c in statement.excluded if not c.primary_key
+                },
+            )
+            self.db.execute(statement)
+
         self.publish.state = PublishStates.committed
 
     def on_failed(self):
