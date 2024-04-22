@@ -560,7 +560,7 @@ def test_commit_phase1(
                 "web_uri": "/content/testproduct/1/repo/repomd.xml",
             },
         ],
-        key=lambda d: d["web_uri"],
+        key=lambda d: str(d["web_uri"]),
     )
 
     # It should have told us how many it wrote and how many remain
