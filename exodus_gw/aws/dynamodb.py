@@ -261,3 +261,7 @@ class DynamoDB:
     def write_config(self, config):
         request = self.create_config_request(config)
         self.batch_write(request)
+        # As well as writing to the DB, update our own local copy
+        # so that methods using the config are consistent with what
+        # we've just written.
+        self._definitions = config

@@ -181,7 +181,7 @@ cache_flush_arl_templates =
     db.commit()
 
     # Set up some aliases to exercise alias resolution.
-    mock_boto3_client.query.return_value = {
+    mock_boto3_client.query.side_effect = lambda *args, **kwargs: {
         "Items": [
             {
                 "config": {

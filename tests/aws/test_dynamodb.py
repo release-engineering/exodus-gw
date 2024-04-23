@@ -51,7 +51,9 @@ NOW_UTC = str(datetime.now(timezone.utc))
                     {
                         "PutRequest": {
                             "Item": {
-                                "web_uri": {"S": "/to/repomd.xml"},
+                                "web_uri": {
+                                    "S": "/content/testproduct/1.1.0/repo/repomd.xml"
+                                },
                                 "object_key": {
                                     "S": "3f449eb3b942af58e9aca4c1cffdef89"
                                     "c3f1552c20787ae8c966767a1fedd3a5"
@@ -64,7 +66,9 @@ NOW_UTC = str(datetime.now(timezone.utc))
                     {
                         "PutRequest": {
                             "Item": {
-                                "web_uri": {"S": "/to/.__exodus_autoindex"},
+                                "web_uri": {
+                                    "S": "/content/testproduct/1.1.0/repo/.__exodus_autoindex"
+                                },
                                 "object_key": {
                                     "S": "5891b5b522d5df086d0ff0b110fbd9d2"
                                     "1bb4fc7163af34d08286a2e846f6be03"
@@ -100,7 +104,9 @@ NOW_UTC = str(datetime.now(timezone.utc))
                     {
                         "DeleteRequest": {
                             "Key": {
-                                "web_uri": {"S": "/to/repomd.xml"},
+                                "web_uri": {
+                                    "S": "/content/testproduct/1.1.0/repo/repomd.xml"
+                                },
                                 "from_date": {"S": "2023-10-04 03:52:02"},
                             }
                         }
@@ -108,7 +114,9 @@ NOW_UTC = str(datetime.now(timezone.utc))
                     {
                         "DeleteRequest": {
                             "Key": {
-                                "web_uri": {"S": "/to/.__exodus_autoindex"},
+                                "web_uri": {
+                                    "S": "/content/testproduct/1.1.0/repo/.__exodus_autoindex"
+                                },
                                 "from_date": {"S": "2023-10-04 03:52:02"},
                             }
                         }

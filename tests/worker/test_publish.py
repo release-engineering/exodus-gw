@@ -80,7 +80,13 @@ def test_commit(
     # and then run()
     calls = mock_flusher.mock_calls
     flusher_args = calls[0][1]
-    assert flusher_args[0] == ["/to/", "/to/repomd.xml"]
+    assert flusher_args[0] == [
+        # Note that this does not include paths after alias resolution,
+        # because Flusher does alias resolution itself internally
+        # (tested elsewhere)
+        "/content/testproduct/1/repo/",
+        "/content/testproduct/1/repo/repomd.xml",
+    ]
     mock_flusher().run.assert_called_once()
 
     # It should've invoked the autoindex enricher
@@ -94,8 +100,11 @@ def test_commit(
     )
     assert sorted([(pp.env, pp.web_uri) for pp in published_paths]) == sorted(
         [
-            ("test", "/to/"),
-            ("test", "/to/repomd.xml"),
+            # Note that both sides of the 1 alias are recorded.
+            ("test", "/content/testproduct/1/repo/"),
+            ("test", "/content/testproduct/1.1.0/repo/"),
+            ("test", "/content/testproduct/1/repo/repomd.xml"),
+            ("test", "/content/testproduct/1.1.0/repo/repomd.xml"),
         ]
     )
 
@@ -220,7 +229,10 @@ def test_commit_write_entry_point_items_fail(
     # Flush should have occurred during rollback also
     calls = mock_flusher.mock_calls
     flusher_args = calls[0][1]
-    assert flusher_args[0] == ["/to/", "/to/repomd.xml"]
+    assert flusher_args[0] == [
+        "/content/testproduct/1/repo/",
+        "/content/testproduct/1/repo/repomd.xml",
+    ]
     mock_flusher().run.assert_called_once()
 
     # It should've set task state to FAILED.
@@ -531,16 +543,25 @@ def test_commit_phase1(
     assert sorted(
         [{"web_uri": i.web_uri, "dirty": i.dirty} for i in fake_publish.items],
         key=lambda d: d["web_uri"],
-    ) == [
-        {"dirty": False, "web_uri": "/other/path"},
-        {"dirty": False, "web_uri": "/some/path"},
-        # the unresolved link is not yet written and therefore remains dirty
-        {"dirty": True, "web_uri": "/some/path/to/link-src"},
-        # autoindex and repomd.xml are both entrypoints, not yet written,
-        # and therefore remain dirty
-        {"dirty": True, "web_uri": "/to/.__exodus_autoindex"},
-        {"dirty": True, "web_uri": "/to/repomd.xml"},
-    ]
+    ) == sorted(
+        [
+            {"dirty": False, "web_uri": "/other/path"},
+            {"dirty": False, "web_uri": "/some/path"},
+            # the unresolved link is not yet written and therefore remains dirty
+            {"dirty": True, "web_uri": "/some/path/to/link-src"},
+            # autoindex and repomd.xml are both entrypoints, not yet written,
+            # and therefore remain dirty
+            {
+                "dirty": True,
+                "web_uri": "/content/testproduct/1/repo/.__exodus_autoindex",
+            },
+            {
+                "dirty": True,
+                "web_uri": "/content/testproduct/1/repo/repomd.xml",
+            },
+        ],
+        key=lambda d: str(d["web_uri"]),
+    )
 
     # It should have told us how many it wrote and how many remain
     assert (

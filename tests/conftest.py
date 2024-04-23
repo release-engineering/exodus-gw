@@ -2,6 +2,7 @@ import base64
 import json
 import os
 from datetime import datetime
+from typing import Any
 
 import dramatiq
 import mock
@@ -31,29 +32,34 @@ def mock_aws_client():
         yield aws_client
 
 
+@pytest.fixture()
+def fake_dynamodb_query(fake_config: dict[str, Any]):
+    # Returns a callable which can be used as a mock side-effect
+    # to make a DynamoDB query on exodus-config return the current
+    # fake_config.
+    def side_effect(
+        TableName,
+        Limit,
+        ScanIndexForward,
+        KeyConditionExpression,
+        ExpressionAttributeValues,
+    ):
+        # This is the only query we expect right now.
+        assert TableName == "my-config"
+        assert Limit == 1
+        return {
+            "Count": 1,
+            "Items": [{"config": {"S": json.dumps(fake_config)}}],
+        }
+
+    return side_effect
+
+
 @pytest.fixture(autouse=True)
-def mock_boto3_client():
+def mock_boto3_client(fake_dynamodb_query):
     with mock.patch("boto3.session.Session") as mock_session:
         client = mock.MagicMock()
-        client.query.return_value = {
-            "ConsumedCapacity": {
-                "CapacityUnits": 0,
-                "GlobalSecondaryIndexes": {},
-                "LocalSecondaryIndexes": {},
-                "ReadCapacityUnits": 0,
-                "Table": {
-                    "CapacityUnits": 0,
-                    "ReadCapacityUnits": 0,
-                    "WriteCapacityUnits": 0,
-                },
-                "TableName": "my-table",
-                "WriteCapacityUnits": 0,
-            },
-            "Count": 0,
-            "Items": [],
-            "LastEvaluatedKey": {},
-            "ScannedCount": 0,
-        }
+        client.query.side_effect = fake_dynamodb_query
         client.__enter__.return_value = client
         mock_session().client.return_value = client
         yield client
@@ -179,13 +185,13 @@ def fake_publish():
             updated=datetime(2023, 10, 4, 3, 52, 1),
         ),
         models.Item(
-            web_uri="/to/repomd.xml",
+            web_uri="/content/testproduct/1/repo/repomd.xml",
             object_key="3f449eb3b942af58e9aca4c1cffdef89c3f1552c20787ae8c966767a1fedd3a5",
             publish_id=publish.id,
             updated=datetime(2023, 10, 4, 3, 52, 2),
         ),
         models.Item(
-            web_uri="/to/.__exodus_autoindex",
+            web_uri="/content/testproduct/1/repo/.__exodus_autoindex",
             object_key="5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03",
             publish_id=publish.id,
             updated=datetime(2023, 10, 4, 3, 52, 2),
@@ -254,8 +260,16 @@ def fake_config():
                 "src": "/content/dist/rhel8/8",
                 "dest": "/content/dist/rhel8/8.5",
             },
+            {
+                "src": "/content/testproduct/1",
+                "dest": "/content/testproduct/1.1.0",
+            },
         ],
         "rhui_alias": [
             {"src": "/content/dist/rhel8/rhui", "dest": "/content/dist/rhel8"},
+            {
+                "src": "/content/testproduct/rhui",
+                "dest": "/content/testproduct",
+            },
         ],
     }

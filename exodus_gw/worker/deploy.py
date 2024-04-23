@@ -10,6 +10,8 @@ from exodus_gw.aws.dynamodb import DynamoDB
 from exodus_gw.database import db_engine
 from exodus_gw.settings import Settings
 
+from .cache import Flusher
+
 LOG = logging.getLogger("exodus-gw")
 
 
@@ -17,8 +19,12 @@ LOG = logging.getLogger("exodus-gw")
     time_limit=Settings().actor_time_limit,
     max_backoff=Settings().actor_max_backoff,
 )
-def complete_deploy_config_task(task_id: str):
-    settings = Settings()
+def complete_deploy_config_task(
+    task_id: str,
+    settings: Settings = Settings(),
+    flush_paths: list[str] | None = None,
+    env: str | None = None,
+):
     db = Session(bind=db_engine(settings))
     task = db.query(models.Task).filter(models.Task.id == task_id).first()
 
@@ -32,6 +38,18 @@ def complete_deploy_config_task(task_id: str):
             extra={"event": "deploy"},
         )
         return
+
+    if env and flush_paths:
+        flusher = Flusher(
+            paths=flush_paths,
+            settings=settings,
+            env=env,
+            # In this context Flusher does not need aliases, because
+            # the flush_paths passed into us have already had alias
+            # resolution applied.
+            aliases=[],
+        )
+        flusher.run()
 
     task.state = schemas.TaskStates.complete
     db.commit()
@@ -47,10 +65,17 @@ def complete_deploy_config_task(task_id: str):
     time_limit=Settings().actor_time_limit,
     max_backoff=Settings().actor_max_backoff,
 )
-def deploy_config(config: dict[str, Any], env: str, from_date: str):
-    settings = Settings()
+def deploy_config(
+    config: dict[str, Any],
+    env: str,
+    from_date: str,
+    settings: Settings = Settings(),
+):
     db = Session(bind=db_engine(settings))
     ddb = DynamoDB(env, settings, from_date)
+
+    original_aliases = {src: dest for (src, dest) in ddb.aliases_for_flush}
+
     current_message_id = CurrentMessage.get_current_message().message_id
     task = (
         db.query(models.Task)
@@ -92,11 +117,34 @@ def deploy_config(config: dict[str, Any], env: str, from_date: str):
         db.commit()
         return
 
+    # After the write propagates, we may need to flush cache for some
+    # URLs depending on what changed in the config.
+    flush_paths: set[str] = set()
+
+    for src, updated_dest in ddb.aliases_for_flush:
+        if original_aliases.get(src) != updated_dest:
+            for published_path in db.query(models.PublishedPath).filter(
+                models.PublishedPath.env == env,
+                models.PublishedPath.web_uri.like(f"{src}/%"),
+            ):
+                LOG.info(
+                    "Updated alias %s will flush cache for %s",
+                    src,
+                    published_path.web_uri,
+                    extra={"event": "deploy"},
+                )
+                flush_paths.add(published_path.web_uri)
+
     # TTL must be sent in milliseconds but the setting is in minutes for
     # convenience and consistency with other components.
     ttl = settings.config_cache_ttl * 60000
     msg = complete_deploy_config_task.send_with_options(
-        kwargs={"task_id": str(task.id)}, delay=ttl
+        kwargs={
+            "task_id": str(task.id),
+            "env": env,
+            "flush_paths": sorted(flush_paths),
+        },
+        delay=ttl,
     )
     LOG.debug(
         "Sent task %s for completion via message %s",
