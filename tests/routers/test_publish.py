@@ -1391,7 +1391,7 @@ def test_update_user_authorized_publish_paths(db, auth_header, monkeypatch):
             json=[
                 {
                     "web_uri": "/content/origin/files/sha256/00/0044062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/test.rpm",
-                    "object_key": "1" * 64,
+                    "object_key": "0044062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a",
                     "content_type": "application/octet-stream",
                 },
                 {
@@ -1440,7 +1440,7 @@ def test_update_user_unauthorized_publish_paths(db, auth_header, monkeypatch):
             json=[
                 {
                     "web_uri": "/content/origin/files/sha256/00/0044062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/test.rpm",
-                    "object_key": "1" * 64,
+                    "object_key": "0044062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a",
                     "content_type": "application/octet-stream",
                 },
                 {
@@ -1456,4 +1456,226 @@ def test_update_user_unauthorized_publish_paths(db, auth_header, monkeypatch):
     assert r.status_code == 403
     assert r.json() == {
         "detail": "User 'fake-user' is not authorized to publish to path '/content/origin/uri1'"
+    }
+
+
+def test_update_invalid_path_unmatched_regex(db, auth_header):
+    """When a user publishes to a /content/origin/ path, ensure that the the web_uri
+    matches a regex which enforces the following format:
+    /origin/files/sha256/(first two letters of sha256sum)/(full sha256sum)/(basename)
+
+    When the web_uri intended to be published under /origin/files/sha256 does not match
+    the defined regex pattern, the request is denied with a 400 response.
+    """
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(id=publish_id, env="test", state="PENDING")
+
+    db.add(publish)
+    db.commit()
+
+    with TestClient(app) as client:
+        # Try to add some items to it
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json=[
+                {
+                    "web_uri": "/content/origin/files/sha256/01/44/0144062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/test.rpm",
+                    "object_key": "0144062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a",
+                    "content_type": "application/octet-stream",
+                },
+            ],
+            headers=auth_header(roles=["test-publisher"]),
+        )
+
+    # It should have failed
+    assert r.status_code == 400
+    assert r.json() == {
+        "detail": "Origin path {} does not match regex {}".format(
+            "/content/origin/files/sha256/01/44/0144062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/test.rpm",
+            "^(/content)?/origin/files/sha256/[0-f]{2}/[0-f]{64}/[^/]{1,300}$",
+        )
+    }
+
+
+def test_update_invalid_path_sha256sum_mismatch(db, auth_header):
+    """When a user publishes to a /content/origin/ path, ensure that the two-character
+    portion of the web_uri matches the first two characters of the sha256sum portion of the
+    web_uri. When they do not match, the request is denied with a 400 response.
+    """
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(id=publish_id, env="test", state="PENDING")
+
+    db.add(publish)
+    db.commit()
+
+    with TestClient(app) as client:
+        # Try to add some items to it
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json=[
+                {
+                    "web_uri": "/content/origin/files/sha256/00/0144062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/test.rpm",
+                    "object_key": "0144062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a",
+                    "content_type": "application/octet-stream",
+                },
+            ],
+            headers=auth_header(roles=["test-publisher"]),
+        )
+
+    # It should have failed
+    assert r.status_code == 400
+    assert r.json() == {
+        "detail": "Origin path {} contains mismatched sha256sum ({}, {})".format(
+            "/content/origin/files/sha256/00/0144062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/test.rpm",
+            "00",
+            "0144062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a",
+        )
+    }
+
+
+def test_update_invalid_path_invalid_object_key(db, auth_header):
+    """When a user publishes to a /content/origin/ path, ensure that the object_key matches
+    the sha256sum included in the web_uri. When they do not match, the request is denied
+    with a 400 response."""
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(id=publish_id, env="test", state="PENDING")
+
+    db.add(publish)
+    db.commit()
+
+    with TestClient(app) as client:
+        # Try to add some items to it
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json=[
+                {
+                    "web_uri": "/content/origin/files/sha256/00/0044062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/test.rpm",
+                    "object_key": "0144062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a",
+                    "content_type": "application/octet-stream",
+                },
+            ],
+            headers=auth_header(roles=["test-publisher"]),
+        )
+
+    # It should have failed
+    assert r.status_code == 400
+    assert r.json() == {
+        "detail": "Invalid object_key {} for web_uri {}".format(
+            "0144062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a",
+            "/content/origin/files/sha256/00/0044062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/test.rpm",
+        )
+    }
+
+
+def test_update_publish_items_origin_paths_typical_link_to(db, auth_header):
+    """Ensure that the /origin/files/ invariant is respected when an item uses link_to."""
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(id=publish_id, env="test", state="PENDING")
+
+    # Add existing items which will influence link resolution.
+    publish.items.extend(
+        [
+            # existing item used as target of symlink
+            Item(
+                web_uri="/content/origin/files/sha256/05/0544062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/test-5.rpm",
+                object_key="0544062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a",
+                content_type="text/plain",
+            ),
+            # existing unresolved link which can be resolved by upcoming request
+            Item(
+                web_uri="/content/origin/files/sha256/06/0644062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/test-6.rpm",
+                link_to="/origin/files/sha256/01/0144062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/test-1.rpm",
+            ),
+        ]
+    )
+
+    db.add(publish)
+    db.commit()
+
+    with TestClient(app) as client:
+        # Try to add some items to it
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json=[
+                {
+                    "web_uri": "/content/origin/files/sha256/00/0044062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/test.rpm",
+                    "object_key": "0044062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a",
+                    "content_type": "application/octet-stream",
+                },
+                {
+                    "web_uri": "/origin/files/sha256/01/0144062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/test-1.rpm",
+                    "object_key": "0144062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a",
+                    "content_type": "application/octet-stream",
+                },
+                {
+                    "web_uri": "/content/origin/files/sha256/02/0244062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/test-2.rpm",
+                    "object_key": "absent",
+                },
+                {
+                    # This item links to an item in the request.
+                    "web_uri": "/my-repo/x86_64/variant/os/Packages/t/test.rpm",
+                    "link_to": "/content/origin/files/sha256/00/0044062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/test.rpm",
+                },
+                {
+                    # This item links to an item in the db.
+                    "web_uri": "/my-repo/x86_64/variant/os/Packages/t/test-5.rpm",
+                    "link_to": "/content/origin/files/sha256/05/0544062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/test-5.rpm",
+                },
+            ],
+            headers=auth_header(roles=["test-publisher"]),
+        )
+
+    # It should have succeeded
+    assert r.status_code == 200
+
+
+def test_update_publish_items_origin_paths_invalid_link_to(db, auth_header):
+    """Ensure that the /origin/files/ invariant is respected when an item uses link_to.
+    When publishing an item using link_to, if the web_uri of the link publishes under /content/origin,
+    the web_uri must contain the target's object_key. When the target's object_key is not included in
+    the web_uri of the item using link_to, the request is denied with a 400 response.
+    """
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(id=publish_id, env="test", state="PENDING")
+
+    db.add(publish)
+    db.commit()
+
+    with TestClient(app) as client:
+        # Try to add some items to it
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json=[
+                {
+                    "web_uri": "/my-repo/x86_64/variant/os/Packages/t/test.rpm",
+                    "object_key": "0044062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658bbb",
+                    "content_type": "application/octet-stream",
+                },
+                {
+                    # This item links to another item in the same request. The item it links to contains an
+                    # object_key that does not match the sha256sum included in this item's web_uri.
+                    "web_uri": "/content/origin/files/sha256/03/0344062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/test-3.rpm",
+                    "link_to": "/my-repo/x86_64/variant/os/Packages/t/test.rpm",
+                },
+            ],
+            headers=auth_header(roles=["test-publisher"]),
+        )
+
+    # It should have succeeded
+    assert r.status_code == 400
+    assert r.json() == {
+        "detail": "Invalid object_key {} for web_uri {}".format(
+            "0044062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658bbb",
+            "/content/origin/files/sha256/03/0344062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/test-3.rpm",
+        )
     }

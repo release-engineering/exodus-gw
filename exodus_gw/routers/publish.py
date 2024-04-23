@@ -273,6 +273,76 @@ def update_publish_items(
 
     db_publish.resolve_links(ln_items=resolvable)
 
+    # Enforce correct usage of the /origin/files directory layout.
+    #
+    # Paths published under /origin/files must always match the format:
+    # /origin/files/sha256/(first two characters of sha256sum)/(full sha256sum)/(basename)
+    #
+    # Additionally, every object_key must either be "absent" or equal to the full sha256sum
+    # present in the web_uri.
+    origin_base_regex = re.compile("^(/content)?/origin/files/sha256/.*$")
+    origin_pattern = (
+        "^(/content)?/origin/files/sha256/[0-f]{2}/[0-f]{64}/[^/]{1,300}$"
+    )
+    origin_regex = re.compile(origin_pattern)
+    origin_items = [i for i in items if re.match(origin_base_regex, i.web_uri)]
+    for i in origin_items:
+        # All content under /origin/files/sha256 must match the regex
+        if not re.match(origin_regex, i.web_uri):
+            LOG.error(
+                "Origin path %s does not match regex %s",
+                i.web_uri,
+                origin_pattern,
+                extra={
+                    "publish_id": publish_id,
+                    "event": "publish",
+                    "success": False,
+                },
+            )
+            raise HTTPException(
+                400,
+                detail="Origin path %s does not match regex %s"
+                % (i.web_uri, origin_pattern),
+            )
+        # Verify that the two-character partial sha256sum matches the first two characters of the
+        # full sha256sum.
+        parts = i.web_uri.partition("/files/sha256/")[2].split("/")
+        if not parts[1].startswith(parts[0]):
+            LOG.error(
+                "Origin path %s contains mismatched sha256sum (%s, %s)",
+                i.web_uri,
+                parts[0],
+                parts[1],
+                extra={
+                    "publish_id": publish_id,
+                    "event": "publish",
+                    "success": False,
+                },
+            )
+            raise HTTPException(
+                400,
+                detail="Origin path %s contains mismatched sha256sum (%s, %s)"
+                % (i.web_uri, parts[0], parts[1]),
+            )
+        # Ensure every object_key is either "absent" or is equal to the full sha256sum
+        # present in the web_uri.
+        if not i.object_key in ("absent", parts[1]):
+            LOG.error(
+                "Invalid object_key %s for web_uri %s",
+                i.object_key,
+                i.web_uri,
+                extra={
+                    "publish_id": publish_id,
+                    "event": "publish",
+                    "success": False,
+                },
+            )
+            raise HTTPException(
+                400,
+                detail="Invalid object_key %s for web_uri %s"
+                % (i.object_key, i.web_uri),
+            )
+
     # Prevent unauthorized users from publishing to restricted paths within
     # a particular CDN environment.
     #
