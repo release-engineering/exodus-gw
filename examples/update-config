@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 
 import argparse
+import json
 import logging
 import os
 from urllib.parse import urljoin
 
 import backoff
-import exodus_config
 import requests
-from cdsutils import EngProductProxy
 
 
 def new_requests_session(args):
@@ -88,6 +87,19 @@ def poll_commit_completion(args, commit):
     return task
 
 
+def generate_config():
+    # Generate config from live data sources.
+    #
+    # This function uses local imports to make these libraries
+    # soft dependencies, because these libraries are not
+    # open-source.
+    import exodus_config
+    from cdsutils import EngProductProxy
+
+    eng_pp = EngProductProxy("prod")
+    return exodus_config.derive_exodus_config(eng_pp)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -106,6 +118,14 @@ def main():
     )
     parser.add_argument("--exodus-gw-url", default="https://localhost:8010")
     parser.add_argument("--env", default="test")
+    parser.add_argument(
+        "--config",
+        default=None,
+        help=(
+            "Load config from this file (default: generate new config using "
+            "product service)"
+        ),
+    )
 
     args = parser.parse_args()
 
@@ -115,8 +135,10 @@ def main():
     check_cert_args(args)
     check_service(args)
 
-    eng_pp = EngProductProxy("prod")
-    config = exodus_config.derive_exodus_config(eng_pp)
+    if args.config:
+        config = json.load(open(args.config))
+    else:
+        config = generate_config()
 
     post_url = os.path.join(args.exodus_gw_url, args.env, "deploy-config")
 
