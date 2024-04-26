@@ -73,12 +73,12 @@ import textwrap
 
 from fastapi import (
     APIRouter,
+    Depends,
     HTTPException,
     Path,
     Query,
     Request,
     Response,
-    Depends,
 )
 
 from .. import auth, deps
