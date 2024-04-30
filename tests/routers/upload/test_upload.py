@@ -39,6 +39,7 @@ async def test_full_upload(
         Metadata={
             "exodus-migration-md5": "94e19d5d30b26306167e9e7bae6b28fd",
             "exodus-migration-src": "original/source",
+            "gw-uploader": "user fake-user",
         },
     )
 
