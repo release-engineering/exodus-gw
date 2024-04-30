@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9/ubi-minimal@sha256:119ac25920c8bb50c8b5fd75dcbca369bf7d1f702b82f3d39663307890f0bf26
+FROM registry.access.redhat.com/ubi9/ubi-minimal@sha256:9607229894026ebecade4623038fce35bb75bf9371aca7b08ca11b08d103d2ab
 
 # Add sources
 COPY . /usr/local/src/exodus-gw/
