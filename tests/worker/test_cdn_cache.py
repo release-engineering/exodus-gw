@@ -208,9 +208,12 @@ cache_flush_arl_templates =
             # - different TTL values for different types of file
             # - leading "/" vs no leading "/" - both should be tolerated
             # - alias resolution
+            # - treeinfo special case
             "/path/one/repodata/repomd.xml",
             "path/two/listing",
             "third/path",
+            "/some/misc/treeinfo",
+            "/some/kickstart/treeinfo",
         ],
         env="cachetest",
         settings=settings,
@@ -242,11 +245,14 @@ cache_flush_arl_templates =
         # after alias resolution are flushed.
         "S/=/123/4567/10m/cdn1.example.com/path/two-dest/listing cid=///",
         "S/=/123/4567/10m/cdn1.example.com/path/two/listing cid=///",
+        # note only the kickstart treeinfo appears, the other is filtered.
+        "S/=/123/4567/30d/cdn1.example.com/some/kickstart/treeinfo cid=///",
         "S/=/123/4567/30d/cdn1.example.com/third/path cid=///",
         "S/=/123/4567/4h/cdn1.example.com/path/one-dest/repodata/repomd.xml cid=///",
         "S/=/123/4567/4h/cdn1.example.com/path/one/repodata/repomd.xml cid=///",
         "S/=/234/6677/10m/cdn2.example.com/other/path/two-dest/listing x/y/z",
         "S/=/234/6677/10m/cdn2.example.com/other/path/two/listing x/y/z",
+        "S/=/234/6677/30d/cdn2.example.com/other/some/kickstart/treeinfo x/y/z",
         "S/=/234/6677/30d/cdn2.example.com/other/third/path x/y/z",
         "S/=/234/6677/4h/cdn2.example.com/other/path/one-dest/repodata/repomd.xml x/y/z",
         "S/=/234/6677/4h/cdn2.example.com/other/path/one/repodata/repomd.xml x/y/z",
@@ -255,11 +261,13 @@ cache_flush_arl_templates =
         "https://cdn1.example.com/path/one/repodata/repomd.xml",
         "https://cdn1.example.com/path/two-dest/listing",
         "https://cdn1.example.com/path/two/listing",
+        "https://cdn1.example.com/some/kickstart/treeinfo",
         "https://cdn1.example.com/third/path",
         # Used the CDN URL which had a leading path.
         "https://cdn2.example.com/root/path/one-dest/repodata/repomd.xml",
         "https://cdn2.example.com/root/path/one/repodata/repomd.xml",
         "https://cdn2.example.com/root/path/two-dest/listing",
         "https://cdn2.example.com/root/path/two/listing",
+        "https://cdn2.example.com/root/some/kickstart/treeinfo",
         "https://cdn2.example.com/root/third/path",
     ]
