@@ -1,13 +1,16 @@
+import logging
 import re
 from datetime import datetime
 from enum import Enum
 from os.path import join, normpath
 from uuid import UUID
 
-from fastapi import Path
+from fastapi import HTTPException, Path
 from pydantic import BaseModel, Field, model_validator
 
 from .settings import Settings
+
+LOG = logging.getLogger("exodus-gw")
 
 PathPublishId = Path(
     ...,
@@ -32,9 +35,28 @@ SHA256SUM_PATTERN = re.compile(r"[0-9a-f]{64}")
 # TYPE/SUBTYPE[+SUFFIX][;PARAMETER=VALUE]
 MIMETYPE_PATTERN = re.compile(r"^[-\w]+/[-.\w]+(\+[-\w]*)?(;[-\w]+=[-\w]+)?")
 
+# Pattern matching anything under /origin/files/sha256 subtree
+ORIGIN_FILES_BASE_PATTERN = re.compile("^(/content)?/origin/files/sha256/.*$")
+
+# Pattern which all files under the above base *should* match in order to avoid
+# a validation error
+ORIGIN_FILES_PATTERN = re.compile(
+    "^(/content)?/origin/files/sha256/[0-f]{2}/[0-f]{64}/[^/]{1,300}$"
+)
+
+
 # Note: it would be preferable if we could reuse a settings object loaded by the
 # app, however we need this value from within a @classmethod validator.
 AUTOINDEX_FILENAME = Settings().autoindex_filename
+
+
+class ItemPolicyError(HTTPException):
+    """Exception type raised when an item provided by the user is
+    structurally valid but fails to comply with certain policies.
+    """
+
+    def __init__(self, message: str):
+        super().__init__(400, detail=message)
 
 
 class ItemBase(BaseModel):
@@ -113,6 +135,53 @@ class ItemBase(BaseModel):
             raise ValueError(f"Invalid URI {web_uri}: filename is reserved")
 
         return self
+
+    def validate_policy(self):
+        # Validate additional properties of the item against certain
+        # embedded policies.
+        #
+        # It's a little clumsy that this cannot happen in the @model_validator
+        # above. The point is that certain users are allowed to bypass the
+        # policy here, whereas the @model_validator is applied too early and
+        # too strictly to allow any bypassing.
+        self.validate_origin_files()
+
+    def validate_origin_files(self):
+        # Enforce correct usage of the /origin/files directory layout.
+        if not ORIGIN_FILES_BASE_PATTERN.match(self.web_uri):
+            # Not under /origin/files => passes this validation
+            return
+
+        # OK, it exists under /origin/files.
+        #
+        # Paths published under /origin/files must always match the format:
+        # /origin/files/sha256/(first two characters of sha256sum)/(full sha256sum)/(basename)
+        #
+        def policy_error(message: str):
+            LOG.warning(message)
+            raise ItemPolicyError(message)
+
+        # All content under /origin/files/sha256 must match the regex
+        if not re.match(ORIGIN_FILES_PATTERN, self.web_uri):
+            policy_error(
+                f"Origin path {self.web_uri} does not match regex {ORIGIN_FILES_PATTERN.pattern}"
+            )
+
+        # Verify that the two-character partial sha256sum matches the first two characters of the
+        # full sha256sum.
+        parts = self.web_uri.partition("/files/sha256/")[2].split("/")
+        if not parts[1].startswith(parts[0]):
+            policy_error(
+                f"Origin path {self.web_uri} contains mismatched sha256sum "
+                f"({parts[0]}, {parts[1]})"
+            )
+
+        # Additionally, every object_key must either be "absent" or equal to the full sha256sum
+        # present in the web_uri.
+        if not self.object_key in ("absent", parts[1]):
+            policy_error(
+                f"Invalid object_key {self.object_key} for web_uri {self.web_uri}"
+            )
 
 
 class Item(ItemBase):

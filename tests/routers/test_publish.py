@@ -1499,6 +1499,49 @@ def test_update_invalid_path_unmatched_regex(db, auth_header):
     }
 
 
+def test_update_invalid_origin_files_bypassed(
+    db, auth_header, caplog: pytest.LogCaptureFixture
+):
+    """When a user publishes to a /content/origin/ path and violates the policy,
+    the violation is allowed if the user has {env}-ignore-policy role.
+    """
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(id=publish_id, env="test", state="PENDING")
+
+    db.add(publish)
+    db.commit()
+
+    with TestClient(app) as client:
+        # Try to add some items to it
+        r = client.put(
+            "/test/publish/%s" % publish_id,
+            json=[
+                {
+                    "web_uri": "/content/origin/files/sha256/01/44/0144062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/test.rpm",
+                    "object_key": "0144062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a",
+                    "content_type": "application/octet-stream",
+                },
+            ],
+            headers=auth_header(
+                roles=["test-publisher", "test-ignore-policy"]
+            ),
+        )
+
+    # It should have succeeded
+    assert r.status_code == 200
+
+    # But at least warned about the suspicious path
+    assert (
+        "Origin path {} does not match regex {}".format(
+            "/content/origin/files/sha256/01/44/0144062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/test.rpm",
+            "^(/content)?/origin/files/sha256/[0-f]{2}/[0-f]{64}/[^/]{1,300}$",
+        )
+        in caplog.messages
+    )
+
+
 def test_update_invalid_path_sha256sum_mismatch(db, auth_header):
     """When a user publishes to a /content/origin/ path, ensure that the two-character
     portion of the web_uri matches the first two characters of the sha256sum portion of the

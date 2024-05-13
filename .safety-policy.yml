@@ -1,20 +1,27 @@
 security:
-    ignore-cvss-severity-below: 4
-    ignore-cvss-unknown-severity: False
-    ignore-vulnerabilities:
-      51668:
-            # PVE-2022-51668, sqlalchemy str(engine.URL()) can leak password.
-            reason: >-
-              Our own code does not currently trigger any leaks.
-              We *should* fix the issue, but there is no stable release of
-              sqlalchemy 2 at time of writing.
-              See RHELDST-15252. 
-            expires: '2023-03-01'
-      65213:
-            # CVE-2023-6129, pyopenssl>=22.0.0,
-            # POLY1305 MAC issue on PowerPC CPUs
-            reason: >-
-              Vulnerability is specific to PPC architecture, which is not
-              used or relevant for this service.
-            expires: '2025-04-04'
-    continue-on-vulnerability-error: False
+  ignore-cvss-severity-below: 4
+  ignore-cvss-unknown-severity: False
+  ignore-vulnerabilities:
+    65213:
+      # CVE-2023-6129, pyopenssl>=22.0.0,
+      # POLY1305 MAC issue on PowerPC CPUs
+      reason: >-
+        Vulnerability is specific to PPC architecture, which is not
+        used or relevant for this service.
+      expires: "2025-04-04"
+    67599:
+      # CVE-2018-20225, pip:
+      #
+      # ** DISPUTED ** An issue was discovered in pip (all versions) because
+      # it installs the version with the highest version number, even if the
+      # user had intended to obtain a private package from a private index.
+      # This only affects use of the --extra-index-url option, and
+      # exploitation requires that the package does not already exist in the
+      # public index (and thus the attacker can put the package there with
+      # an arbitrary version number). NOTE: it has been reported that this
+      # is intended functionality and the user is responsible for using
+      # --extra-index-url securely.
+      #
+      reason: >-
+        Not exploitable: all dependencies exist on the public index.
+  continue-on-vulnerability-error: False

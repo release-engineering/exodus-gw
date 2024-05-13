@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from fastapi import Depends, HTTPException, Path, Query, Request
 
 from .auth import call_context as get_call_context
+from .auth import caller_roles as get_caller_roles
 from .aws.client import S3ClientWrapper
 from .settings import Environment, Settings, get_environment
 
@@ -121,6 +122,7 @@ async def get_deadline_from_query(
 #
 db = Depends(get_db)
 call_context = Depends(get_call_context)
+caller_roles = Depends(get_caller_roles)
 env = Depends(get_environment_from_path)
 deadline = Depends(get_deadline_from_query)
 settings = Depends(get_settings)
