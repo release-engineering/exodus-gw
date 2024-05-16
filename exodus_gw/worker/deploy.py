@@ -61,6 +61,25 @@ def complete_deploy_config_task(
     )
 
 
+def _listing_paths_for_flush(config: dict[str, Any]) -> set[str]:
+    # extract listing paths from config that might have
+    # updated values influencing the response of /listing
+    # endpoint
+    listing_paths: set[str] = set()
+
+    for path in config.get("listing", {}).keys():
+        lpath = path + "/listing"
+        LOG.info(
+            "Listing %s will flush cache for %s",
+            path,
+            lpath,
+            extra={"event": "deploy"},
+        )
+        listing_paths.add(lpath)
+
+    return listing_paths
+
+
 @dramatiq.actor(
     time_limit=Settings().actor_time_limit,
     max_backoff=Settings().actor_max_backoff,
@@ -134,6 +153,13 @@ def deploy_config(
                     extra={"event": "deploy"},
                 )
                 flush_paths.add(published_path.web_uri)
+
+    # Include all the listing paths for flush when enabled in settings
+    flush_paths = (
+        flush_paths.union(_listing_paths_for_flush(config))
+        if settings.cdn_listing_flush
+        else flush_paths
+    )
 
     # TTL must be sent in milliseconds but the setting is in minutes for
     # convenience and consistency with other components.
