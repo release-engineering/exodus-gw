@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 import mock
 
-from exodus_gw import models, worker, settings
+from exodus_gw import models, settings, worker
 from exodus_gw.models.path import PublishedPath
 
 NOW_UTC = datetime.now(timezone.utc)
