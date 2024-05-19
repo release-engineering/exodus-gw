@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 import mock
 
-from exodus_gw import models, worker
+from exodus_gw import models, settings, worker
 from exodus_gw.models.path import PublishedPath
 
 NOW_UTC = datetime.now(timezone.utc)
@@ -36,7 +36,13 @@ def test_deploy_config(
     db.add(t)
     db.commit()
 
-    worker.deploy_config(fake_config, "test", NOW_UTC)
+    # disable cache flush for listings
+    updated_settings = settings.Settings()
+    updated_settings.cdn_listing_flush = False
+
+    worker.deploy_config(
+        fake_config, "test", NOW_UTC, settings=updated_settings
+    )
 
     # It should've created an appropriate put request.
     request = {
@@ -181,6 +187,8 @@ def test_deploy_config_with_flush(
     assert body["kwargs"]["env"] == "test"
     assert body["kwargs"]["flush_paths"] == [
         # It figured out that cache will need to be flushed for these.
+        "/content/dist/rhel/server/8/listing",
+        "/content/dist/rhel/server/listing",
         "/content/testproduct/1/file1",
         "/content/testproduct/1/file2",
     ]
