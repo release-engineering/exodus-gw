@@ -97,7 +97,7 @@ class Flusher:
         return out
 
     def do_flush(self, urls: list[str]):
-        if not self.env.fastpurge_enabled or not urls:
+        if not self.env.fastpurge_enabled:
             LOG.info("fastpurge is not enabled for %s", self.env.name)
             return
 
@@ -120,14 +120,16 @@ class Flusher:
 
     def run(self):
         urls = self.urls_for_flush
-        self.do_flush(urls)
 
-        LOG.info(
-            "%s flush of %s URL(s) (%s, ...)",
-            "Completed" if self.env.fastpurge_enabled else "Skipped",
-            len(urls),
-            urls[0] if urls else "<empty>",
-        )
+        if urls:
+            self.do_flush(urls)
+
+            LOG.info(
+                "%s flush of %s URL(s) (%s, ...)",
+                "Completed" if self.env.fastpurge_enabled else "Skipped",
+                len(urls),
+                urls[0],
+            )
 
 
 def load_task(db: Session, task_id: str):
