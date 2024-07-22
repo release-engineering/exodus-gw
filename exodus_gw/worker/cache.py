@@ -149,7 +149,9 @@ def flush_cdn_cache(
     settings: Settings = Settings(),
 ) -> None:
     db = Session(bind=db_engine(settings))
-    task_id = CurrentMessage.get_current_message().message_id
+    message = CurrentMessage.get_current_message()
+    assert message
+    task_id = message.message_id
 
     task = load_task(db, task_id)
 

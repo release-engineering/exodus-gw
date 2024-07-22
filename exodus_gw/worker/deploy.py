@@ -95,7 +95,9 @@ def deploy_config(
 
     original_aliases = {src: dest for (src, dest) in ddb.aliases_for_flush}
 
-    current_message_id = CurrentMessage.get_current_message().message_id
+    message = CurrentMessage.get_current_message()
+    assert message
+    current_message_id = message.message_id
     task = (
         db.query(models.Task)
         .filter(models.Task.id == current_message_id)
