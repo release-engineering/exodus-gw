@@ -569,7 +569,9 @@ def commit(
     commit_mode: str | None = None,
     settings: Settings = Settings(),
 ) -> None:
-    actor_msg_id = CurrentMessage.get_current_message().message_id
+    message = CurrentMessage.get_current_message()
+    assert message
+    actor_msg_id = message.message_id
 
     commit_mode = commit_mode or CommitModes.phase2.value
     commit_class: type[CommitBase] = {
