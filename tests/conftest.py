@@ -1,4 +1,5 @@
 import base64
+import gzip
 import json
 import os
 from datetime import datetime
@@ -32,8 +33,12 @@ def mock_aws_client():
         yield aws_client
 
 
-@pytest.fixture()
-def fake_dynamodb_query(fake_config: dict[str, Any]):
+@pytest.fixture(params=["binary-config", "text-config"])
+def fake_dynamodb_query(
+    fake_config: dict[str, Any], request: pytest.FixtureRequest
+):
+    binary_config = request.param == "binary-config"
+
     # Returns a callable which can be used as a mock side-effect
     # to make a DynamoDB query on exodus-config return the current
     # fake_config.
@@ -47,22 +52,36 @@ def fake_dynamodb_query(fake_config: dict[str, Any]):
         # This is the only query we expect right now.
         assert TableName == "my-config"
         assert Limit == 1
+        config_json = json.dumps(fake_config)
+        if binary_config:
+            config_value = {
+                "B": base64.b64encode(
+                    gzip.compress(config_json.encode())
+                ).decode()
+            }
+        else:
+            config_value = {"S": config_json}
         return {
             "Count": 1,
-            "Items": [{"config": {"S": json.dumps(fake_config)}}],
+            "Items": [{"config": config_value}],
         }
 
     return side_effect
 
 
 @pytest.fixture(autouse=True)
-def mock_boto3_client(fake_dynamodb_query):
+def mock_boto3_session():
     with mock.patch("boto3.session.Session") as mock_session:
-        client = mock.MagicMock()
-        client.query.side_effect = fake_dynamodb_query
-        client.__enter__.return_value = client
-        mock_session().client.return_value = client
-        yield client
+        yield mock_session
+
+
+@pytest.fixture()
+def mock_boto3_client(fake_dynamodb_query, mock_boto3_session):
+    client = mock.MagicMock()
+    client.query.side_effect = fake_dynamodb_query
+    client.__enter__.return_value = client
+    mock_boto3_session().client.return_value = client
+    yield client
 
 
 @pytest.fixture()

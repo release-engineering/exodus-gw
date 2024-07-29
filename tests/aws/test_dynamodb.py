@@ -145,7 +145,7 @@ def test_batch_write(
     )
 
 
-def test_batch_write_item_limit(fake_publish, caplog):
+def test_batch_write_item_limit(mock_boto3_client, fake_publish, caplog):
     items = fake_publish.items * 9
     ddb = dynamodb.DynamoDB("test", Settings(), NOW_UTC)
 
@@ -218,7 +218,9 @@ def test_write_batch(delete, mock_boto3_client, fake_publish, caplog):
 
 
 @mock.patch("exodus_gw.aws.dynamodb.DynamoDB.batch_write")
-def test_write_batch_put_fail(mock_batch_write, fake_publish, caplog):
+def test_write_batch_put_fail(
+    mock_batch_write, mock_boto3_client, fake_publish, caplog
+):
     caplog.set_level(logging.INFO, logger="exodus-gw")
     mock_batch_write.return_value = {
         "UnprocessedItems": {
@@ -235,7 +237,9 @@ def test_write_batch_put_fail(mock_batch_write, fake_publish, caplog):
 
 
 @mock.patch("exodus_gw.aws.dynamodb.DynamoDB.batch_write")
-def test_write_batch_delete_fail(mock_batch_write, fake_publish, caplog):
+def test_write_batch_delete_fail(
+    mock_batch_write, mock_boto3_client, fake_publish, caplog
+):
     mock_batch_write.return_value = {
         "UnprocessedItems": {
             "my-table": [
