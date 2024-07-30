@@ -13,6 +13,8 @@ from exodus_gw.models import Publish
 from exodus_gw.models.path import PublishedPath
 from exodus_gw.settings import load_settings
 
+pytestmark = pytest.mark.usefixtures("mock_boto3_client")
+
 NOW_UTC = datetime.utcnow()
 
 

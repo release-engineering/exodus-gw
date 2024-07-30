@@ -101,6 +101,7 @@ def test_flush_cdn_cache_fastpurge_disabled(
     db: Session,
     caplog: pytest.LogCaptureFixture,
     fake_message_id: str,
+    mock_boto3_client,
 ):
     """flush_cdn_cache succeeds but does nothing if fastpurge is not configured."""
     settings = load_settings()
