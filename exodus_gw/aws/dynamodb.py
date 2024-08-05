@@ -1,7 +1,7 @@
 import gzip
 import json
 import logging
-from base64 import b64decode, b64encode
+from base64 import b64decode
 from datetime import datetime
 from itertools import islice
 from threading import Lock
@@ -161,11 +161,7 @@ class DynamoDB:
                         "Item": {
                             "from_date": {"S": self.from_date},
                             "config_id": {"S": "exodus-config"},
-                            "config": {
-                                "B": b64encode(
-                                    gzip.compress(json.dumps(config).encode())
-                                ).decode()
-                            },
+                            "config": {"S": json.dumps(config)},
                         }
                     }
                 },
