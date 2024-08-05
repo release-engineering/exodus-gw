@@ -8,6 +8,11 @@ from sqlalchemy.types import Uuid
 
 from .base import Base
 
+# Avoid pylint complaining about:
+# E1136: Value 'Mapped' is unsubscriptable
+# These errors started to appear around 2024-08, and they're wrong.
+# pylint: disable=unsubscriptable-object
+
 
 class DramatiqMessage(Base):
     # This table holds queued messages.
