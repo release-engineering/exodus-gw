@@ -1,7 +1,6 @@
 import gzip
 import json
 import logging
-from base64 import b64decode
 from datetime import datetime
 from itertools import islice
 from threading import Lock
@@ -96,9 +95,8 @@ class DynamoDB:
         )
         if query_result.get("Items"):
             item = query_result["Items"][0]
-            if item_encoded := item["config"].get("B"):
+            if item_bytes := item["config"].get("B"):
                 # new-style: config is compressed and stored as bytes
-                item_bytes = b64decode(item_encoded)
                 item_json = gzip.decompress(item_bytes).decode()
             else:
                 # old-style, config was stored as JSON string.
@@ -161,7 +159,9 @@ class DynamoDB:
                         "Item": {
                             "from_date": {"S": self.from_date},
                             "config_id": {"S": "exodus-config"},
-                            "config": {"S": json.dumps(config)},
+                            "config": {
+                                "B": gzip.compress(json.dumps(config).encode())
+                            },
                         }
                     }
                 },
