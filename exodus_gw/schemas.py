@@ -310,3 +310,46 @@ class MessageResponse(BaseModel):
 
 class EmptyResponse(BaseModel):
     """An empty object."""
+
+
+class Alias(BaseModel):
+    src: str = Field(
+        ..., description="Path being aliased from, relative to CDN root."
+    )
+    dest: str = Field(
+        ..., description="Target of the alias, relative to CDN root."
+    )
+
+
+class YumVariable(Enum):
+    releasever = "releasever"
+    basearch = "basearch"
+
+
+class ListingItem(BaseModel):
+    var: YumVariable = Field(..., description="YUM variable name.")
+    values: list[str] = Field(
+        ..., description="Allowed values for YUM variable replacement."
+    )
+
+
+class Config(BaseModel):
+    listing: dict[str, ListingItem] = Field(
+        ...,
+        description=(
+            "A mapping from paths to a yum variable name & list of values, "
+            "used in generating 'listing' responses."
+        ),
+    )
+    origin_alias: list[Alias] = Field(
+        ...,
+        description="Aliases relating to /origin.",
+    )
+    releasever_alias: list[Alias] = Field(
+        ...,
+        description="Aliases relating to $releasever variables.",
+    )
+    rhui_alias: list[Alias] = Field(
+        ...,
+        description="Aliases relating to RHUI.",
+    )
