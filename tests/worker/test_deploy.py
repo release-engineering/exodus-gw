@@ -54,7 +54,11 @@ def test_deploy_config(
                     "Item": {
                         "from_date": {"S": NOW_UTC},
                         "config_id": {"S": "exodus-config"},
-                        "config": {"S": json.dumps(fake_config)},
+                        "config": {
+                            "B": gzip.compress(
+                                json.dumps(fake_config).encode()
+                            )
+                        },
                     }
                 }
             },
@@ -154,7 +158,11 @@ def test_deploy_config_with_flush(
                     "Item": {
                         "from_date": {"S": NOW_UTC},
                         "config_id": {"S": "exodus-config"},
-                        "config": {"S": json.dumps(updated_config)},
+                        "config": {
+                            "B": gzip.compress(
+                                json.dumps(updated_config).encode()
+                            )
+                        },
                     }
                 }
             },
