@@ -1,14 +1,13 @@
 """APIs for adjusting configuration used by the CDN."""
 
 import logging
-from datetime import datetime, timezone
 from typing import Any
 
-import jsonschema
-from fastapi import APIRouter, Body, HTTPException
+from fastapi import APIRouter, Body
 from sqlalchemy.orm import Session
 
-from .. import auth, deps, models, schemas, settings, worker
+from .. import auth, deps, models, schemas, settings
+from .config import CONFIG_SCHEMA, config_post
 
 LOG = logging.getLogger("exodus-gw")
 
@@ -17,87 +16,12 @@ openapi_tag = {"name": "deploy", "description": __doc__}
 router = APIRouter(tags=[openapi_tag["name"]])
 
 
-# Paths segments (e.g., "/dist" in "/content/dist/rhel") may contain
-# any number of alphanumeric characters, dollars ($), hyphens (-), or
-# underscores (_). Periods (.) are also allowed when acompanying any
-# other permitted character.
-#
-# Not allowed are multiple slashes (e.g., "///") or segments containing
-# only periods (e.g., "/../").
-PATH_PATTERN = r"^((?!/\.+/)(/[\w\$\.\-]+))*$"
-
-ALIAS_SCHEMA = {
-    "type": "array",
-    "items": {
-        "type": "object",
-        "properties": {
-            "src": {
-                "type": "string",
-                "pattern": PATH_PATTERN,
-                "description": "Path being aliased from, relative to CDN root.",
-            },
-            "dest": {
-                "type": "string",
-                "pattern": PATH_PATTERN,
-                "description": "Target of the alias, relative to CDN root.",
-            },
-        },
-    },
-    "uniqueItems": True,
-}
-
-
-def alias_schema(description):
-    out = ALIAS_SCHEMA.copy()
-    out["description"] = description
-    return out
-
-
-CONFIG_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "listing": {
-            "type": "object",
-            "description": (
-                "A mapping from paths to a yum variable name & list of values, "
-                "used in generating 'listing' responses."
-            ),
-            "patternProperties": {
-                PATH_PATTERN: {
-                    "type": "object",
-                    "properties": {
-                        "var": {
-                            "type": "string",
-                            "enum": ["releasever", "basearch"],
-                        },
-                        "values": {
-                            "type": "array",
-                            "items": {"type": "string", "minLength": 1},
-                            "uniqueItems": True,
-                        },
-                    },
-                }
-            },
-            "additionalProperties": False,
-        },
-        "origin_alias": alias_schema("Aliases relating to /origin."),
-        "releasever_alias": alias_schema(
-            "Aliases relating to $releasever variables."
-        ),
-        "rhui_alias": alias_schema("Aliases relating to RHUI."),
-    },
-    # All above properties are required by consumers of this data.
-    "required": ["listing", "origin_alias", "releasever_alias", "rhui_alias"],
-    # Restrict properties to only those required.
-    "additionalProperties": False,
-}
-
-
 @router.post(
     "/{env}/deploy-config",
     response_model=schemas.Task,
     dependencies=[auth.needs_role("config-deployer")],
     responses={200: {"description": "Deployment enqueued"}},
+    deprecated=True,
     openapi_extra={
         "requestBody": {
             "description": (
@@ -159,37 +83,7 @@ def deploy_config(
 
     Deployment occurs asynchronously. This API returns a Task object
     which may be used to monitor the progress of the deployment.
+
+    This endpoint is deprecated, use /{env}/config instead.
     """
-
-    try:
-        jsonschema.validate(config, CONFIG_SCHEMA)
-    except jsonschema.ValidationError as exc_info:
-        LOG.error(
-            "Invalid config",
-            exc_info=exc_info,
-            extra={"event": "deploy", "success": False},
-        )
-        raise HTTPException(
-            status_code=400, detail="Invalid configuration structure"
-        ) from exc_info
-
-    msg = worker.deploy_config.send(
-        config=config,
-        env=env.name,
-        from_date=str(datetime.now(timezone.utc)),
-    )
-
-    LOG.info(
-        "Enqueued configuration deployment at %s: %s",
-        msg.kwargs["from_date"],
-        msg.message_id,
-        extra={"event": "deploy", "success": True},
-    )
-
-    task = models.Task(
-        id=msg.message_id,
-        state="NOT_STARTED",
-    )
-    db.add(task)
-
-    return task
+    return config_post(config, env, db)
