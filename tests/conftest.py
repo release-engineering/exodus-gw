@@ -54,11 +54,7 @@ def fake_dynamodb_query(
         assert Limit == 1
         config_json = json.dumps(fake_config)
         if binary_config:
-            config_value = {
-                "B": base64.b64encode(
-                    gzip.compress(config_json.encode())
-                ).decode()
-            }
+            config_value = {"B": gzip.compress(config_json.encode())}
         else:
             config_value = {"S": config_json}
         return {
