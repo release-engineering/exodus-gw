@@ -60,7 +60,7 @@ from .aws.util import xml_response
 from .database import db_engine
 from .logging import loggers_init
 from .migrate import db_migrate
-from .routers import cdn, deploy, publish, service, upload
+from .routers import cdn, config, deploy, publish, service, upload
 from .settings import load_settings
 
 app = FastAPI(
@@ -72,6 +72,7 @@ app = FastAPI(
         publish.openapi_tag,
         deploy.openapi_tag,
         cdn.openapi_tag,
+        config.openapi_tag,
     ],
     dependencies=[Depends(log_login)],
 )
@@ -81,6 +82,7 @@ app.include_router(upload.router)
 app.include_router(publish.router)
 app.include_router(deploy.router)
 app.include_router(cdn.router)
+app.include_router(config.router)
 
 # Hide version because we do not version our API.
 #
