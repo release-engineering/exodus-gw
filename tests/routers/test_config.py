@@ -4,10 +4,23 @@ from fastapi.testclient import TestClient
 from exodus_gw.main import app
 
 
-def test_deploy_config_typical(fake_config, auth_header):
+def test_config_get(auth_header, fake_config, mock_boto3_client):
+    with TestClient(app) as client:
+        r = client.get(
+            "/test/config",
+            headers=auth_header(roles=["test-config-consumer"]),
+        )
+
+    # It should have succeeded and returned stored config
+    assert r.status_code == 200
+    assert r.json() == fake_config
+
+
+@pytest.mark.parametrize("endpoint", ["config", "deploy-config"])
+def test_deploy_config_typical(fake_config, auth_header, endpoint):
     with TestClient(app) as client:
         r = client.post(
-            "/test/deploy-config",
+            f"/test/{endpoint}",
             json=fake_config,
             headers=auth_header(roles=["test-config-deployer"]),
         )
@@ -41,7 +54,7 @@ def test_deploy_config_typical(fake_config, auth_header):
     ids=[
         "listing_path",
         "listing_var",
-        "alis_path",
+        "alias_path",
         "additional_property",
     ],
 )
