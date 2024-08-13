@@ -161,43 +161,109 @@ class RequestReader:
         return cls(request)
 
 
-def uri_alias(uri: str, aliases: list[tuple[str, str]]):
+def uri_alias(uri: str, aliases: list[tuple[str, str]]) -> list[str]:
     # Resolve every alias between paths within the uri (e.g.
     # allow RHUI paths to be aliased to non-RHUI).
     #
     # Aliases are expected to come from cdn-definitions.
+    #
+    # Returns an ordered list of URIs, guaranteed to always contain
+    # at least one element (the original URI).
+    # URIs are returned for each intermediate step in alias resolution,
+    # and are ordered by depth, from deepest to most shallow.
+    #
+    # For example:
+    #  - if there are no applicable aliases, returns [uri]
+    #  - if there is one matching alias, returns [uri_beyond_alias, uri]
+    #  - if one alias matches, and then beyond that another alias matches
+    #    (meaning two levels deep of alias resolution), returns:
+    #    [uri_beyond_both_aliases, uri_beyond_first_alias, uri]
+    #
+    out: list[str] = [uri]
+    uri_alias_recurse(out, uri, aliases)
+    return out
 
-    new_uri = ""
-    remaining: list[tuple[str, str]] = aliases
 
-    # We do multiple passes here to ensure that nested aliases
-    # are resolved correctly, regardless of the order in which
-    # they're provided.
-    while remaining:
-        processed: list[tuple[str, str]] = []
+def uri_alias_recurse(
+    accum: list[str],
+    uri: str,
+    aliases: list[tuple[str, str]],
+    depth=0,
+    maxdepth=4,
+):
+    if depth > maxdepth:
+        # Runaway recursion breaker.
+        #
+        # There is no known path to get here, and if we ever do it's
+        # probably a bug.
+        #
+        # The point of this check is to avoid such a bug
+        # causing publish to completely break or hang.
+        LOG.warning(
+            "Aliases too deeply nested, bailing out at %s (URIs so far: %s)",
+            uri,
+            accum,
+        )
+        return
 
-        for src, dest in remaining:
-            if uri.startswith(src + "/") or uri == src:
-                new_uri = uri.replace(src, dest, 1)
-                LOG.debug(
-                    "Resolved alias:\n\tsrc: %s\n\tdest: %s",
-                    uri,
+    def add_out(new_uri: str) -> bool:
+        # Prepends a new URI to the output list
+        # (or shifts the existing URI to the front if it was already there)
+        # Return True if the URI was newly added.
+        out = True
+        if new_uri in accum:
+            accum.remove(new_uri)
+            out = False
+        accum.insert(0, new_uri)
+        return out
+
+    for src, dest in aliases:
+        if uri.startswith(src + "/") or uri == src:
+            new_uri = uri.replace(src, dest, 1)
+            LOG.debug(
+                "Resolved alias:\n\tsrc: %s\n\tdest: %s",
+                uri,
+                new_uri,
+                extra={"event": "publish", "success": True},
+            )
+            if add_out(new_uri):
+                # We've calculated a new URI and it's the first
+                # time we've seen it. We have to recursively apply
+                # the aliases again to this new URI.
+                #
+                # Before doing that, we'll subtract *this* alias from the set,
+                # meaning that it won't be considered recursively.
+                #
+                # We do this because otherwise RHUI aliases are infinitely
+                # recursive. For example, since:
+                #
+                #   /content/dist/rhel8/rhui
+                #     => /content/dist/rhel8
+                #
+                # That means this also works:
+                #   /content/dist/rhel8/rhui/rhui
+                #     => /content/dist/rhel8/rhui
+                #       => /content/dist/rhel8
+                #
+                # In fact you could insert as many "rhui" components into the path
+                # as you want and still ultimately resolve to the same path.
+                # That's the way the symlinks actually worked on the legacy CDN.
+                #
+                # But this is not desired behavior, we know that every alias is intended
+                # to be resolved in the URL a maximum of once, hence this adjustment.
+                sub_aliases = [
+                    (subsrc, subdest)
+                    for (subsrc, subdest) in aliases
+                    if (subsrc, subdest) != (src, dest)
+                ]
+
+                uri_alias_recurse(
+                    accum,
                     new_uri,
-                    extra={"event": "publish", "success": True},
+                    sub_aliases,
+                    depth=depth + 1,
+                    maxdepth=maxdepth,
                 )
-                uri = new_uri
-                processed.append((src, dest))
-
-        if not processed:
-            # We didn't resolve any alias, then we're done processing.
-            break
-
-        # We resolved at least one alias, so we need another round
-        # in case others apply now. But take out anything we've already
-        # processed, so it is not possible to recurse.
-        remaining = [r for r in remaining if r not in processed]
-
-    return uri
 
 
 def uris_with_aliases(
@@ -211,10 +277,7 @@ def uris_with_aliases(
         # We accept inputs both with and without leading '/', normalize.
         uri = "/" + uri.removeprefix("/")
 
-        # This always goes into the set we'll process.
-        out.add(uri)
-
-        # The value after alias resolution also goes into the set.
-        out.add(uri_alias(uri, aliases))
+        for resolved in uri_alias(uri, aliases):
+            out.add(resolved)
 
     return sorted(out)
