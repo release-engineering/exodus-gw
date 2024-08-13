@@ -102,11 +102,16 @@ def test_commit(
     )
     assert sorted([(pp.env, pp.web_uri) for pp in published_paths]) == sorted(
         [
-            # Note that both sides of the 1 alias are recorded.
+            # Note that both sides of the 1 alias are recorded, including
+            # beyond the RHUI alias.
             ("test", "/content/testproduct/1/repo/"),
             ("test", "/content/testproduct/1.1.0/repo/"),
             ("test", "/content/testproduct/1/repo/repomd.xml"),
             ("test", "/content/testproduct/1.1.0/repo/repomd.xml"),
+            ("test", "/content/testproduct/rhui/1/repo/"),
+            ("test", "/content/testproduct/rhui/1/repo/repomd.xml"),
+            ("test", "/content/testproduct/rhui/1.1.0/repo/"),
+            ("test", "/content/testproduct/rhui/1.1.0/repo/repomd.xml"),
         ]
     )
 

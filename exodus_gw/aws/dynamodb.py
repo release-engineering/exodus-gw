@@ -60,15 +60,77 @@ class DynamoDB:
     def aliases_for_write(self) -> list[tuple[str, str]]:
         # Aliases used when writing items to DynamoDB.
         #
-        # Exclude rhui aliases (for now? RHELDST-18849).
+        # Note that these aliases are traversed only in the src => dest
+        # direction, which intentionally results in a kind of
+        # canonicalization of paths at publish time.
+        #
+        # Example:
+        #
+        #   Given an alias of:
+        #     src:  /content/dist/rhel8/8
+        #     dest: /content/dist/rhel8/8.8
+        #
+        # If /content/dist/rhel8/8/foo is published, we write
+        # an item with path /content/dist/rhel8/8.8/foo and DO NOT
+        # write /content/dist/rhel8/8/foo.
+        #
+        # Note also that rhui_alias is not included here.
+        # It's not needed because, in practice, all of the content
+        # accessed via those aliases is always *published* on the
+        # destination side of an alias.
+        #
+        # Example:
+        #
+        #   Given an alias of:
+        #     src:  /content/dist/rhel8/rhui
+        #     dest: /content/dist/rhel8
+        #
+        # Content is always published under the /content/dist/rhel8 paths,
+        # therefore there is no need to resolve the above alias at publish
+        # time.
+        #
+        # It is possible that processing rhui_alias here would not be
+        # incorrect, but also possible that adding it might have some
+        # unintended effects.
         return self._aliases(["origin_alias", "releasever_alias"])
 
     @property
     def aliases_for_flush(self) -> list[tuple[str, str]]:
         # Aliases used when flushing cache.
-        return self._aliases(
-            ["origin_alias", "releasever_alias", "rhui_alias"]
-        )
+        out = self._aliases(["origin_alias", "releasever_alias", "rhui_alias"])
+
+        # When calculating paths for cache flush, the aliases should be resolved
+        # in *both* directions, so also return inverted copies of the aliases.
+        #
+        # Example:
+        #
+        #   Given an alias of:
+        #     src:  /content/dist/rhel8/8
+        #     dest: /content/dist/rhel8/8.8
+        #
+        #   - If /content/dist/rhel8/8/foo is published, then
+        #     /content/dist/rhel8/8.8/foo should also have cache flushed
+        #     (src => dest)
+        #   - If /content/dist/rhel8/8.8/foo is published, then
+        #     /content/dist/rhel8/8/foo should also have cache flushed
+        #     (dest => src)
+        #
+        # In practice, while it seems technically correct to do this for all aliases,
+        # this is mainly needed for RHUI content.
+        #
+        # Example:
+        #
+        #   Given an alias of:
+        #     src:  /content/dist/rhel8/rhui
+        #     dest: /content/dist/rhel8
+        #
+        # We are always publishing content only on the destination side of
+        # this alias. If we don't traverse the alias from dest => src then we
+        # will miss the fact that /content/dist/rhel8/rhui paths should also
+        # have cache flushed.
+        out = out + [(dest, src) for (src, dest) in out]
+
+        return out
 
     def query_definitions(self) -> dict[str, Any]:
         """Query the definitions in the config_table. If definitions are found, return them. Otherwise,
@@ -123,7 +185,10 @@ class DynamoDB:
             # updated timestamp.
             from_date = str(item.updated)
 
-            web_uri = uri_alias(item.web_uri, uri_aliases)
+            # Resolve aliases. We only write to the deepest path
+            # after all alias resolution, hence only using the
+            # first result from uri_alias.
+            web_uri = uri_alias(item.web_uri, uri_aliases)[0]
 
             if delete:
                 request[table_name].append(

@@ -193,7 +193,7 @@ cache_flush_arl_templates =
                                 {"src": "/path/one", "dest": "/path/one-dest"},
                             ],
                             "rhui_alias": [
-                                {"src": "/path/two", "dest": "/path/two-dest"},
+                                {"src": "/path/rhui/two", "dest": "/path/two"},
                             ],
                         }
                     )
@@ -211,7 +211,7 @@ cache_flush_arl_templates =
             # - alias resolution
             # - treeinfo special case
             "/path/one/repodata/repomd.xml",
-            "path/two/listing",
+            "path/rhui/two/listing",
             "third/path",
             "/some/misc/treeinfo",
             "/some/kickstart/treeinfo",
@@ -244,14 +244,14 @@ cache_flush_arl_templates =
         # Used the ARL templates. Note the different TTL values
         # for different paths, and also the paths both before and
         # after alias resolution are flushed.
-        "S/=/123/4567/10m/cdn1.example.com/path/two-dest/listing cid=///",
+        "S/=/123/4567/10m/cdn1.example.com/path/rhui/two/listing cid=///",
         "S/=/123/4567/10m/cdn1.example.com/path/two/listing cid=///",
         # note only the kickstart treeinfo appears, the other is filtered.
         "S/=/123/4567/30d/cdn1.example.com/some/kickstart/treeinfo cid=///",
         "S/=/123/4567/30d/cdn1.example.com/third/path cid=///",
         "S/=/123/4567/4h/cdn1.example.com/path/one-dest/repodata/repomd.xml cid=///",
         "S/=/123/4567/4h/cdn1.example.com/path/one/repodata/repomd.xml cid=///",
-        "S/=/234/6677/10m/cdn2.example.com/other/path/two-dest/listing x/y/z",
+        "S/=/234/6677/10m/cdn2.example.com/other/path/rhui/two/listing x/y/z",
         "S/=/234/6677/10m/cdn2.example.com/other/path/two/listing x/y/z",
         "S/=/234/6677/30d/cdn2.example.com/other/some/kickstart/treeinfo x/y/z",
         "S/=/234/6677/30d/cdn2.example.com/other/third/path x/y/z",
@@ -260,14 +260,14 @@ cache_flush_arl_templates =
         # Used the CDN URL which didn't have a leading path.
         "https://cdn1.example.com/path/one-dest/repodata/repomd.xml",
         "https://cdn1.example.com/path/one/repodata/repomd.xml",
-        "https://cdn1.example.com/path/two-dest/listing",
+        "https://cdn1.example.com/path/rhui/two/listing",
         "https://cdn1.example.com/path/two/listing",
         "https://cdn1.example.com/some/kickstart/treeinfo",
         "https://cdn1.example.com/third/path",
         # Used the CDN URL which had a leading path.
         "https://cdn2.example.com/root/path/one-dest/repodata/repomd.xml",
         "https://cdn2.example.com/root/path/one/repodata/repomd.xml",
-        "https://cdn2.example.com/root/path/two-dest/listing",
+        "https://cdn2.example.com/root/path/rhui/two/listing",
         "https://cdn2.example.com/root/path/two/listing",
         "https://cdn2.example.com/root/some/kickstart/treeinfo",
         "https://cdn2.example.com/root/third/path",
