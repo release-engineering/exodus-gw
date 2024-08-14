@@ -1,5 +1,8 @@
 import configparser
 import os
+import re
+from collections.abc import Iterable
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
@@ -26,6 +29,136 @@ def split_ini_list(raw: str | None) -> list[str]:
     return [elem.strip() for elem in raw.split("\n") if elem.strip()]
 
 
+@dataclass
+class CacheFlushRule:
+    name: str
+    """Name of this rule (from the config file)."""
+
+    templates: list[str]
+    """List of URL/ARL templates.
+
+    Each template may be either:
+    - a base URL, e.g. "https://cdn.example.com/cdn-root"
+    - an ARL template, e.g. "S/=/123/22334455/{ttl}/cdn1.example.com/{path}"
+
+    Templates may contain 'ttl' and 'path' placeholders to be substituted
+    when calculating cache keys for flush.
+    When there is no 'path' in a template, the path will instead be
+    appended.
+    """
+
+    includes: list[re.Pattern[str]]
+    """List of patterns applied to decide whether this rule is
+    applicable to any given path.
+
+    Patterns are non-anchored regular expressions.
+    A path must match at least one pattern in order for cache flush
+    to occur for that path.
+
+    There is a default pattern of ".*", meaning that all paths will
+    be included by default.
+
+    Note that these includes are evaluated *after* the set of paths
+    for flush have already been filtered to include only entry points
+    (e.g. repomd.xml and other mutable paths). It is not possible to
+    use this mechanism to enable cache flushing of non-entry-point
+    paths.
+    """
+
+    excludes: list[re.Pattern[str]]
+    """List of patterns applied to decide whether this rule should
+    be skipped for any given path.
+
+    Patterns are non-anchored regular expressions.
+    If a path matches any pattern, cache flush won't occur.
+
+    excludes are applied after includes.
+    """
+
+    def matches(self, path: str) -> bool:
+        """True if this rule matches the given path."""
+
+        # We always match against absolute paths with a leading /,
+        # regardless of how the input was formatted.
+        path = "/" + path.removeprefix("/")
+
+        # Must match at least one 'includes'.
+        for pattern in self.includes:
+            if pattern.search(path):
+                break
+        else:
+            return False
+
+        # Must not match any 'excludes'.
+        for pattern in self.excludes:
+            if pattern.search(path):
+                return False
+
+        return True
+
+    @classmethod
+    def load_all(
+        cls: type["CacheFlushRule"],
+        config: configparser.ConfigParser,
+        env_section: str,
+        names: Iterable[str],
+    ) -> list["CacheFlushRule"]:
+
+        out: list[CacheFlushRule] = []
+        for rule_name in names:
+            section_name = f"cache_flush.{rule_name}"
+            templates = split_ini_list(config.get(section_name, "templates"))
+            includes = [
+                re.compile(s)
+                for s in split_ini_list(
+                    config.get(section_name, "includes", fallback=".*")
+                )
+            ]
+            excludes = [
+                re.compile(s)
+                for s in split_ini_list(
+                    config.get(section_name, "excludes", fallback=None)
+                )
+            ]
+            out.append(
+                cls(
+                    name=rule_name,
+                    templates=templates,
+                    includes=includes,
+                    excludes=excludes,
+                )
+            )
+
+        # backwards-compatibility: if no rules were defined, but old-style
+        # cache flush config was specified, read it into a rule with default
+        # 'includes' and 'excludes'.
+        if not names and (
+            config.has_option(env_section, "cache_flush_urls")
+            or config.has_option(env_section, "cache_flush_arl_templates")
+        ):
+            out.append(
+                cls(
+                    name=f"{env_section}-legacy",
+                    templates=split_ini_list(
+                        config.get(
+                            env_section, "cache_flush_urls", fallback=None
+                        )
+                    )
+                    + split_ini_list(
+                        config.get(
+                            env_section,
+                            "cache_flush_arl_templates",
+                            fallback=None,
+                        )
+                    ),
+                    includes=[re.compile(r".*")],
+                    excludes=[],
+                )
+            )
+
+        return out
+
+
 class Environment(object):
     def __init__(
         self,
@@ -36,8 +169,7 @@ class Environment(object):
         config_table,
         cdn_url,
         cdn_key_id,
-        cache_flush_urls=None,
-        cache_flush_arl_templates=None,
+        cache_flush_rules=None,
     ):
         self.name = name
         self.aws_profile = aws_profile
@@ -46,10 +178,7 @@ class Environment(object):
         self.config_table = config_table
         self.cdn_url = cdn_url
         self.cdn_key_id = cdn_key_id
-        self.cache_flush_urls = split_ini_list(cache_flush_urls)
-        self.cache_flush_arl_templates = split_ini_list(
-            cache_flush_arl_templates
-        )
+        self.cache_flush_rules: list[CacheFlushRule] = cache_flush_rules or []
 
     @property
     def cdn_private_key(self):
@@ -63,8 +192,8 @@ class Environment(object):
         are available for this environment.
         """
         return (
-            # *at least one* URL or ARL template must be set...
-            (self.cache_flush_urls or self.cache_flush_arl_templates)
+            # There must be at least one cache flush rule in config...
+            bool(self.cache_flush_rules)
             # ... and *all* fastpurge credentials must be set
             and self.fastpurge_access_token
             and self.fastpurge_client_secret
@@ -373,9 +502,12 @@ def load_settings() -> Settings:
         config_table = config.get(env, "config_table", fallback=None)
         cdn_url = config.get(env, "cdn_url", fallback=None)
         cdn_key_id = config.get(env, "cdn_key_id", fallback=None)
-        cache_flush_urls = config.get(env, "cache_flush_urls", fallback=None)
-        cache_flush_arl_templates = config.get(
-            env, "cache_flush_arl_templates", fallback=None
+
+        cache_flush_rule_names = split_ini_list(
+            config.get(env, "cache_flush_rules", fallback=None)
+        )
+        cache_flush_rules = CacheFlushRule.load_all(
+            config, env, cache_flush_rule_names
         )
 
         settings.environments.append(
@@ -387,8 +519,7 @@ def load_settings() -> Settings:
                 config_table=config_table,
                 cdn_url=cdn_url,
                 cdn_key_id=cdn_key_id,
-                cache_flush_urls=cache_flush_urls,
-                cache_flush_arl_templates=cache_flush_arl_templates,
+                cache_flush_rules=cache_flush_rules,
             )
         )
 

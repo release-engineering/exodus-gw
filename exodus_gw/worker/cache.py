@@ -81,18 +81,25 @@ class Flusher:
             for p in uris_with_aliases(self.paths, self.aliases)
         ]
 
-        for cdn_base_url in self.env.cache_flush_urls:
-            for path in path_list:
-                out.append(os.path.join(cdn_base_url, path))
+        for path in path_list:
+            # Figure out the templates applicable to this path
+            templates: list[str] = []
+            for rule in self.env.cache_flush_rules:
+                if rule.matches(path):
+                    templates.extend(rule.templates)
 
-        for arl_template in self.env.cache_flush_arl_templates:
-            for path in path_list:
-                out.append(
-                    arl_template.format(
-                        path=path,
-                        ttl=self.arl_ttl(path),
+            for template in templates:
+                if "{path}" in template:
+                    # interpret as a template with placeholders
+                    out.append(
+                        template.format(
+                            path=path.removeprefix("/"),
+                            ttl=self.arl_ttl(path),
+                        )
                     )
-                )
+                else:
+                    # no {path} placeholder, interpret as a root URL
+                    out.append(os.path.join(template, path))
 
         return out
 
