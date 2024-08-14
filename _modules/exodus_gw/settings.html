@@ -33,6 +33,9 @@
   <h1>Source code for exodus_gw.settings</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">configparser</span>
 <span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Iterable</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span>
 
@@ -59,6 +62,136 @@
     <span class="k">return</span> <span class="p">[</span><span class="n">elem</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">raw</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">elem</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
 
 
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">CacheFlushRule</span><span class="p">:</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Name of this rule (from the config file).&quot;&quot;&quot;</span>
+
+    <span class="n">templates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;List of URL/ARL templates.</span>
+
+<span class="sd">    Each template may be either:</span>
+<span class="sd">    - a base URL, e.g. &quot;https://cdn.example.com/cdn-root&quot;</span>
+<span class="sd">    - an ARL template, e.g. &quot;S/=/123/22334455/{ttl}/cdn1.example.com/{path}&quot;</span>
+
+<span class="sd">    Templates may contain &#39;ttl&#39; and &#39;path&#39; placeholders to be substituted</span>
+<span class="sd">    when calculating cache keys for flush.</span>
+<span class="sd">    When there is no &#39;path&#39; in a template, the path will instead be</span>
+<span class="sd">    appended.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">includes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">Pattern</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;List of patterns applied to decide whether this rule is</span>
+<span class="sd">    applicable to any given path.</span>
+
+<span class="sd">    Patterns are non-anchored regular expressions.</span>
+<span class="sd">    A path must match at least one pattern in order for cache flush</span>
+<span class="sd">    to occur for that path.</span>
+
+<span class="sd">    There is a default pattern of &quot;.*&quot;, meaning that all paths will</span>
+<span class="sd">    be included by default.</span>
+
+<span class="sd">    Note that these includes are evaluated *after* the set of paths</span>
+<span class="sd">    for flush have already been filtered to include only entry points</span>
+<span class="sd">    (e.g. repomd.xml and other mutable paths). It is not possible to</span>
+<span class="sd">    use this mechanism to enable cache flushing of non-entry-point</span>
+<span class="sd">    paths.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">excludes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">Pattern</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;List of patterns applied to decide whether this rule should</span>
+<span class="sd">    be skipped for any given path.</span>
+
+<span class="sd">    Patterns are non-anchored regular expressions.</span>
+<span class="sd">    If a path matches any pattern, cache flush won&#39;t occur.</span>
+
+<span class="sd">    excludes are applied after includes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">matches</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;True if this rule matches the given path.&quot;&quot;&quot;</span>
+
+        <span class="c1"># We always match against absolute paths with a leading /,</span>
+        <span class="c1"># regardless of how the input was formatted.</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">path</span><span class="o">.</span><span class="n">removeprefix</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Must match at least one &#39;includes&#39;.</span>
+        <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">includes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="c1"># Must not match any &#39;excludes&#39;.</span>
+        <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">excludes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">load_all</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="s2">&quot;CacheFlushRule&quot;</span><span class="p">],</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">configparser</span><span class="o">.</span><span class="n">ConfigParser</span><span class="p">,</span>
+        <span class="n">env_section</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">names</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="s2">&quot;CacheFlushRule&quot;</span><span class="p">]:</span>
+
+        <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CacheFlushRule</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">rule_name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+            <span class="n">section_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;cache_flush.</span><span class="si">{</span><span class="n">rule_name</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">templates</span> <span class="o">=</span> <span class="n">split_ini_list</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">section_name</span><span class="p">,</span> <span class="s2">&quot;templates&quot;</span><span class="p">))</span>
+            <span class="n">includes</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">split_ini_list</span><span class="p">(</span>
+                    <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">section_name</span><span class="p">,</span> <span class="s2">&quot;includes&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s2">&quot;.*&quot;</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+            <span class="n">excludes</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">split_ini_list</span><span class="p">(</span>
+                    <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">section_name</span><span class="p">,</span> <span class="s2">&quot;excludes&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="bp">cls</span><span class="p">(</span>
+                    <span class="n">name</span><span class="o">=</span><span class="n">rule_name</span><span class="p">,</span>
+                    <span class="n">templates</span><span class="o">=</span><span class="n">templates</span><span class="p">,</span>
+                    <span class="n">includes</span><span class="o">=</span><span class="n">includes</span><span class="p">,</span>
+                    <span class="n">excludes</span><span class="o">=</span><span class="n">excludes</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="c1"># backwards-compatibility: if no rules were defined, but old-style</span>
+        <span class="c1"># cache flush config was specified, read it into a rule with default</span>
+        <span class="c1"># &#39;includes&#39; and &#39;excludes&#39;.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">names</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="n">env_section</span><span class="p">,</span> <span class="s2">&quot;cache_flush_urls&quot;</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="n">env_section</span><span class="p">,</span> <span class="s2">&quot;cache_flush_arl_templates&quot;</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="bp">cls</span><span class="p">(</span>
+                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">env_section</span><span class="si">}</span><span class="s2">-legacy&quot;</span><span class="p">,</span>
+                    <span class="n">templates</span><span class="o">=</span><span class="n">split_ini_list</span><span class="p">(</span>
+                        <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                            <span class="n">env_section</span><span class="p">,</span> <span class="s2">&quot;cache_flush_urls&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="o">+</span> <span class="n">split_ini_list</span><span class="p">(</span>
+                        <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+                            <span class="n">env_section</span><span class="p">,</span>
+                            <span class="s2">&quot;cache_flush_arl_templates&quot;</span><span class="p">,</span>
+                            <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="p">),</span>
+                    <span class="n">includes</span><span class="o">=</span><span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;.*&quot;</span><span class="p">)],</span>
+                    <span class="n">excludes</span><span class="o">=</span><span class="p">[],</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">out</span>
+
+
 <span class="k">class</span> <span class="nc">Environment</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -69,8 +202,7 @@
         <span class="n">config_table</span><span class="p">,</span>
         <span class="n">cdn_url</span><span class="p">,</span>
         <span class="n">cdn_key_id</span><span class="p">,</span>
-        <span class="n">cache_flush_urls</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">cache_flush_arl_templates</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">cache_flush_rules</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">aws_profile</span> <span class="o">=</span> <span class="n">aws_profile</span>
@@ -79,10 +211,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">config_table</span> <span class="o">=</span> <span class="n">config_table</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cdn_url</span> <span class="o">=</span> <span class="n">cdn_url</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cdn_key_id</span> <span class="o">=</span> <span class="n">cdn_key_id</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cache_flush_urls</span> <span class="o">=</span> <span class="n">split_ini_list</span><span class="p">(</span><span class="n">cache_flush_urls</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cache_flush_arl_templates</span> <span class="o">=</span> <span class="n">split_ini_list</span><span class="p">(</span>
-            <span class="n">cache_flush_arl_templates</span>
-        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache_flush_rules</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CacheFlushRule</span><span class="p">]</span> <span class="o">=</span> <span class="n">cache_flush_rules</span> <span class="ow">or</span> <span class="p">[]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">cdn_private_key</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -96,8 +225,8 @@
 <span class="sd">        are available for this environment.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(</span>
-            <span class="c1"># *at least one* URL or ARL template must be set...</span>
-            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_flush_urls</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache_flush_arl_templates</span><span class="p">)</span>
+            <span class="c1"># There must be at least one cache flush rule in config...</span>
+            <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_flush_rules</span><span class="p">)</span>
             <span class="c1"># ... and *all* fastpurge credentials must be set</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">fastpurge_access_token</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">fastpurge_client_secret</span>
@@ -409,9 +538,12 @@
         <span class="n">config_table</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s2">&quot;config_table&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
         <span class="n">cdn_url</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s2">&quot;cdn_url&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
         <span class="n">cdn_key_id</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s2">&quot;cdn_key_id&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-        <span class="n">cache_flush_urls</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s2">&quot;cache_flush_urls&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-        <span class="n">cache_flush_arl_templates</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-            <span class="n">env</span><span class="p">,</span> <span class="s2">&quot;cache_flush_arl_templates&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span>
+
+        <span class="n">cache_flush_rule_names</span> <span class="o">=</span> <span class="n">split_ini_list</span><span class="p">(</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s2">&quot;cache_flush_rules&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">cache_flush_rules</span> <span class="o">=</span> <span class="n">CacheFlushRule</span><span class="o">.</span><span class="n">load_all</span><span class="p">(</span>
+            <span class="n">config</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="n">cache_flush_rule_names</span>
         <span class="p">)</span>
 
         <span class="n">settings</span><span class="o">.</span><span class="n">environments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -423,8 +555,7 @@
                 <span class="n">config_table</span><span class="o">=</span><span class="n">config_table</span><span class="p">,</span>
                 <span class="n">cdn_url</span><span class="o">=</span><span class="n">cdn_url</span><span class="p">,</span>
                 <span class="n">cdn_key_id</span><span class="o">=</span><span class="n">cdn_key_id</span><span class="p">,</span>
-                <span class="n">cache_flush_urls</span><span class="o">=</span><span class="n">cache_flush_urls</span><span class="p">,</span>
-                <span class="n">cache_flush_arl_templates</span><span class="o">=</span><span class="n">cache_flush_arl_templates</span><span class="p">,</span>
+                <span class="n">cache_flush_rules</span><span class="o">=</span><span class="n">cache_flush_rules</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
 

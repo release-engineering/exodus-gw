@@ -440,24 +440,49 @@ the <a class="reference external" href="https://techdocs.akamai.com/purge-cache/
 <p>This feature is optional. If configuration is not provided, related APIs in
 exodus-gw will continue to function but will skip cache flush operations.</p>
 <p>Enabling the feature requires the deployment of two sets of configuration.</p>
-<p>Firstly, in the <code class="docutils literal notranslate"><span class="pre">exodus-gw.ini</span></code> section for the relevant environment,
-set <code class="docutils literal notranslate"><span class="pre">cache_flush_urls</span></code> to enable cache flush by URL and/or
-<code class="docutils literal notranslate"><span class="pre">cache_flush_arl_templates</span></code> to enable cache flushing by ARL. Both options
-can be used together as needed.</p>
+<p>Firstly, in <code class="docutils literal notranslate"><span class="pre">exodus-gw.ini</span></code>, define some cache flush rules under
+sections named <code class="docutils literal notranslate"><span class="pre">[cache_flush.{rule_name}]</span></code>.</p>
+<p>Each rule must define a list of URL/ARL <code class="docutils literal notranslate"><span class="pre">templates</span></code> for calculating
+the cache keys to flush. Rules may optionally define <code class="docutils literal notranslate"><span class="pre">includes</span></code> and
+<code class="docutils literal notranslate"><span class="pre">excludes</span></code> to select specific paths where the rule should be applied.</p>
+<p>Once rules are defined, enable them for a specific environment by listing
+them in <code class="docutils literal notranslate"><span class="pre">cache_flush_rules</span></code> under that environment’s configuration.
+See the following example:</p>
 <div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="k">[env.live]</span>
-<span class="c1"># Root URL(s) of CDN properties for which to flush cache.</span>
-<span class="c1"># Several can be provided.</span>
-<span class="na">cache_flush_urls</span><span class="w"> </span><span class="o">=</span>
-<span class="w">  </span><span class="na">https</span><span class="o">:</span><span class="s">//cdn1.example.com</span>
-<span class="w">  </span><span class="na">https</span><span class="o">:</span><span class="s">//cdn2.example.com</span>
+<span class="c1"># Rule(s) to activate for this environment.</span>
+<span class="c1">#</span>
+<span class="c1"># This example supposes that there are two CDN hostnames in use,</span>
+<span class="c1"># one of which exposes all content *except* a certain subtree</span>
+<span class="c1"># and one which exposes *only* that subtree.</span>
+<span class="na">cache_flush_rules</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">cdn1</span>
+<span class="w">  </span><span class="na">cdn2</span>
 
-<span class="c1"># Templates of ARL(s) for which to flush cache.</span>
+<span class="k">[cache_flush.cdn1]</span>
+<span class="c1"># URL or ARL template(s) for which to flush cache.</span>
+<span class="c1">#</span>
 <span class="c1"># Templates can use placeholders:</span>
 <span class="c1"># - path: path of a file under CDN root</span>
-<span class="c1"># - ttl (optional): a TTL value will be substituted</span>
-<span class="na">cache_flush_arl_templates</span><span class="w"> </span><span class="o">=</span>
+<span class="c1"># - ttl: a TTL value will be substituted</span>
+<span class="na">templates</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">https</span><span class="o">:</span><span class="s">//cdn1.example.com</span>
 <span class="w">  </span><span class="na">S/</span><span class="o">=</span><span class="s">/123/22334455/{ttl}/cdn1.example.com/{path}</span>
+
+<span class="c1"># Suppose that &quot;/files&quot; is restricted to cdn2, then the</span>
+<span class="c1"># exclusion pattern here will avoid unnecessarily flushing</span>
+<span class="c1"># cdn1 cache for paths underneath that subtree.</span>
+<span class="na">excludes</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">^/files/</span>
+
+<span class="k">[cache_flush.cdn2]</span>
+<span class="na">templates</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">https</span><span class="o">:</span><span class="s">//cdn2.example.com</span>
 <span class="w">  </span><span class="na">S/</span><span class="o">=</span><span class="s">/123/22334455/{ttl}/cdn2.example.com/{path}</span>
+
+<span class="c1"># This rule only applies to this subtree, which was excluded</span>
+<span class="c1"># from the other rule.</span>
+<span class="na">includes</span><span class="w"> </span><span class="o">=</span>
+<span class="w">  </span><span class="na">^/files/</span>
 </pre></div>
 </div>
 <p>Secondly, use environment variables to deploy credentials for the

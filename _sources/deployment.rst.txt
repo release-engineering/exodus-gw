@@ -124,27 +124,54 @@ exodus-gw will continue to function but will skip cache flush operations.
 
 Enabling the feature requires the deployment of two sets of configuration.
 
-Firstly, in the ``exodus-gw.ini`` section for the relevant environment,
-set ``cache_flush_urls`` to enable cache flush by URL and/or
-``cache_flush_arl_templates`` to enable cache flushing by ARL. Both options
-can be used together as needed.
+Firstly, in ``exodus-gw.ini``, define some cache flush rules under
+sections named ``[cache_flush.{rule_name}]``.
+
+Each rule must define a list of URL/ARL ``templates`` for calculating
+the cache keys to flush. Rules may optionally define ``includes`` and
+``excludes`` to select specific paths where the rule should be applied.
+
+Once rules are defined, enable them for a specific environment by listing
+them in ``cache_flush_rules`` under that environment's configuration.
+See the following example:
 
 .. code-block:: ini
 
   [env.live]
-  # Root URL(s) of CDN properties for which to flush cache.
-  # Several can be provided.
-  cache_flush_urls =
-    https://cdn1.example.com
-    https://cdn2.example.com
+  # Rule(s) to activate for this environment.
+  #
+  # This example supposes that there are two CDN hostnames in use,
+  # one of which exposes all content *except* a certain subtree
+  # and one which exposes *only* that subtree.
+  cache_flush_rules =
+    cdn1
+    cdn2
 
-  # Templates of ARL(s) for which to flush cache.
+  [cache_flush.cdn1]
+  # URL or ARL template(s) for which to flush cache.
+  #
   # Templates can use placeholders:
   # - path: path of a file under CDN root
-  # - ttl (optional): a TTL value will be substituted
-  cache_flush_arl_templates =
+  # - ttl: a TTL value will be substituted
+  templates =
+    https://cdn1.example.com
     S/=/123/22334455/{ttl}/cdn1.example.com/{path}
+
+  # Suppose that "/files" is restricted to cdn2, then the
+  # exclusion pattern here will avoid unnecessarily flushing
+  # cdn1 cache for paths underneath that subtree.
+  excludes =
+    ^/files/
+
+  [cache_flush.cdn2]
+  templates =
+    https://cdn2.example.com
     S/=/123/22334455/{ttl}/cdn2.example.com/{path}
+
+  # This rule only applies to this subtree, which was excluded
+  # from the other rule.
+  includes =
+    ^/files/
 
 Secondly, use environment variables to deploy credentials for the
 Fast Purge API, according to the below table. The fields here correspond
