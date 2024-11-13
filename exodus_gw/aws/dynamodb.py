@@ -46,18 +46,19 @@ class DynamoDB:
                     self._definitions = self.query_definitions()
         return self._definitions
 
-    def _aliases(self, alias_types: list[str]) -> list[tuple[str, str]]:
-        out: list[tuple[str, str]] = []
+    def _aliases(self, alias_types: list[str]) -> list[tuple[str, str, list[str]]]:
+        out: list[tuple[str, str, list[str]]] = []
 
         for k, v in self.definitions.items():
             if k in alias_types:
                 for alias in v:
-                    out.append((alias["src"], alias["dest"]))
+                    out.append((alias["src"], alias["dest"],
+                                alias.get("exclude_paths") or []))
 
         return out
 
     @property
-    def aliases_for_write(self) -> list[tuple[str, str]]:
+    def aliases_for_write(self) -> list[tuple[str, str, list[str]]]:
         # Aliases used when writing items to DynamoDB.
         #
         # Note that these aliases are traversed only in the src => dest
@@ -95,7 +96,7 @@ class DynamoDB:
         return self._aliases(["origin_alias", "releasever_alias"])
 
     @property
-    def aliases_for_flush(self) -> list[tuple[str, str]]:
+    def aliases_for_flush(self) -> list[tuple[str, str, list[str]]]:
         # Aliases used when flushing cache.
         out = self._aliases(["origin_alias", "releasever_alias", "rhui_alias"])
 
@@ -128,7 +129,7 @@ class DynamoDB:
         # this alias. If we don't traverse the alias from dest => src then we
         # will miss the fact that /content/dist/rhel8/rhui paths should also
         # have cache flushed.
-        out = out + [(dest, src) for (src, dest) in out]
+        out = out + [(dest, src, exclusions) for (src, dest, exclusions) in out]
 
         return out
 

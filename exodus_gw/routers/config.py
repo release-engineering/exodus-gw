@@ -43,6 +43,12 @@ ALIAS_SCHEMA = {
                 "pattern": PATH_PATTERN,
                 "description": "Target of the alias, relative to CDN root.",
             },
+            "exclude_paths": {
+                "type": "array",
+                "items": {"type": "string"},
+                "description": "Paths for which alias will not be resolved, "
+                               "treated as an unanchored regex."
+            }
         },
     },
     "uniqueItems": True,
@@ -134,19 +140,30 @@ def config_post(
                     },
                 },
                 "origin_alias": [
-                    {"src": "/content/origin", "dest": "/origin"},
-                    {"src": "/origin/rpm", "dest": "/origin/rpms"},
+                    {
+                        "src": "/content/origin",
+                        "dest": "/origin",
+                        "exclude_paths": []
+                    },
+                    {
+                        "src": "/origin/rpm",
+                        "dest": "/origin/rpms",
+                        "exclude_paths": ["/iso/"]
+                    },
                 ],
                 "releasever_alias": [
                     {
                         "dest": "/content/dist/rhel8/8.5",
                         "src": "/content/dist/rhel8/8",
+                        "exclude_paths": ["/files/", "/images/", "/iso/"]
                     },
+
                 ],
                 "rhui_alias": [
                     {
                         "dest": "/content/dist/rhel8",
                         "src": "/content/dist/rhel8/rhui",
+                        "exclude_paths": ["/files/", "/images/", "/iso/"]
                     },
                 ],
             }

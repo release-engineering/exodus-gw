@@ -209,10 +209,20 @@ excludes =
                         {
                             "origin_alias": [],
                             "releasever_alias": [
-                                {"src": "/path/one", "dest": "/path/one-dest"},
+                                {
+                                    "src": "/path/one",
+                                    "dest": "/path/one-dest",
+                                    "exclude_paths": ["/files/", "/images/",
+                                                      "/iso/"],
+                                },
                             ],
                             "rhui_alias": [
-                                {"src": "/path/rhui/two", "dest": "/path/two"},
+                                {
+                                    "src": "/path/rhui/two",
+                                    "dest": "/path/two",
+                                    "exclude_paths": ["/files/", "/images/",
+                                                      "/iso/"],
+                                    },
                             ],
                         }
                     )
