@@ -115,6 +115,9 @@ def test_commit(
         # Note that this does not include paths after alias resolution,
         # because Flusher does alias resolution itself internally
         # (tested elsewhere)
+        # Note that the default phase2_patterns cause all non-RPM kickstart
+        # files to be flushed.
+        "/content/testproduct/1/kickstart/EULA",
         "/content/testproduct/1/kickstart/extra_files.json",
         "/content/testproduct/1/repo/",
         "/content/testproduct/1/repo/repomd.xml",
@@ -149,6 +152,22 @@ def test_commit(
             (
                 "test",
                 "/content/testproduct/rhui/1/kickstart/extra_files.json",
+            ),
+            (
+                "test",
+                "/content/testproduct/1.1.0/kickstart/EULA",
+            ),
+            (
+                "test",
+                "/content/testproduct/1/kickstart/EULA",
+            ),
+            (
+                "test",
+                "/content/testproduct/rhui/1.1.0/kickstart/EULA",
+            ),
+            (
+                "test",
+                "/content/testproduct/rhui/1/kickstart/EULA",
             ),
             ("test", "/content/testproduct/1/repo/"),
             ("test", "/content/testproduct/1.1.0/repo/"),
@@ -603,8 +622,15 @@ def test_commit_phase1(
         [
             {"dirty": False, "web_uri": "/other/path"},
             {"dirty": False, "web_uri": "/some/path"},
+            # kickstart content:
+            # - EULA, though not an entrypoint, was forcibly delayed to phase2
+            #   via phase2_patterns setting. And therefore is still 'dirty'.
+            # - RPMs aren't matched by phase2_patterns and can still be
+            #   processed in phase1.
+            # - extra_files.json is an entrypoint and so is also delayed until
+            #   phase2.
             {
-                "dirty": False,
+                "dirty": True,
                 "web_uri": "/content/testproduct/1/kickstart/EULA",
             },
             {
@@ -633,7 +659,7 @@ def test_commit_phase1(
 
     # It should have told us how many it wrote and how many remain
     assert (
-        "Phase 1: committed 4 items, phase 2: 3 items remaining" in caplog.text
+        "Phase 1: committed 3 items, phase 2: 4 items remaining" in caplog.text
     )
 
     # Let's do the same commit again...
@@ -651,7 +677,7 @@ def test_commit_phase1(
     # This time there should not have been any phase1 items processed at all,
     # as none of them were dirty.
     assert (
-        "Phase 1: committed 0 items, phase 2: 3 items remaining" in caplog.text
+        "Phase 1: committed 0 items, phase 2: 4 items remaining" in caplog.text
     )
 
     # And it should NOT have invoked the autoindex enricher in either commit

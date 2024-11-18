@@ -377,6 +377,24 @@ class Settings(BaseSettings):
     ]
     """List of file names that should be saved for last when publishing."""
 
+    phase2_patterns: list[re.Pattern[str]] = [
+        # kickstart repos; note the logic here matches
+        # the manual workaround RHELDST-27642
+        re.compile(r"/kickstart/.*(?<!\.rpm)$"),
+    ]
+    """List of patterns which, if any have matched, force a path to
+    be handled during phase 2 of commit.
+
+    These patterns are intended for use with repositories not cleanly
+    separated between mutable entry points and immutable content.
+
+    For example, in-place updates to kickstart repositories may not
+    only modify entry points such as extra_files.json but also
+    arbitrary files referenced by that entry point, all of which should
+    be processed during phase 2 of commit in order for updates to
+    appear atomic.
+    """
+
     autoindex_filename: str = ".__exodus_autoindex"
     """Filename for indexes automatically generated during publish.
 
