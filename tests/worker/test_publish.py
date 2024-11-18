@@ -9,7 +9,7 @@ import sqlalchemy.orm
 from sqlalchemy import not_
 
 from exodus_gw import models, worker
-from exodus_gw.models import Publish
+from exodus_gw.models import Item, Publish
 from exodus_gw.models.path import PublishedPath
 from exodus_gw.settings import load_settings
 
@@ -24,6 +24,32 @@ def _task(publish_id):
         publish_id=publish_id,
         state="NOT_STARTED",
         deadline=NOW_UTC + timedelta(hours=2),
+    )
+
+
+def add_kickstart(publish: Publish):
+    """Adds some kickstart items onto a publish."""
+    publish.items.extend(
+        [
+            models.Item(
+                web_uri="/content/testproduct/1/kickstart/extra_files.json",
+                object_key="cee38a35950f3f9465378b1548c4495882da0bfbe217999add63cb3a8e2c4d75",
+                publish_id=publish.id,
+                updated=datetime(2023, 10, 4, 3, 52, 2),
+            ),
+            models.Item(
+                web_uri="/content/testproduct/1/kickstart/EULA",
+                object_key="6c92384cdbf1a8c448278aaffaf7d8c3f048749e201d504ffaab07d85f6b1a03",
+                publish_id=publish.id,
+                updated=datetime(2023, 10, 4, 3, 52, 2),
+            ),
+            models.Item(
+                web_uri="/content/testproduct/1/kickstart/Packages/example.rpm",
+                object_key="88a2831543aaca1355a725ad2f5969c7a180643beddfe94281343a2ba361c979",
+                publish_id=publish.id,
+                updated=datetime(2023, 10, 4, 3, 52, 2),
+            ),
+        ]
     )
 
 
@@ -48,6 +74,9 @@ def test_commit(
     )
     # Simulate successful write of items by write_batch.
     mock_write_batch.return_value = True
+
+    # Let this test cover kickstart items.
+    add_kickstart(fake_publish)
 
     db.add(fake_publish)
     db.add(task)
@@ -86,6 +115,7 @@ def test_commit(
         # Note that this does not include paths after alias resolution,
         # because Flusher does alias resolution itself internally
         # (tested elsewhere)
+        "/content/testproduct/1/kickstart/extra_files.json",
         "/content/testproduct/1/repo/",
         "/content/testproduct/1/repo/repomd.xml",
     ]
@@ -104,6 +134,22 @@ def test_commit(
         [
             # Note that both sides of the 1 alias are recorded, including
             # beyond the RHUI alias.
+            (
+                "test",
+                "/content/testproduct/1.1.0/kickstart/extra_files.json",
+            ),
+            (
+                "test",
+                "/content/testproduct/1/kickstart/extra_files.json",
+            ),
+            (
+                "test",
+                "/content/testproduct/rhui/1.1.0/kickstart/extra_files.json",
+            ),
+            (
+                "test",
+                "/content/testproduct/rhui/1/kickstart/extra_files.json",
+            ),
             ("test", "/content/testproduct/1/repo/"),
             ("test", "/content/testproduct/1.1.0/repo/"),
             ("test", "/content/testproduct/1/repo/repomd.xml"),
@@ -490,6 +536,9 @@ def test_commit_phase1(
         )
     )
 
+    # Let this test cover kickstart items.
+    add_kickstart(fake_publish)
+
     db.add(fake_publish)
     db.add(task)
 
@@ -554,6 +603,18 @@ def test_commit_phase1(
         [
             {"dirty": False, "web_uri": "/other/path"},
             {"dirty": False, "web_uri": "/some/path"},
+            {
+                "dirty": False,
+                "web_uri": "/content/testproduct/1/kickstart/EULA",
+            },
+            {
+                "dirty": False,
+                "web_uri": "/content/testproduct/1/kickstart/Packages/example.rpm",
+            },
+            {
+                "dirty": True,
+                "web_uri": "/content/testproduct/1/kickstart/extra_files.json",
+            },
             # the unresolved link is not yet written and therefore remains dirty
             {"dirty": True, "web_uri": "/some/path/to/link-src"},
             # autoindex and repomd.xml are both entrypoints, not yet written,
@@ -572,7 +633,7 @@ def test_commit_phase1(
 
     # It should have told us how many it wrote and how many remain
     assert (
-        "Phase 1: committed 2 items, phase 2: 2 items remaining" in caplog.text
+        "Phase 1: committed 4 items, phase 2: 3 items remaining" in caplog.text
     )
 
     # Let's do the same commit again...
@@ -590,7 +651,7 @@ def test_commit_phase1(
     # This time there should not have been any phase1 items processed at all,
     # as none of them were dirty.
     assert (
-        "Phase 1: committed 0 items, phase 2: 2 items remaining" in caplog.text
+        "Phase 1: committed 0 items, phase 2: 3 items remaining" in caplog.text
     )
 
     # And it should NOT have invoked the autoindex enricher in either commit
