@@ -46,7 +46,11 @@ def test_deploy_config_typical(fake_config, auth_header, endpoint):
         {"listing": {"/origin/rhel/server": {"values": ["8"], "var": "nope"}}},
         {
             "rhui_alias": [
-                {"dest": "/../rhel/rhui/server", "src": "/../rhel/rhui/server"}
+                {
+                    "dest": "/../rhel/rhui/server",
+                    "src": "/../rhel/rhui/server",
+                    "exclude_paths": ["/this/", "/is/", "/fine/"],
+                }
             ]
         },
         {"no_dont": 123},

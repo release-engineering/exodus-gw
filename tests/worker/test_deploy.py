@@ -138,6 +138,26 @@ def test_deploy_config_with_flush(
         )
     )
 
+    # Exclusion tests. This Path should not be flushed as it contains part of
+    # the original alias exclusions.
+    db.add(
+        PublishedPath(
+            env="test",
+            web_uri="/content/testproduct/1/iso/file4",
+            updated=datetime.now(tz=timezone.utc),
+        )
+    )
+
+    # This path will be flushed as it was not part of the original alias
+    # exclusions.
+    db.add(
+        PublishedPath(
+            env="test",
+            web_uri="/content/testproduct/1/newExclusion/file5",
+            updated=datetime.now(tz=timezone.utc),
+        )
+    )
+
     db.commit()
 
     # We're updating the alias in the config.
@@ -146,6 +166,7 @@ def test_deploy_config_with_flush(
         {
             "dest": "/content/testproduct/1.2.0",
             "src": "/content/testproduct/1",
+            "exclude_paths": ["/newExclusion/"],
         },
     ]
     worker.deploy_config(updated_config, "test", NOW_UTC)
@@ -201,6 +222,7 @@ def test_deploy_config_with_flush(
         "/content/dist/rhel/server/listing",
         "/content/testproduct/1/file1",
         "/content/testproduct/1/file2",
+        "/content/testproduct/1/newExclusion/file5",
     ]
 
     # And actor call should have been delayed by this long.
