@@ -46,14 +46,21 @@ class DynamoDB:
                     self._definitions = self.query_definitions()
         return self._definitions
 
-    def _aliases(self, alias_types: list[str]) -> list[tuple[str, str, list[str]]]:
+    def _aliases(
+        self, alias_types: list[str]
+    ) -> list[tuple[str, str, list[str]]]:
         out: list[tuple[str, str, list[str]]] = []
 
         for k, v in self.definitions.items():
             if k in alias_types:
                 for alias in v:
-                    out.append((alias["src"], alias["dest"],
-                                alias.get("exclude_paths") or []))
+                    out.append(
+                        (
+                            alias["src"],
+                            alias["dest"],
+                            alias.get("exclude_paths") or [],
+                        )
+                    )
 
         return out
 
@@ -129,7 +136,9 @@ class DynamoDB:
         # this alias. If we don't traverse the alias from dest => src then we
         # will miss the fact that /content/dist/rhel8/rhui paths should also
         # have cache flushed.
-        out = out + [(dest, src, exclusions) for (src, dest, exclusions) in out]
+        out = out + [
+            (dest, src, exclusions) for (src, dest, exclusions) in out
+        ]
 
         return out
 

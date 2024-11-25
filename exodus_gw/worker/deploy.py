@@ -153,8 +153,12 @@ def deploy_config(
                 # If any original exclusion matches the uri, the uri wouldn't
                 # have been treated as an alias, thus cache flushing would be
                 # unnecessary.
-                if any([re.search(exclusion, published_path.web_uri)
-                        for exclusion in original_exclusions.get(src, [])]):
+                if any(
+                    [
+                        re.search(exclusion, published_path.web_uri)
+                        for exclusion in original_exclusions.get(src, [])
+                    ]
+                ):
                     continue
                 LOG.info(
                     "Updated alias %s will flush cache for %s",

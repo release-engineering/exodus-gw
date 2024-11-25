@@ -212,17 +212,23 @@ excludes =
                                 {
                                     "src": "/path/one",
                                     "dest": "/path/one-dest",
-                                    "exclude_paths": ["/files/", "/images/",
-                                                      "/iso/"],
+                                    "exclude_paths": [
+                                        "/files/",
+                                        "/images/",
+                                        "/iso/",
+                                    ],
                                 },
                             ],
                             "rhui_alias": [
                                 {
                                     "src": "/path/rhui/two",
                                     "dest": "/path/two",
-                                    "exclude_paths": ["/files/", "/images/",
-                                                      "/iso/"],
-                                    },
+                                    "exclude_paths": [
+                                        "/files/",
+                                        "/images/",
+                                        "/iso/",
+                                    ],
+                                },
                             ],
                         }
                     )

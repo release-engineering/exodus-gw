@@ -161,7 +161,9 @@ class RequestReader:
         return cls(request)
 
 
-def uri_alias(uri: str, aliases: list[tuple[str, str, list[str]]]) -> list[str]:
+def uri_alias(
+    uri: str, aliases: list[tuple[str, str, list[str]]]
+) -> list[str]:
     # Resolve every alias between paths within the uri (e.g.
     # allow RHUI paths to be aliased to non-RHUI).
     #
@@ -222,12 +224,13 @@ def uri_alias_recurse(
             # Used to replicate old NetStorage-compatible behaviour. This will
             # typically match non-rpm paths, such as /images/ or /isos/
             if any([re.search(exclusion, uri) for exclusion in exclude_paths]):
-                LOG.debug("Aliasing for %s was not applied as it matches one "
-                          "of the following exclusion paths: %s.",
-                          uri,
-                          ",".join(exclude_paths),
-                          extra={"event": "publish", "success": True},
-                          )
+                LOG.debug(
+                    "Aliasing for %s was not applied as it matches one "
+                    "of the following exclusion paths: %s.",
+                    uri,
+                    ",".join(exclude_paths),
+                    extra={"event": "publish", "success": True},
+                )
                 continue
 
             new_uri = uri.replace(src, dest, 1)

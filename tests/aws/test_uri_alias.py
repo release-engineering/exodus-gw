@@ -145,34 +145,45 @@ def test_uri_alias_limit(caplog: pytest.LogCaptureFixture):
         (
             "/content/dist/rhel9/9/x86_64/baseos/iso/PULP_MANIFEST",
             [
-                ("/content/dist/rhel9/9", "/content/dist/rhel9/9.5", ["/iso/"]),
+                (
+                    "/content/dist/rhel9/9",
+                    "/content/dist/rhel9/9.5",
+                    ["/iso/"],
+                ),
             ],
             # just returns the original
             ["/content/dist/rhel9/9/x86_64/baseos/iso/PULP_MANIFEST"],
             "Aliasing for /content/dist/rhel9/9/x86_64/baseos/iso/PULP_MANIFEST "
-            "was not applied as it matches one of the following exclusion paths: /iso/."
+            "was not applied as it matches one of the following exclusion paths: /iso/.",
         ),
         (
             "/some/path/with/file/in/it",
             [
-                ("/some/path", "/another/different/path", ["/none/", "/here/"]),
-                ("/another/different/path", "/this/wont/alias", ["/file/"])
+                (
+                    "/some/path",
+                    "/another/different/path",
+                    ["/none/", "/here/"],
+                ),
+                ("/another/different/path", "/this/wont/alias", ["/file/"]),
             ],
-            ["/another/different/path/with/file/in/it",
-             "/some/path/with/file/in/it"],
+            [
+                "/another/different/path/with/file/in/it",
+                "/some/path/with/file/in/it",
+            ],
             "Aliasing for /another/different/path/with/file/in/it was not "
-            "applied as it matches one of the following exclusion paths: /file/."
+            "applied as it matches one of the following exclusion paths: /file/.",
         ),
         (
             "/my/base/content/path/cool_iso_tool.rpm",
             [
                 ("/my/base", "/your/own", ["/iso/"]),
             ],
-            ["/your/own/content/path/cool_iso_tool.rpm",
-             "/my/base/content/path/cool_iso_tool.rpm"],
+            [
+                "/your/own/content/path/cool_iso_tool.rpm",
+                "/my/base/content/path/cool_iso_tool.rpm",
+            ],
             "Resolved alias:\\n\\tsrc: /my/base/content/path/cool_iso_tool.rpm"
-            "\\n\\tdest: /your/own/content/path/cool_iso_tool.rpm"
-
+            "\\n\\tdest: /your/own/content/path/cool_iso_tool.rpm",
         ),
         (
             "/content/dist/rhel9/9.5/x86_64/baseos/iso/PULP_MANIFEST",
@@ -182,21 +193,28 @@ def test_uri_alias_limit(caplog: pytest.LogCaptureFixture):
             ["/content/dist/rhel9/9.5/x86_64/baseos/iso/PULP_MANIFEST"],
             "Aliasing for /content/dist/rhel9/9.5/x86_64/baseos/iso/PULP_MANIFEST "
             "was not applied as it matches one of the following exclusion "
-            "paths: /rhel[89]/."
+            "paths: /rhel[89]/.",
         ),
         (
             "/content/dist/rhel7/7.5/x86_64/baseos/iso/PULP_MANIFEST",
             [
                 ("/content/dist", "/alias/path", ["/rhel[89]/"]),
             ],
-            ["/alias/path/rhel7/7.5/x86_64/baseos/iso/PULP_MANIFEST",
-             "/content/dist/rhel7/7.5/x86_64/baseos/iso/PULP_MANIFEST",],
+            [
+                "/alias/path/rhel7/7.5/x86_64/baseos/iso/PULP_MANIFEST",
+                "/content/dist/rhel7/7.5/x86_64/baseos/iso/PULP_MANIFEST",
+            ],
             "Resolved alias:\\n\\tsrc: /content/dist/rhel7/7.5/x86_64/baseos/iso/PULP_MANIFEST"
-            "\\n\\tdest: /alias/path/rhel7/7.5/x86_64/baseos/iso/PULP_MANIFEST"
+            "\\n\\tdest: /alias/path/rhel7/7.5/x86_64/baseos/iso/PULP_MANIFEST",
         ),
     ],
-
-    ids=["basic", "transitive", "filename",  "pattern_include", "pattern_exclude"],
+    ids=[
+        "basic",
+        "transitive",
+        "filename",
+        "pattern_include",
+        "pattern_exclude",
+    ],
 )
 def test_uri_alias_exclusions(input, aliases, output, log_message, caplog):
     caplog.set_level(DEBUG, logger="exodus-gw")
