@@ -36,7 +36,7 @@ class Flusher:
         paths: list[str],
         settings: Settings,
         env: str,
-        aliases: list[tuple[str, str]],
+        aliases: list[tuple[str, str, list[str]]],
     ):
         self.paths = [p for p in paths if not exclude_path(p)]
         self.settings = settings

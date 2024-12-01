@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Any
 
 import dramatiq
@@ -93,7 +94,8 @@ def deploy_config(
     db = Session(bind=db_engine(settings))
     ddb = DynamoDB(env, settings, from_date)
 
-    original_aliases = {src: dest for (src, dest) in ddb.aliases_for_flush}
+    original_aliases = {src: dest for (src, dest, _) in ddb.aliases_for_flush}
+    original_exclusions = {src: exc for (src, _, exc) in ddb.aliases_for_flush}
 
     message = CurrentMessage.get_current_message()
     assert message
@@ -142,12 +144,22 @@ def deploy_config(
     # URLs depending on what changed in the config.
     flush_paths: set[str] = set()
 
-    for src, updated_dest in ddb.aliases_for_flush:
+    for src, updated_dest, _ in ddb.aliases_for_flush:
         if original_aliases.get(src) != updated_dest:
             for published_path in db.query(models.PublishedPath).filter(
                 models.PublishedPath.env == env,
                 models.PublishedPath.web_uri.like(f"{src}/%"),
             ):
+                # If any original exclusion matches the uri, the uri wouldn't
+                # have been treated as an alias, thus cache flushing would be
+                # unnecessary.
+                if any(
+                    [
+                        re.search(exclusion, published_path.web_uri)
+                        for exclusion in original_exclusions.get(src, [])
+                    ]
+                ):
+                    continue
                 LOG.info(
                     "Updated alias %s will flush cache for %s",
                     src,
