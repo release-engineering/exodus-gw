@@ -305,6 +305,20 @@ off retries. Defaults to five (5) minutes.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="exodus_gw.settings.Settings.phase2_patterns">
+<span class="sig-name descname"><span class="pre">phase2_patterns</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/re.html#re.Pattern" title="(in Python v3.13)"><span class="pre">Pattern</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#exodus_gw.settings.Settings.phase2_patterns" title="Link to this definition">¶</a></dt>
+<dd><p>List of patterns which, if any have matched, force a path to
+be handled during phase 2 of commit.</p>
+<p>These patterns are intended for use with repositories not cleanly
+separated between mutable entry points and immutable content.</p>
+<p>For example, in-place updates to kickstart repositories may not
+only modify entry points such as extra_files.json but also
+arbitrary files referenced by that entry point, all of which should
+be processed during phase 2 of commit in order for updates to
+appear atomic.</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.autoindex_filename">
 <span class="sig-name descname"><span class="pre">autoindex_filename</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></em><a class="headerlink" href="#exodus_gw.settings.Settings.autoindex_filename" title="Link to this definition">¶</a></dt>
 <dd><p>Filename for indexes automatically generated during publish.</p>

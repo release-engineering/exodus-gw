@@ -412,6 +412,24 @@
     <span class="p">]</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;List of file names that should be saved for last when publishing.&quot;&quot;&quot;</span>
 
+    <span class="n">phase2_patterns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">Pattern</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="c1"># kickstart repos; note the logic here matches</span>
+        <span class="c1"># the manual workaround RHELDST-27642</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;/kickstart/.*(?&lt;!\.rpm)$&quot;</span><span class="p">),</span>
+    <span class="p">]</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;List of patterns which, if any have matched, force a path to</span>
+<span class="sd">    be handled during phase 2 of commit.</span>
+
+<span class="sd">    These patterns are intended for use with repositories not cleanly</span>
+<span class="sd">    separated between mutable entry points and immutable content.</span>
+
+<span class="sd">    For example, in-place updates to kickstart repositories may not</span>
+<span class="sd">    only modify entry points such as extra_files.json but also</span>
+<span class="sd">    arbitrary files referenced by that entry point, all of which should</span>
+<span class="sd">    be processed during phase 2 of commit in order for updates to</span>
+<span class="sd">    appear atomic.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">autoindex_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.__exodus_autoindex&quot;</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Filename for indexes automatically generated during publish.</span>
 
