@@ -238,6 +238,27 @@ class CommitBase:
             # link_to resolution logic.
             raise ValueError("BUG: missing object_key for %s" % item.web_uri)
 
+    def is_phase2(self, item: Item) -> bool:
+        # Return True if item should be handled in phase 2 of commit.
+        name = basename(item.web_uri)
+        if (
+            name == self.settings.autoindex_filename
+            or name in self.settings.entry_point_files
+        ):
+            # Typical entrypoint
+            return True
+
+        for pattern in self.settings.phase2_patterns:
+            # Arbitrary patterns from settings.
+            # e.g. this is where /kickstart/ is expected to be handled.
+            if pattern.search(item.web_uri):
+                LOG.debug(
+                    "%s: phase2 forced via pattern %s", item.web_uri, pattern
+                )
+                return True
+
+        return False
+
     @property
     def item_select(self):
         # Returns base of the SELECT query to find all items for commit.
@@ -334,9 +355,6 @@ class CommitBase:
 
         # Save any entry point items to publish last.
         final_items: list[Item] = []
-        final_basenames = self.settings.entry_point_files + [
-            self.settings.autoindex_filename
-        ]
 
         wrote_count = 0
 
@@ -358,7 +376,7 @@ class CommitBase:
 
                     self.check_item(item)
 
-                    if basename(item.web_uri) in final_basenames:
+                    if self.is_phase2(item):
                         LOG.debug(
                             "Delayed write for %s",
                             item.web_uri,
