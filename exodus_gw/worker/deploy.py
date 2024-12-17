@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from exodus_gw import models, schemas
 from exodus_gw.aws.dynamodb import DynamoDB
+from exodus_gw.aws.util import uris_with_aliases
 from exodus_gw.database import db_engine
 from exodus_gw.settings import Settings
 
@@ -144,30 +145,40 @@ def deploy_config(
     # URLs depending on what changed in the config.
     flush_paths: set[str] = set()
 
+    updated_prefixes = set()
     for src, updated_dest, _ in ddb.aliases_for_flush:
         if original_aliases.get(src) != updated_dest:
-            for published_path in db.query(models.PublishedPath).filter(
-                models.PublishedPath.env == env,
-                models.PublishedPath.web_uri.like(f"{src}/%"),
-            ):
-                # If any original exclusion matches the uri, the uri wouldn't
-                # have been treated as an alias, thus cache flushing would be
-                # unnecessary.
-                if any(
-                    [
-                        re.search(exclusion, published_path.web_uri)
-                        for exclusion in original_exclusions.get(src, [])
-                    ]
-                ):
-                    continue
-                LOG.info(
-                    "Updated alias %s will flush cache for %s",
-                    src,
-                    published_path.web_uri,
-                    extra={"event": "deploy"},
-                )
-                flush_paths.add(published_path.web_uri)
+            updated_prefixes.add(src)
 
+    aliases_to_expand = [alias for alias in ddb.aliases_for_flush
+                         if alias[0] in original_aliases.keys()]
+    updated_prefixes.update(uris_with_aliases(updated_prefixes, aliases_to_expand))
+
+    for src in updated_prefixes:
+        for published_path in db.query(models.PublishedPath).filter(
+            models.PublishedPath.env == env,
+            models.PublishedPath.web_uri.like(f"{src}/%"),
+        ):
+            # If any original exclusion matches the uri, the uri wouldn't
+            # have been treated as an alias, thus cache flushing would be
+            # unnecessary.
+            if any(
+                [
+                    re.search(exclusion, published_path.web_uri)
+                    for exclusion in original_exclusions.get(src, [])
+                ]
+            ):
+                continue
+            LOG.info(
+                "Updated alias %s will flush cache for %s",
+                src,
+                published_path.web_uri,
+                extra={"event": "deploy"},
+            )
+            flush_paths.add(published_path.web_uri)
+
+    # Need to expand the matched aliases to other aliases that'd be populated
+    # during publish
     # Include all the listing paths for flush when enabled in settings
     flush_paths = (
         flush_paths.union(_listing_paths_for_flush(config))

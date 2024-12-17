@@ -5,7 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
 
-
+# pylint: disable=unsubscriptable-object
 class PublishedPath(Base):
     """Represents a path updated on the CDN at some point.
 
