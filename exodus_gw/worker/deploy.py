@@ -147,11 +147,17 @@ def deploy_config(
 
     updated_paths = set()
     for src, updated_dest, _ in ddb.aliases_for_flush:
-        if original_aliases.get(src) and original_aliases.get(src) != updated_dest:
+        if (
+            original_aliases.get(src)
+            and original_aliases.get(src) != updated_dest
+        ):
             updated_paths.add(src)
 
-    aliases_to_expand = [alias for alias in ddb.aliases_for_flush
-                         if alias[0] in original_aliases.keys()]
+    aliases_to_expand = [
+        alias
+        for alias in ddb.aliases_for_flush
+        if alias[0] in original_aliases.keys()
+    ]
     updated_paths.update(uris_with_aliases(updated_paths, aliases_to_expand))
 
     for src in updated_paths:
