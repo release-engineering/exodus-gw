@@ -22,6 +22,7 @@ from exodus_gw.schemas import ItemBase
 from .base import Base
 
 
+# pylint: disable=unsubscriptable-object
 class Publish(Base):
     __tablename__ = "publishes"
 
