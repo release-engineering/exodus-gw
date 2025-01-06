@@ -150,9 +150,14 @@ def deploy_config(
         if original_aliases.get(src) != updated_dest:
             updated_prefixes.add(src)
 
-    aliases_to_expand = [alias for alias in ddb.aliases_for_flush
-                         if alias[0] in original_aliases.keys()]
-    updated_prefixes.update(uris_with_aliases(updated_prefixes, aliases_to_expand))
+    aliases_to_expand = [
+        alias
+        for alias in ddb.aliases_for_flush
+        if alias[0] in original_aliases.keys()
+    ]
+    updated_prefixes.update(
+        uris_with_aliases(updated_prefixes, aliases_to_expand)
+    )
 
     for src in updated_prefixes:
         for published_path in db.query(models.PublishedPath).filter(
