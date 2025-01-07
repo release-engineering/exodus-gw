@@ -158,6 +158,21 @@ def test_deploy_config_with_flush(
         )
     )
 
+    # These paths should be flushed after expanding the updated aliases.
+    db.add(
+        PublishedPath(
+            env="test",
+            web_uri="/content/testproduct/rhui/1/file1",
+            updated=datetime.now(tz=timezone.utc),
+        )
+    )
+    db.add(
+        PublishedPath(
+            env="test",
+            web_uri="/content/testproduct/rhui/1/file2",
+            updated=datetime.now(tz=timezone.utc),
+        )
+    )
     db.commit()
 
     # We're updating the alias in the config.
@@ -223,6 +238,8 @@ def test_deploy_config_with_flush(
         "/content/testproduct/1/file1",
         "/content/testproduct/1/file2",
         "/content/testproduct/1/newExclusion/file5",
+        "/content/testproduct/rhui/1/file1",
+        "/content/testproduct/rhui/1/file2",
     ]
 
     # And actor call should have been delayed by this long.
