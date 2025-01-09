@@ -291,6 +291,11 @@ def fake_config():
                 "dest": "/content/testproduct/1.1.0",
                 "exclude_paths": DEFAULT_EXCLUDE_PATHS,
             },
+            {
+                "src": "/content/product_duplicate/1",
+                "dest": "/content/testproduct/1.1.0",
+                "exclude_paths": DEFAULT_EXCLUDE_PATHS,
+            },
         ],
         "rhui_alias": [
             {

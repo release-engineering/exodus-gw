@@ -137,6 +137,23 @@ def test_commit(
         [
             # Note that both sides of the 1 alias are recorded, including
             # beyond the RHUI alias.
+
+            (
+                "test",
+                "/content/product_duplicate/1/kickstart/EULA",
+             ),
+            (
+                "test",
+                "/content/product_duplicate/1/kickstart/extra_files.json",
+            ),
+            (
+                "test",
+                "/content/product_duplicate/1/repo/",
+            ),
+            (
+                "test",
+                "/content/product_duplicate/1/repo/repomd.xml",
+            ),
             (
                 "test",
                 "/content/testproduct/1.1.0/kickstart/extra_files.json",
