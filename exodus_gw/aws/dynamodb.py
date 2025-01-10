@@ -163,7 +163,9 @@ class DynamoDB:
         #  .../5/5Client, and then see .../5/5.11 pointing to .../5/5Workstation
         #  and will wrongly believe this is because the alias has changed.
 
-        return self._aliases(["origin_alias", "releasever_alias", "rhui_alias"])
+        return self._aliases(
+            ["origin_alias", "releasever_alias", "rhui_alias"]
+        )
 
     def query_definitions(self) -> dict[str, Any]:
         """Query the definitions in the config_table. If definitions are found, return them. Otherwise,

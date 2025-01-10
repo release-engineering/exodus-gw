@@ -155,8 +155,8 @@ def deploy_config(
     aliases_to_expand = [
         alias
         for alias in ddb.aliases_for_flush
-        if alias[0] in original_aliases.keys() and
-           alias[0] not in updated_prefixes
+        if alias[0] in original_aliases.keys()
+        and alias[0] not in updated_prefixes
     ]
 
     updated_prefixes.update(

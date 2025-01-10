@@ -261,7 +261,6 @@ def test_deploy_config_with_flush_only_necessary(
     # Simulate successful write by batch_write.
     mock_boto3_client.batch_write_item.return_value = {"UnprocessedItems": {}}
 
-
     db.add(t)
 
     # Add some paths we expect will be flushed
@@ -311,8 +310,11 @@ def test_deploy_config_with_flush_only_necessary(
 
     # We're updating the alias in the config.
     updated_config = json.loads(json.dumps(fake_config))
-    updated_config["releasever_alias"] = [a for a in updated_config["releasever_alias"]
-                                          if a["dest"] != "/content/dist/rhel8/8.6"]
+    updated_config["releasever_alias"] = [
+        a
+        for a in updated_config["releasever_alias"]
+        if a["dest"] != "/content/dist/rhel8/8.6"
+    ]
     updated_config["releasever_alias"].append(
         {
             "src": "/content/dist/rhel8/8",
