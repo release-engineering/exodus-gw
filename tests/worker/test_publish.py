@@ -139,6 +139,22 @@ def test_commit(
             # beyond the RHUI alias.
             (
                 "test",
+                "/content/product_duplicate/1/kickstart/EULA",
+            ),
+            (
+                "test",
+                "/content/product_duplicate/1/kickstart/extra_files.json",
+            ),
+            (
+                "test",
+                "/content/product_duplicate/1/repo/",
+            ),
+            (
+                "test",
+                "/content/product_duplicate/1/repo/repomd.xml",
+            ),
+            (
+                "test",
                 "/content/testproduct/1.1.0/kickstart/extra_files.json",
             ),
             (

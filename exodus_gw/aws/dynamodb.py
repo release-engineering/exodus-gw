@@ -142,6 +142,31 @@ class DynamoDB:
 
         return out
 
+    @property
+    def aliases_for_config_update(self) -> list[tuple[str, str, list[str]]]:
+        # Used for determining which aliases were updated during config
+        # deployment. Unliked alias_for_flush these aliases should only be in
+        # the forward direction. This avoids urls being unnecessarily flushed.
+        #
+        # Example:
+        #
+        #   Given the aliases:
+        #      src : /content/dist/rhel/workstation/5/5Client
+        #      dest: /content/dist/rhel/workstation/5/5.11
+        #
+        #      src : /content/dist/rhel/workstation/5/5Workstation
+        #      dest: /content/dist/rhel/workstation/5/5.11
+        #
+        #  Since both aliases point to the same destination, if we checked for
+        #  alias updates in both directions, it would appear that the alias is
+        #  getting updated. i.e: the code would see .../5/5.11 pointing to
+        #  .../5/5Client, and then see .../5/5.11 pointing to .../5/5Workstation
+        #  and will wrongly believe this is because the alias has changed.
+
+        return self._aliases(
+            ["origin_alias", "releasever_alias", "rhui_alias"]
+        )
+
     def query_definitions(self) -> dict[str, Any]:
         """Query the definitions in the config_table. If definitions are found, return them. Otherwise,
         return an empty dictionary."""
