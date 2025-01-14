@@ -155,14 +155,14 @@ def config_post(
                     {
                         "dest": "/content/dist/rhel8/8.5",
                         "src": "/content/dist/rhel8/8",
-                        "exclude_paths": ["/files/", "/images/", "/iso/"],
+                        "exclude_paths": ["/files/", "/iso/"],
                     },
                 ],
                 "rhui_alias": [
                     {
                         "dest": "/content/dist/rhel8",
                         "src": "/content/dist/rhel8/rhui",
-                        "exclude_paths": ["/files/", "/images/", "/iso/"],
+                        "exclude_paths": ["/files/", "/iso/"],
                     },
                 ],
             }

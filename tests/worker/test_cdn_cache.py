@@ -214,7 +214,6 @@ excludes =
                                     "dest": "/path/one-dest",
                                     "exclude_paths": [
                                         "/files/",
-                                        "/images/",
                                         "/iso/",
                                     ],
                                 },
@@ -225,7 +224,6 @@ excludes =
                                     "dest": "/path/two",
                                     "exclude_paths": [
                                         "/files/",
-                                        "/images/",
                                         "/iso/",
                                     ],
                                 },
