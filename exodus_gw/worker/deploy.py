@@ -146,15 +146,19 @@ def deploy_config(
     flush_paths: set[str] = set()
 
     updated_prefixes = set()
-    for src, updated_dest, _ in ddb.aliases_for_flush:
+    for src, updated_dest, _ in ddb.aliases_for_config_update:
         if original_aliases.get(src) != updated_dest:
             updated_prefixes.add(src)
 
+    # We need to use the bidirectional aliases here to resolve transitive
+    # aliases.
     aliases_to_expand = [
         alias
         for alias in ddb.aliases_for_flush
         if alias[0] in original_aliases.keys()
+        and alias[0] not in updated_prefixes
     ]
+
     updated_prefixes.update(
         uris_with_aliases(updated_prefixes, aliases_to_expand)
     )

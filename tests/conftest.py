@@ -16,7 +16,7 @@ from exodus_gw.dramatiq import Broker
 
 from .async_utils import BlockDetector
 
-DEFAULT_EXCLUDE_PATHS = ["/files/", "/images/", "/iso/"]
+DEFAULT_EXCLUDE_PATHS = ["/files/", "/iso/"]
 
 
 async def fake_aexit_instancemethod(self, exc_type, exc_val, exc_tb):
@@ -288,6 +288,11 @@ def fake_config():
             },
             {
                 "src": "/content/testproduct/1",
+                "dest": "/content/testproduct/1.1.0",
+                "exclude_paths": DEFAULT_EXCLUDE_PATHS,
+            },
+            {
+                "src": "/content/product_duplicate/1",
                 "dest": "/content/testproduct/1.1.0",
                 "exclude_paths": DEFAULT_EXCLUDE_PATHS,
             },
