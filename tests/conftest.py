@@ -67,6 +67,32 @@ def fake_dynamodb_query(
     return side_effect
 
 
+@pytest.fixture(params=["binary-config", "text-config"])
+def fake_dynamodb_query_empty_config(request: pytest.FixtureRequest):
+    binary_config = request.param == "binary-config"
+
+    # Returns a callable which can be used as a mock side-effect
+    # to make a DynamoDB query on exodus-config return 0 items.
+    # Used to simulate an environment with an empty config table,
+    # such as a new test environment.
+    def side_effect(
+        TableName,
+        Limit,
+        ScanIndexForward,
+        KeyConditionExpression,
+        ExpressionAttributeValues,
+    ):
+        # This is the only query we expect right now.
+        assert TableName == "my-config"
+        assert Limit == 1
+        return {
+            "Count": 0,
+            "Items": [],
+        }
+
+    return side_effect
+
+
 @pytest.fixture(autouse=True)
 def mock_boto3_session():
     with mock.patch("boto3.session.Session") as mock_session:
@@ -77,6 +103,17 @@ def mock_boto3_session():
 def mock_boto3_client(fake_dynamodb_query, mock_boto3_session):
     client = mock.MagicMock()
     client.query.side_effect = fake_dynamodb_query
+    client.__enter__.return_value = client
+    mock_boto3_session().client.return_value = client
+    yield client
+
+
+@pytest.fixture()
+def mock_boto3_client_empty_config(
+    fake_dynamodb_query_empty_config, mock_boto3_session
+):
+    client = mock.MagicMock()
+    client.query.side_effect = fake_dynamodb_query_empty_config
     client.__enter__.return_value = client
     mock_boto3_session().client.return_value = client
     yield client
