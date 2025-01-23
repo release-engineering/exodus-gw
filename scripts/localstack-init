@@ -19,7 +19,7 @@ ensure_aws_profile()(
   # If the profile already exists, we do nothing since the user might
   # have configured it a certain way and we shouldn't mess with it.
   # However if it doesn't exist, we define a minimal one.
-  if ! aws configure list-profiles | egrep --silent "^test$"; then
+  if ! aws configure list-profiles | grep -E --silent "^test$"; then
     aws configure set profile.test.region us-east-1
     aws configure set profile.test.aws_access_key_id fake-key-id
     aws configure set profile.test.aws_secret_access_key fake-key
