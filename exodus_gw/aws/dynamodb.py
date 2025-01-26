@@ -169,10 +169,16 @@ class DynamoDB:
 
     def query_definitions(self) -> dict[str, Any]:
         """Query the definitions in the config_table. If definitions are found, return them. Otherwise,
-        return an empty dictionary."""
+        return a valid empty configuration."""
 
-        # Return an empty dict if a query result is not found
-        out: dict[str, Any] = {}
+        # If a query result is not found, return a reasonable default object representing a valid
+        # empty configuration.
+        out: dict[str, Any] = {
+            "listing": {},
+            "origin_alias": [],
+            "releasever_alias": [],
+            "rhui_alias": [],
+        }
 
         LOG.info(
             "Loading exodus-config as at %s.",

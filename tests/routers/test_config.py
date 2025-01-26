@@ -16,6 +16,23 @@ def test_config_get(auth_header, fake_config, mock_boto3_client):
     assert r.json() == fake_config
 
 
+def test_config_get_empty_config(auth_header, mock_boto3_client_empty_config):
+    with TestClient(app) as client:
+        r = client.get(
+            "/test/config",
+            headers=auth_header(roles=["test-config-consumer"]),
+        )
+
+    # It should have succeeded and returned the default empty config
+    assert r.status_code == 200
+    assert r.json() == {
+        "listing": {},
+        "origin_alias": [],
+        "releasever_alias": [],
+        "rhui_alias": [],
+    }
+
+
 @pytest.mark.parametrize("endpoint", ["config", "deploy-config"])
 def test_deploy_config_typical(fake_config, auth_header, endpoint):
     with TestClient(app) as client:
