@@ -309,12 +309,10 @@ def fake_config():
             {
                 "src": "/content/origin",
                 "dest": "/origin",
-                "exclude_paths": DEFAULT_EXCLUDE_PATHS,
             },
             {
                 "src": "/origin/rpm",
                 "dest": "/origin/rpms",
-                "exclude_paths": DEFAULT_EXCLUDE_PATHS,
             },
         ],
         "releasever_alias": [
@@ -338,12 +336,10 @@ def fake_config():
             {
                 "src": "/content/dist/rhel8/rhui",
                 "dest": "/content/dist/rhel8",
-                "exclude_paths": DEFAULT_EXCLUDE_PATHS,
             },
             {
                 "src": "/content/testproduct/rhui",
                 "dest": "/content/testproduct",
-                "exclude_paths": DEFAULT_EXCLUDE_PATHS,
             },
         ],
     }

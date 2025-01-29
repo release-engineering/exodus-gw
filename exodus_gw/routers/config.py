@@ -143,12 +143,10 @@ def config_post(
                     {
                         "src": "/content/origin",
                         "dest": "/origin",
-                        "exclude_paths": [],
                     },
                     {
                         "src": "/origin/rpm",
                         "dest": "/origin/rpms",
-                        "exclude_paths": ["/iso/"],
                     },
                 ],
                 "releasever_alias": [
@@ -162,7 +160,6 @@ def config_post(
                     {
                         "dest": "/content/dist/rhel8",
                         "src": "/content/dist/rhel8/rhui",
-                        "exclude_paths": ["/files/", "/iso/"],
                     },
                 ],
             }
@@ -216,6 +213,7 @@ def config_post(
 @router.get(
     "/{env}/config",
     response_model=schemas.Config,
+    response_model_exclude_none=True,
     summary="Get CDN configuration",
     status_code=200,
     responses={
@@ -234,6 +232,7 @@ def config_post(
                 {
                     "dest": "/content/dist/rhel-alt/server/7/7.9",
                     "src": "/content/dist/rhel-alt/server/7/7Server",
+                    "exclude_paths": ["/files/", "/iso/"],
                 },
             ],
             "rhui_alias": [

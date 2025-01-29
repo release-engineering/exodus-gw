@@ -59,12 +59,10 @@ def deploy_config(
                     {
                         "src": "/content/origin",
                         "dest": "/origin",
-                        "exclude_paths": [],
                     },
                     {
                         "src": "/origin/rpm",
                         "dest": "/origin/rpms",
-                        "exclude_paths": ["/iso/"],
                     },
                 ],
                 "releasever_alias": [
@@ -78,7 +76,6 @@ def deploy_config(
                     {
                         "dest": "/content/dist/rhel8",
                         "src": "/content/dist/rhel8/rhui",
-                        "exclude_paths": ["/files/", "/iso/"],
                     },
                 ],
             }

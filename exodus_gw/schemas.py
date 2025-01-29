@@ -320,7 +320,7 @@ class Alias(BaseModel):
         ..., description="Target of the alias, relative to CDN root."
     )
     exclude_paths: list[str] | None = Field(
-        [],
+        None,
         description="Paths for which alias will not be resolved, "
         "treated as an unanchored regex.",
     )
