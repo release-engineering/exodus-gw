@@ -148,9 +148,9 @@ botocore==1.36.1 \
     #   aiobotocore
     #   boto3
     #   s3transfer
-certifi==2024.12.14 \
-    --hash=sha256:1275f7a45be9464efc1173084eaa30f866fe2e47d389406136d332ed4967ec56 \
-    --hash=sha256:b650d30f370c2b724812bee08008be0c4163b163ddaec3f2546c1caf65f191db
+certifi==2025.1.31 \
+    --hash=sha256:3d5da6925056f6f18f119200434a4780a94263f10d1c21d032a6f6b2baa20651 \
+    --hash=sha256:ca78db4565a652026a4db2bcdf68f2fb589ea80d0be70e03929ed730746b84fe
     # via requests
 cffi==1.17.1 \
     --hash=sha256:045d61c734659cc045141be4bae381a41d89b741f795af1dd018bfb532fd0df8 \
@@ -364,9 +364,9 @@ edgegrid-python==2.0.0 \
     --hash=sha256:b8ef707dee591f9cad2c436fdbed79b53e2bb41e30e1df512cbac0961191a0ee \
     --hash=sha256:ebb917a70b514c54ff9abd39e0e2993760ab1c99048c260e4c6b3f7d09946494
     # via fastpurge
-fastapi==0.115.7 \
-    --hash=sha256:0f106da6c01d88a6786b3248fb4d7a940d071f6f488488898ad5d354b25ed015 \
-    --hash=sha256:eb6a8c8bf7f26009e8147111ff15b5177a0e19bb4a45bc3486ab14804539d21e
+fastapi==0.115.8 \
+    --hash=sha256:0ce9111231720190473e222cdf0f07f7206ad7e53ea02beb1d2dc36e2f0741e9 \
+    --hash=sha256:753a96dd7e036b34eeef8babdfcfe3f28ff79648f86551eb36bfc1b0bf4a8cbf
     # via -r requirements.in
 fastpurge==1.0.5 \
     --hash=sha256:0e8c082afca8d4fd289963a59b4ba022704263b271117bac18b7d8bd768b0b9f \
