@@ -7,8 +7,8 @@ import mock
 import pytest
 from botocore.exceptions import EndpointConnectionError
 
-from exodus_gw.models import Publish, Item
 from exodus_gw.aws import dynamodb
+from exodus_gw.models import Item, Publish
 from exodus_gw.settings import Settings
 
 NOW_UTC = str(datetime.now(timezone.utc))
@@ -72,7 +72,7 @@ NOW_UTC = str(datetime.now(timezone.utc))
                                 },
                                 "object_key": {
                                     "S": "3f449eb3b942af58e9aca4c1cffdef89"
-                                         "c3f1552c20787ae8c966767a1fedd3a5"
+                                    "c3f1552c20787ae8c966767a1fedd3a5"
                                 },
                                 "from_date": {"S": "2023-10-04 03:52:02"},
                                 "content_type": {"S": None},
@@ -254,7 +254,7 @@ def test_batch_write(
                                 },
                                 "object_key": {
                                     "S": "3f449eb3b942af58e9aca4c1cffdef89"
-                                         "c3f1552c20787ae8c966767a1fedd3a5"
+                                    "c3f1552c20787ae8c966767a1fedd3a5"
                                 },
                                 "from_date": {"S": "2023-10-04 03:52:02"},
                                 "content_type": {"S": None},
@@ -304,7 +304,7 @@ def test_batch_write(
                                 "web_uri": {"S": "/some/path"},
                                 "object_key": {
                                     "S": "0bacfc5268f9994065dd858ece3359fd"
-                                         "7a99d82af5be84202b8e84c2a5b07ffa"
+                                    "7a99d82af5be84202b8e84c2a5b07ffa"
                                 },
                                 # Note these timestamps come from the canned values
                                 # on fake_publish.items
@@ -319,7 +319,7 @@ def test_batch_write(
                                 "web_uri": {"S": "/other/path"},
                                 "object_key": {
                                     "S": "e448a4330ff79a1b20069d436fae9480"
-                                         "6a0e2e3a6b309cd31421ef088c6439fb"
+                                    "6a0e2e3a6b309cd31421ef088c6439fb"
                                 },
                                 "from_date": {"S": "2023-10-04 03:52:01"},
                                 "content_type": {"S": None},
@@ -334,7 +334,7 @@ def test_batch_write(
                                 },
                                 "object_key": {
                                     "S": "3f449eb3b942af58e9aca4c1cffdef89"
-                                         "c3f1552c20787ae8c966767a1fedd3a5"
+                                    "c3f1552c20787ae8c966767a1fedd3a5"
                                 },
                                 "from_date": {"S": "2023-10-04 03:52:02"},
                                 "content_type": {"S": None},
@@ -349,7 +349,7 @@ def test_batch_write(
                                 },
                                 "object_key": {
                                     "S": "5891b5b522d5df086d0ff0b110fbd9d2"
-                                         "1bb4fc7163af34d08286a2e846f6be03"
+                                    "1bb4fc7163af34d08286a2e846f6be03"
                                 },
                                 "from_date": {"S": "2023-10-04 03:52:02"},
                                 "content_type": {"S": None},
@@ -381,45 +381,82 @@ def test_batch_write_mirror_configurable(
 
 
 def test_write_mirror(mock_boto3_client):
-    expected_request = {'my-table': [
+    expected_request = {
+        "my-table": [
             # publish.items[0] both sides of the alias are mirrored.
-            {'PutRequest': {
-                'Item': {'from_date': {'S': '2023-10-04 03:52:00'},
-                         'web_uri': {
-                             'S': '/content/dist/rhel8/8.5/x86_64/baseos/os/repodata/abc123-primary.xml.gz'},
-                         'object_key': {
-                             'S': '0bacfc5268f9994065dd858ece3359fd7a99d82af5be84202b8e84c2a5b07ffa'},
-                         'content_type': {'S': None}}}}
-            , {'PutRequest': {
-            'Item': {'from_date': {'S': '2023-10-04 03:52:00'}, 'web_uri': {
-                'S': '/content/dist/rhel8/8/x86_64/baseos/os/repodata/abc123-primary.xml.gz'},
-                     'object_key': {
-                         'S': '0bacfc5268f9994065dd858ece3359fd7a99d82af5be84202b8e84c2a5b07ffa'},
-                     'content_type': {'S': None}}}},
+            {
+                "PutRequest": {
+                    "Item": {
+                        "from_date": {"S": "2023-10-04 03:52:00"},
+                        "web_uri": {
+                            "S": "/content/dist/rhel8/8.5/x86_64/baseos/os/repodata/abc123-primary.xml.gz"
+                        },
+                        "object_key": {
+                            "S": "0bacfc5268f9994065dd858ece3359fd7a99d82af5be84202b8e84c2a5b07ffa"
+                        },
+                        "content_type": {"S": None},
+                    }
+                }
+            },
+            {
+                "PutRequest": {
+                    "Item": {
+                        "from_date": {"S": "2023-10-04 03:52:00"},
+                        "web_uri": {
+                            "S": "/content/dist/rhel8/8/x86_64/baseos/os/repodata/abc123-primary.xml.gz"
+                        },
+                        "object_key": {
+                            "S": "0bacfc5268f9994065dd858ece3359fd7a99d82af5be84202b8e84c2a5b07ffa"
+                        },
+                        "content_type": {"S": None},
+                    }
+                }
+            },
             # publish.items[1] no alias matches, so it's just the provided uri
-            {'PutRequest': {
-                'Item': {'from_date': {'S': '2023-10-04 03:52:01'},
-                         'web_uri': {
-                             'S': '/content/dist/rhel9/9/x86_64/baseos/os/repodata/abc-primary.xml.gz'},
-                         'object_key': {
-                             'S': 'e448a4330ff79a1b20069d436fae94806a0e2e3a6b309cd31421ef088c6439fb'},
-                         'content_type': {'S': None}}}},
+            {
+                "PutRequest": {
+                    "Item": {
+                        "from_date": {"S": "2023-10-04 03:52:01"},
+                        "web_uri": {
+                            "S": "/content/dist/rhel9/9/x86_64/baseos/os/repodata/abc-primary.xml.gz"
+                        },
+                        "object_key": {
+                            "S": "e448a4330ff79a1b20069d436fae94806a0e2e3a6b309cd31421ef088c6439fb"
+                        },
+                        "content_type": {"S": None},
+                    }
+                }
+            },
             # publish.items[2], dest of the alias, so no mirroring occurs.
-            {'PutRequest': {
-                'Item': {'from_date': {'S': '2023-10-04 03:52:02'},
-                         'web_uri': {
-                             'S': '/content/dist/rhel8/8.5/aarch64/appstream/debug/repodata/xyz-primary.xml.gz'},
-                         'object_key': {
-                             'S': '3f449eb3b942af58e9aca4c1cffdef89c3f1552c20787ae8c966767a1fedd3a5'},
-                         'content_type': {'S': None}}}},
+            {
+                "PutRequest": {
+                    "Item": {
+                        "from_date": {"S": "2023-10-04 03:52:02"},
+                        "web_uri": {
+                            "S": "/content/dist/rhel8/8.5/aarch64/appstream/debug/repodata/xyz-primary.xml.gz"
+                        },
+                        "object_key": {
+                            "S": "3f449eb3b942af58e9aca4c1cffdef89c3f1552c20787ae8c966767a1fedd3a5"
+                        },
+                        "content_type": {"S": None},
+                    }
+                }
+            },
             # publish.items[3] RHUI is not mirrored.
-            {'PutRequest': {
-                'Item': {'from_date': {'S': '2023-10-04 03:52:02'},
-                         'web_uri': {
-                             'S': '/content/dist/rhel8/rhui/8/aarch64/appstream/debug/repodata/ijk-primary.xml.gz'},
-                         'object_key': {
-                             'S': '5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03'},
-                         'content_type': {'S': None}}}},
+            {
+                "PutRequest": {
+                    "Item": {
+                        "from_date": {"S": "2023-10-04 03:52:02"},
+                        "web_uri": {
+                            "S": "/content/dist/rhel8/rhui/8/aarch64/appstream/debug/repodata/ijk-primary.xml.gz"
+                        },
+                        "object_key": {
+                            "S": "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03"
+                        },
+                        "content_type": {"S": None},
+                    }
+                }
+            },
         ]
     }
     publish = Publish(
