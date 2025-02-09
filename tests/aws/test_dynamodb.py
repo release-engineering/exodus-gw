@@ -8,6 +8,7 @@ import pytest
 from botocore.exceptions import EndpointConnectionError
 
 from exodus_gw.aws import dynamodb
+from exodus_gw.models import Item, Publish
 from exodus_gw.settings import Settings
 
 NOW_UTC = str(datetime.now(timezone.utc))
@@ -16,6 +17,283 @@ NOW_UTC = str(datetime.now(timezone.utc))
 @pytest.mark.parametrize(
     "delete,expected_request",
     [
+        (
+            False,
+            {
+                "my-table": [
+                    {
+                        "PutRequest": {
+                            "Item": {
+                                "web_uri": {"S": "/some/path"},
+                                "object_key": {
+                                    "S": "0bacfc5268f9994065dd858ece3359fd"
+                                    "7a99d82af5be84202b8e84c2a5b07ffa"
+                                },
+                                # Note these timestamps come from the canned values
+                                # on fake_publish.items
+                                "from_date": {"S": "2023-10-04 03:52:00"},
+                                "content_type": {"S": None},
+                            }
+                        }
+                    },
+                    {
+                        "PutRequest": {
+                            "Item": {
+                                "web_uri": {"S": "/other/path"},
+                                "object_key": {
+                                    "S": "e448a4330ff79a1b20069d436fae9480"
+                                    "6a0e2e3a6b309cd31421ef088c6439fb"
+                                },
+                                "from_date": {"S": "2023-10-04 03:52:01"},
+                                "content_type": {"S": None},
+                            }
+                        }
+                    },
+                    {
+                        "PutRequest": {
+                            "Item": {
+                                "web_uri": {
+                                    "S": "/content/testproduct/1.1.0/repo/repomd.xml"
+                                },
+                                "object_key": {
+                                    "S": "3f449eb3b942af58e9aca4c1cffdef89"
+                                    "c3f1552c20787ae8c966767a1fedd3a5"
+                                },
+                                "from_date": {"S": "2023-10-04 03:52:02"},
+                                "content_type": {"S": None},
+                            }
+                        }
+                    },
+                    {
+                        "PutRequest": {
+                            "Item": {
+                                "web_uri": {
+                                    "S": "/content/testproduct/1/repo/repomd.xml"
+                                },
+                                "object_key": {
+                                    "S": "3f449eb3b942af58e9aca4c1cffdef89"
+                                    "c3f1552c20787ae8c966767a1fedd3a5"
+                                },
+                                "from_date": {"S": "2023-10-04 03:52:02"},
+                                "content_type": {"S": None},
+                            }
+                        }
+                    },
+                    {
+                        "PutRequest": {
+                            "Item": {
+                                "web_uri": {
+                                    "S": "/content/testproduct/1.1.0/repo/.__exodus_autoindex"
+                                },
+                                "object_key": {
+                                    "S": "5891b5b522d5df086d0ff0b110fbd9d2"
+                                    "1bb4fc7163af34d08286a2e846f6be03"
+                                },
+                                "from_date": {"S": "2023-10-04 03:52:02"},
+                                "content_type": {"S": None},
+                            }
+                        }
+                    },
+                    {
+                        "PutRequest": {
+                            "Item": {
+                                "web_uri": {
+                                    "S": "/content/testproduct/1/repo/.__exodus_autoindex"
+                                },
+                                "object_key": {
+                                    "S": "5891b5b522d5df086d0ff0b110fbd9d2"
+                                    "1bb4fc7163af34d08286a2e846f6be03"
+                                },
+                                "from_date": {"S": "2023-10-04 03:52:02"},
+                                "content_type": {"S": None},
+                            }
+                        }
+                    },
+                ],
+            },
+        ),
+        (
+            True,
+            {
+                "my-table": [
+                    {
+                        "DeleteRequest": {
+                            "Key": {
+                                "web_uri": {"S": "/some/path"},
+                                "from_date": {"S": "2023-10-04 03:52:00"},
+                            }
+                        }
+                    },
+                    {
+                        "DeleteRequest": {
+                            "Key": {
+                                "web_uri": {"S": "/other/path"},
+                                "from_date": {"S": "2023-10-04 03:52:01"},
+                            }
+                        }
+                    },
+                    {
+                        "DeleteRequest": {
+                            "Key": {
+                                "web_uri": {
+                                    "S": "/content/testproduct/1.1.0/repo/repomd.xml"
+                                },
+                                "from_date": {"S": "2023-10-04 03:52:02"},
+                            }
+                        }
+                    },
+                    {
+                        "DeleteRequest": {
+                            "Key": {
+                                "web_uri": {
+                                    "S": "/content/testproduct/1/repo/repomd.xml"
+                                },
+                                "from_date": {"S": "2023-10-04 03:52:02"},
+                            }
+                        }
+                    },
+                    {
+                        "DeleteRequest": {
+                            "Key": {
+                                "web_uri": {
+                                    "S": "/content/testproduct/1.1.0/repo/.__exodus_autoindex"
+                                },
+                                "from_date": {"S": "2023-10-04 03:52:02"},
+                            }
+                        }
+                    },
+                    {
+                        "DeleteRequest": {
+                            "Key": {
+                                "web_uri": {
+                                    "S": "/content/testproduct/1/repo/.__exodus_autoindex"
+                                },
+                                "from_date": {"S": "2023-10-04 03:52:02"},
+                            }
+                        }
+                    },
+                ],
+            },
+        ),
+    ],
+    ids=["Put", "Delete"],
+)
+def test_batch_write(
+    mock_boto3_client, fake_publish, delete, expected_request
+):
+    ddb = dynamodb.DynamoDB("test", Settings(), NOW_UTC, mirror_writes=True)
+
+    request = ddb.create_request(fake_publish.items, delete=delete)
+
+    # Represent successful write/delete of all items to the table.
+    mock_boto3_client.batch_write_item.return_value = {"UnprocessedItems": {}}
+
+    ddb.batch_write(request)
+
+    # Should've requested write of all items.
+    mock_boto3_client.batch_write_item.assert_called_once_with(
+        RequestItems=expected_request
+    )
+
+
+@pytest.mark.parametrize(
+    "mirror,expected_request",
+    [
+        (
+            True,
+            {
+                "my-table": [
+                    {
+                        "PutRequest": {
+                            "Item": {
+                                "web_uri": {"S": "/some/path"},
+                                "object_key": {
+                                    "S": "0bacfc5268f9994065dd858ece3359fd"
+                                    "7a99d82af5be84202b8e84c2a5b07ffa"
+                                },
+                                # Note these timestamps come from the canned values
+                                # on fake_publish.items
+                                "from_date": {"S": "2023-10-04 03:52:00"},
+                                "content_type": {"S": None},
+                            }
+                        }
+                    },
+                    {
+                        "PutRequest": {
+                            "Item": {
+                                "web_uri": {"S": "/other/path"},
+                                "object_key": {
+                                    "S": "e448a4330ff79a1b20069d436fae9480"
+                                    "6a0e2e3a6b309cd31421ef088c6439fb"
+                                },
+                                "from_date": {"S": "2023-10-04 03:52:01"},
+                                "content_type": {"S": None},
+                            }
+                        }
+                    },
+                    {
+                        "PutRequest": {
+                            "Item": {
+                                "web_uri": {
+                                    "S": "/content/testproduct/1.1.0/repo/repomd.xml"
+                                },
+                                "object_key": {
+                                    "S": "3f449eb3b942af58e9aca4c1cffdef89"
+                                    "c3f1552c20787ae8c966767a1fedd3a5"
+                                },
+                                "from_date": {"S": "2023-10-04 03:52:02"},
+                                "content_type": {"S": None},
+                            }
+                        }
+                    },
+                    {
+                        "PutRequest": {
+                            "Item": {
+                                "web_uri": {
+                                    "S": "/content/testproduct/1/repo/repomd.xml"
+                                },
+                                "object_key": {
+                                    "S": "3f449eb3b942af58e9aca4c1cffdef89"
+                                    "c3f1552c20787ae8c966767a1fedd3a5"
+                                },
+                                "from_date": {"S": "2023-10-04 03:52:02"},
+                                "content_type": {"S": None},
+                            }
+                        }
+                    },
+                    {
+                        "PutRequest": {
+                            "Item": {
+                                "web_uri": {
+                                    "S": "/content/testproduct/1.1.0/repo/.__exodus_autoindex"
+                                },
+                                "object_key": {
+                                    "S": "5891b5b522d5df086d0ff0b110fbd9d2"
+                                    "1bb4fc7163af34d08286a2e846f6be03"
+                                },
+                                "from_date": {"S": "2023-10-04 03:52:02"},
+                                "content_type": {"S": None},
+                            }
+                        }
+                    },
+                    {
+                        "PutRequest": {
+                            "Item": {
+                                "web_uri": {
+                                    "S": "/content/testproduct/1/repo/.__exodus_autoindex"
+                                },
+                                "object_key": {
+                                    "S": "5891b5b522d5df086d0ff0b110fbd9d2"
+                                    "1bb4fc7163af34d08286a2e846f6be03"
+                                },
+                                "from_date": {"S": "2023-10-04 03:52:02"},
+                                "content_type": {"S": None},
+                            }
+                        }
+                    },
+                ],
+            },
+        ),
         (
             False,
             {
@@ -81,58 +359,147 @@ NOW_UTC = str(datetime.now(timezone.utc))
                 ],
             },
         ),
-        (
-            True,
-            {
-                "my-table": [
-                    {
-                        "DeleteRequest": {
-                            "Key": {
-                                "web_uri": {"S": "/some/path"},
-                                "from_date": {"S": "2023-10-04 03:52:00"},
-                            }
-                        }
-                    },
-                    {
-                        "DeleteRequest": {
-                            "Key": {
-                                "web_uri": {"S": "/other/path"},
-                                "from_date": {"S": "2023-10-04 03:52:01"},
-                            }
-                        }
-                    },
-                    {
-                        "DeleteRequest": {
-                            "Key": {
-                                "web_uri": {
-                                    "S": "/content/testproduct/1.1.0/repo/repomd.xml"
-                                },
-                                "from_date": {"S": "2023-10-04 03:52:02"},
-                            }
-                        }
-                    },
-                    {
-                        "DeleteRequest": {
-                            "Key": {
-                                "web_uri": {
-                                    "S": "/content/testproduct/1.1.0/repo/.__exodus_autoindex"
-                                },
-                                "from_date": {"S": "2023-10-04 03:52:02"},
-                            }
-                        }
-                    },
-                ],
-            },
-        ),
     ],
-    ids=["Put", "Delete"],
+    ids=["Mirror-Enabled", "Mirror-Disabled"],
 )
-def test_batch_write(
-    mock_boto3_client, fake_publish, delete, expected_request
+def test_batch_write_mirror_configurable(
+    mock_boto3_client, fake_publish, mirror, expected_request
 ):
-    ddb = dynamodb.DynamoDB("test", Settings(), NOW_UTC)
+    ddb = dynamodb.DynamoDB("test", Settings(), NOW_UTC, mirror_writes=mirror)
 
-    request = ddb.create_request(fake_publish.items, delete=delete)
+    request = ddb.create_request(fake_publish.items, delete=False)
+
+    # Represent successful write/delete of all items to the table.
+    mock_boto3_client.batch_write_item.return_value = {"UnprocessedItems": {}}
+
+    ddb.batch_write(request)
+
+    # Should've requested write of all items.
+    mock_boto3_client.batch_write_item.assert_called_once_with(
+        RequestItems=expected_request
+    )
+
+
+def test_write_mirror(mock_boto3_client):
+    expected_request = {
+        "my-table": [
+            # publish.items[0] both sides of the alias are mirrored.
+            {
+                "PutRequest": {
+                    "Item": {
+                        "from_date": {"S": "2023-10-04 03:52:00"},
+                        "web_uri": {
+                            "S": "/content/dist/rhel8/8.5/x86_64/baseos/os/repodata/abc123-primary.xml.gz"
+                        },
+                        "object_key": {
+                            "S": "0bacfc5268f9994065dd858ece3359fd7a99d82af5be84202b8e84c2a5b07ffa"
+                        },
+                        "content_type": {"S": None},
+                    }
+                }
+            },
+            {
+                "PutRequest": {
+                    "Item": {
+                        "from_date": {"S": "2023-10-04 03:52:00"},
+                        "web_uri": {
+                            "S": "/content/dist/rhel8/8/x86_64/baseos/os/repodata/abc123-primary.xml.gz"
+                        },
+                        "object_key": {
+                            "S": "0bacfc5268f9994065dd858ece3359fd7a99d82af5be84202b8e84c2a5b07ffa"
+                        },
+                        "content_type": {"S": None},
+                    }
+                }
+            },
+            # publish.items[1] no alias matches, so it's just the provided uri
+            {
+                "PutRequest": {
+                    "Item": {
+                        "from_date": {"S": "2023-10-04 03:52:01"},
+                        "web_uri": {
+                            "S": "/content/dist/rhel9/9/x86_64/baseos/os/repodata/abc-primary.xml.gz"
+                        },
+                        "object_key": {
+                            "S": "e448a4330ff79a1b20069d436fae94806a0e2e3a6b309cd31421ef088c6439fb"
+                        },
+                        "content_type": {"S": None},
+                    }
+                }
+            },
+            # publish.items[2], dest of the alias, so no mirroring occurs.
+            {
+                "PutRequest": {
+                    "Item": {
+                        "from_date": {"S": "2023-10-04 03:52:02"},
+                        "web_uri": {
+                            "S": "/content/dist/rhel8/8.5/aarch64/appstream/debug/repodata/xyz-primary.xml.gz"
+                        },
+                        "object_key": {
+                            "S": "3f449eb3b942af58e9aca4c1cffdef89c3f1552c20787ae8c966767a1fedd3a5"
+                        },
+                        "content_type": {"S": None},
+                    }
+                }
+            },
+            # publish.items[3] RHUI is not mirrored.
+            {
+                "PutRequest": {
+                    "Item": {
+                        "from_date": {"S": "2023-10-04 03:52:02"},
+                        "web_uri": {
+                            "S": "/content/dist/rhel8/rhui/8/aarch64/appstream/debug/repodata/ijk-primary.xml.gz"
+                        },
+                        "object_key": {
+                            "S": "5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03"
+                        },
+                        "content_type": {"S": None},
+                    }
+                }
+            },
+        ]
+    }
+    publish = Publish(
+        id="123e4567-e89b-12d3-a456-426614174000",
+        env="test",
+        state="PENDING",
+    )
+    publish.items = [
+        # Matches the 8 => 8.5 alias in conftest.py, should mirror
+        Item(
+            web_uri="/content/dist/rhel8/8/x86_64/baseos/os/repodata/abc123-primary.xml.gz",
+            object_key="0bacfc5268f9994065dd858ece3359fd7a99d82af5be84202b8e84c2a5b07ffa",
+            publish_id=publish.id,
+            updated=datetime(2023, 10, 4, 3, 52, 0),
+        ),
+        # Doesn't match any aliases, so no mirroring.
+        Item(
+            web_uri="/content/dist/rhel9/9/x86_64/baseos/os/repodata/abc-primary.xml.gz",
+            object_key="e448a4330ff79a1b20069d436fae94806a0e2e3a6b309cd31421ef088c6439fb",
+            publish_id=publish.id,
+            updated=datetime(2023, 10, 4, 3, 52, 1),
+        ),
+        # The destination side of 8 => 8.5, should not mirror.
+        Item(
+            web_uri="/content/dist/rhel8/8.5/aarch64/appstream/debug/repodata/xyz-primary.xml.gz",
+            object_key="3f449eb3b942af58e9aca4c1cffdef89c3f1552c20787ae8c966767a1fedd3a5",
+            publish_id=publish.id,
+            updated=datetime(2023, 10, 4, 3, 52, 2),
+        ),
+        # RHUI aliases are not aliased on write, so we expect the same uri
+        # with no mirroring. rhsm-pulp is configured upstream to block
+        # writing directly to rhui, this test is here to document the
+        # current behaviour.
+        Item(
+            web_uri="/content/dist/rhel8/rhui/8/aarch64/appstream/debug/repodata/ijk-primary.xml.gz",
+            object_key="5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03",
+            publish_id=publish.id,
+            updated=datetime(2023, 10, 4, 3, 52, 2),
+        ),
+    ]
+    ddb = dynamodb.DynamoDB("test", Settings(), NOW_UTC, mirror_writes=True)
+
+    request = ddb.create_request(publish.items, delete=False)
 
     # Represent successful write/delete of all items to the table.
     mock_boto3_client.batch_write_item.return_value = {"UnprocessedItems": {}}
