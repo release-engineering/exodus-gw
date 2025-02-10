@@ -26,9 +26,11 @@ ExecStartPost=cp \
   %E/exodus-gw-dev/db-service-key.pem
 
 # private key file must be owned by the database user or root
-# set postgres(999) as owner of the private key file
+# set postgres(999) as owner of the private key file for
+# debian-based images, and postgres(70) as the owner of the
+# private key file for alpine-based images.
 ExecStartPost=/usr/bin/podman unshare \
-  chown 999:999 %E/exodus-gw-dev/db-service-key.pem
+  chown 70:70 %E/exodus-gw-dev/db-service-key.pem
 
 [Install]
 WantedBy=exodus-gw.target
