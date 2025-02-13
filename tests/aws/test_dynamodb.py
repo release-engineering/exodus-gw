@@ -183,7 +183,7 @@ def test_batch_write(
 ):
     ddb = dynamodb.DynamoDB("test", Settings(), NOW_UTC, mirror_writes=True)
 
-    request = ddb.create_request(fake_publish.items, delete=delete)
+    request = ddb.create_requests(fake_publish.items, delete=delete)[0]
 
     # Represent successful write/delete of all items to the table.
     mock_boto3_client.batch_write_item.return_value = {"UnprocessedItems": {}}
@@ -367,7 +367,7 @@ def test_batch_write_mirror_configurable(
 ):
     ddb = dynamodb.DynamoDB("test", Settings(), NOW_UTC, mirror_writes=mirror)
 
-    request = ddb.create_request(fake_publish.items, delete=False)
+    request = ddb.create_requests(fake_publish.items, delete=False)[0]
 
     # Represent successful write/delete of all items to the table.
     mock_boto3_client.batch_write_item.return_value = {"UnprocessedItems": {}}
@@ -462,7 +462,7 @@ def test_write_mirror(mock_boto3_client):
     ]
     ddb = dynamodb.DynamoDB("test", Settings(), NOW_UTC, mirror_writes=True)
 
-    request = ddb.create_request(publish.items, delete=False)
+    request = ddb.create_requests(publish.items, delete=False)[0]
 
     # Represent successful write/delete of all items to the table.
     mock_boto3_client.batch_write_item.return_value = {"UnprocessedItems": {}}
@@ -475,17 +475,16 @@ def test_write_mirror(mock_boto3_client):
     )
 
 
-def test_batch_write_item_limit(mock_boto3_client, fake_publish, caplog):
+def test_create_requests_splits_batches(mock_boto3_client, fake_publish, caplog):
+    # With mirroring, requests could end up with more than the allowed number
+    # of items.
     items = fake_publish.items * 9
     ddb = dynamodb.DynamoDB("test", Settings(), NOW_UTC)
+    # Test that the generated requests are split into groups of no more than 25
+    requests = ddb.create_requests(items)
 
-    request = ddb.create_request(items)
-
-    with pytest.raises(ValueError) as exc_info:
-        ddb.batch_write(request)
-
-    assert "Cannot process more than 25 items per request" in caplog.text
-    assert "Request contains too many items" in str(exc_info.value)
+    for request in requests:
+        assert len(request["my-table"]) <= 25
 
 
 def test_batch_write_deadline(mock_boto3_client, fake_publish, caplog):
@@ -506,7 +505,7 @@ def test_batch_write_deadline(mock_boto3_client, fake_publish, caplog):
         from_date=NOW_UTC,
         deadline=deadline,
     )
-    request = ddb.create_request(items=fake_publish.items)
+    request = ddb.create_requests(items=fake_publish.items)[0]
 
     # Ensure eternally unsuccessful write of all items to the table.
     # This would ordinarily exhaust all tries defined in settings (default 20).

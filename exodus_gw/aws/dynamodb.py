@@ -233,7 +233,7 @@ class DynamoDB:
             uris.append(item.web_uri)
         return uris
 
-    def create_request(
+    def create_requests(
         self,
         items: list[models.Item],
         delete: bool = False,
@@ -241,6 +241,11 @@ class DynamoDB:
         """Create the dictionary structure expected by batch_write_item."""
         table_name = self.env_obj.table
         request: dict[str, list[Any]] = {table_name: []}
+
+        # Used to split request into requests < 25 items, to keep boto happy.
+        # in reality, it'll currently only be two requests.
+        request_list = []
+        url_count = 0
         for item in items:
             # Items carry their own from_date. This effectively resolves
             # conflicts in the case of two publishes updating the same web_uri
@@ -250,6 +255,11 @@ class DynamoDB:
             from_date = str(item.updated)
 
             for web_uri in self.uris_for_item(item):
+                # request is too large
+                if url_count == self.settings.write_batch_size:
+                    url_count = 0
+                    request_list.append(request)
+                    request = {table_name: []}
                 if delete:
                     request[table_name].append(
                         {
@@ -274,8 +284,10 @@ class DynamoDB:
                             }
                         }
                     )
+                url_count += 1
 
-        return request
+        request_list.append(request)
+        return request_list
 
     def create_config_request(self, config):
         request = {
@@ -362,37 +374,39 @@ class DynamoDB:
     def write_batch(self, items: list[models.Item], delete: bool = False):
         """Submit a batch of given items for writing via batch_write."""
 
-        request = self.create_request(list(items), delete)
-        try:
-            response = self.batch_write(request)
-        except Exception:
-            LOG.exception(
-                "Exception while %s items on table '%s'",
-                ("deleting" if delete else "writing"),
-                self.env_obj.table,
-                extra={"event": "publish", "success": False},
-            )
-            raise
-        # Raise immediately for put requests.
-        # Collect unprocessed items for delete requests and resume deleting.
-        if response["UnprocessedItems"]:
-            if delete:
-                LOG.error(
-                    "Unprocessed items:\n\t%s",
-                    (response["UnprocessedItems"]),
+        requests = self.create_requests(list(items), delete)
+        for request in requests:
+            try:
+
+                response = self.batch_write(request)
+            except Exception:
+                LOG.exception(
+                    "Exception while %s items on table '%s'",
+                    ("deleting" if delete else "writing"),
+                    self.env_obj.table,
                     extra={"event": "publish", "success": False},
                 )
-                raise RuntimeError(
-                    "Deletion failed\nSee error log for details"
-                )
+                raise
+            # Raise immediately for put requests.
+            # Collect unprocessed items for delete requests and resume deleting.
+            if response["UnprocessedItems"]:
+                if delete:
+                    LOG.error(
+                        "Unprocessed items:\n\t%s",
+                        (response["UnprocessedItems"]),
+                        extra={"event": "publish", "success": False},
+                    )
+                    raise RuntimeError(
+                        "Deletion failed\nSee error log for details"
+                    )
 
-            raise RuntimeError("One or more writes were unsuccessful")
+                raise RuntimeError("One or more writes were unsuccessful")
 
-        LOG.debug(
-            "Items successfully %s",
-            "deleted" if delete else "written",
-            extra={"event": "publish", "success": True},
-        )
+            LOG.debug(
+                "Items successfully %s",
+                "deleted" if delete else "written",
+                extra={"event": "publish", "success": True},
+            )
 
     def write_config(self, config):
         request = self.create_config_request(config)
