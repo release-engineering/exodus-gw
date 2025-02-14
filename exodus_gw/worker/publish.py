@@ -186,13 +186,8 @@ class CommitBase:
                 self.from_date,
                 self.env_obj,
                 self.task.deadline,
-                self.should_mirror_writes,
             )
         return self._dynamodb
-
-    @property
-    def should_mirror_writes(self):
-        return False
 
     @property
     def task_ready(self) -> bool:
@@ -450,10 +445,6 @@ class CommitBase:
 class CommitPhase1(CommitBase):
     # phase1 commit is allowed to proceed in either of these states.
     PUBLISH_STATES = [PublishStates.committing, PublishStates.pending]
-
-    @property
-    def should_mirror_writes(self):
-        return self.settings.mirror_writes_enabled
 
     @property
     def item_select(self):
