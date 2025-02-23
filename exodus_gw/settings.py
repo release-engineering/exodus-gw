@@ -475,10 +475,6 @@ class Settings(BaseSettings):
     s3_pool_size: int = 3
     """Number of S3 clients to cache"""
 
-    mirror_writes_enabled: bool = True
-    """Whether both the original url and releasever alias are written during
-     phase 1 commits."""
-
     model_config = SettingsConfigDict(env_prefix="exodus_gw_")
 
 
