@@ -54,9 +54,7 @@ def test_deploy_config(
                     "Item": {
                         "from_date": {"S": NOW_UTC},
                         "config_id": {"S": "exodus-config"},
-                        "config": {
-                            "B": mock.ANY
-                        },
+                        "config": {"B": mock.ANY},
                     }
                 }
             },
@@ -73,10 +71,12 @@ def test_deploy_config(
     mock_boto3_client.batch_write_item.assert_called_with(RequestItems=request)
 
     # gzip can produce different output for the same input.
-    request = mock_boto3_client.batch_write_item.call_args.kwargs["RequestItems"]
+    request = mock_boto3_client.batch_write_item.call_args.kwargs[
+        "RequestItems"
+    ]
     assert json.dumps(fake_config).encode() == gzip.decompress(
-        request["my-config"][0]["PutRequest"]["Item"]["config"]["B"])
-
+        request["my-config"][0]["PutRequest"]["Item"]["config"]["B"]
+    )
 
     # It should've sent task id to complete_deploy_config_task.
     messages = db.query(models.DramatiqMessage).all()
@@ -198,9 +198,7 @@ def test_deploy_config_with_flush(
                     "Item": {
                         "from_date": {"S": NOW_UTC},
                         "config_id": {"S": "exodus-config"},
-                        "config": {
-                            "B": mock.ANY
-                        },
+                        "config": {"B": mock.ANY},
                     }
                 }
             },
@@ -217,9 +215,12 @@ def test_deploy_config_with_flush(
     mock_boto3_client.batch_write_item.assert_called_with(RequestItems=request)
 
     # gzip can produce different output for the same input.
-    request = mock_boto3_client.batch_write_item.call_args.kwargs[ "RequestItems"]
+    request = mock_boto3_client.batch_write_item.call_args.kwargs[
+        "RequestItems"
+    ]
     assert json.dumps(updated_config).encode() == gzip.decompress(
-        request["my-config"][0]["PutRequest"]["Item"]["config"]["B"])
+        request["my-config"][0]["PutRequest"]["Item"]["config"]["B"]
+    )
 
     # It should've sent task id to complete_deploy_config_task.
     messages = db.query(models.DramatiqMessage).all()
@@ -339,9 +340,7 @@ def test_deploy_config_with_flush_only_necessary(
                     "Item": {
                         "from_date": {"S": NOW_UTC},
                         "config_id": {"S": "exodus-config"},
-                        "config": {
-                            "B": mock.ANY
-                        },
+                        "config": {"B": mock.ANY},
                     }
                 }
             },
@@ -351,9 +350,12 @@ def test_deploy_config_with_flush_only_necessary(
     mock_boto3_client.batch_write_item.assert_called_with(RequestItems=request)
 
     # gzip can produce different output for the same input.
-    request = mock_boto3_client.batch_write_item.call_args.kwargs["RequestItems"]
+    request = mock_boto3_client.batch_write_item.call_args.kwargs[
+        "RequestItems"
+    ]
     assert json.dumps(updated_config).encode() == gzip.decompress(
-        request["my-config"][0]["PutRequest"]["Item"]["config"]["B"])
+        request["my-config"][0]["PutRequest"]["Item"]["config"]["B"]
+    )
 
     # It should've sent task id to complete_deploy_config_task.
     messages = db.query(models.DramatiqMessage).all()
