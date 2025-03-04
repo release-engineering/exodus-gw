@@ -1,8 +1,8 @@
+import functools
 import gzip
 import json
 import logging
 from datetime import datetime
-from itertools import islice
 from threading import Lock
 from typing import Any
 
@@ -210,6 +210,7 @@ class DynamoDB:
             out = json.loads(item_json)
         return out
 
+    @functools.lru_cache(maxsize=2500)
     def uris_for_item(self, item) -> list[str]:
         """Returns all URIs to be written for the given item.
 
@@ -352,11 +353,27 @@ class DynamoDB:
         return _batch_write(request)
 
     def get_batches(self, items: list[models.Item]):
-        """Divide the publish items into batches of size 'write_batch_size'."""
+        """
+        Divide the publish items into batches of size 'write_batch_size'.
+
+        Due to mirroring, an item might have multiple write requests. We need
+        to account for this when splitting items into batches. We memoize the
+        results of uri_for_item to avoid recalculating aliases.
+        """
         it = iter(items)
-        batches = list(
-            iter(lambda: tuple(islice(it, self.settings.write_batch_size)), ())
-        )
+        batches: list[list[models.Item]] = []
+        current_batch: list[models.Item] = []
+        current_batch_size = 0
+        for item in it:
+            item_weight = len(self.uris_for_item(item))
+            if current_batch_size + item_weight > self.settings.write_batch_size:
+                batches.append(current_batch)
+                current_batch = []
+                current_batch_size = 0
+            current_batch.append(item)
+            current_batch_size += item_weight
+        if current_batch:
+            batches.append(current_batch)
         return batches
 
     def write_batch(self, items: list[models.Item], delete: bool = False):

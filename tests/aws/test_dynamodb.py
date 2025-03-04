@@ -475,6 +475,17 @@ def test_write_mirror(mock_boto3_client):
     )
 
 
+def test_batch_split_batches(mock_boto3_client, fake_publish, caplog):
+    items = fake_publish.items * 9
+    ddb = dynamodb.DynamoDB("test", Settings(), NOW_UTC, mirror_writes=True)
+
+    batches = ddb.get_batches(items)
+
+    assert len(batches) == 3
+    for b in batches:
+        assert 0 < len(b) <= 25
+
+
 def test_batch_write_item_limit(mock_boto3_client, fake_publish, caplog):
     items = fake_publish.items * 9
     ddb = dynamodb.DynamoDB("test", Settings(), NOW_UTC)
