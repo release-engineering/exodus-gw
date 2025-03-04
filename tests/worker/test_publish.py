@@ -763,15 +763,25 @@ def test_commit_missing_object_key(
 @pytest.mark.parametrize(
     "commit_class,expected",
     [
-        (worker.publish.CommitPhase1, [
-            "/content/dist/rhel8/8.5/aarch64/appstream/debug/repodata/abc123-comps.xml",
-            "/content/dist/rhel8/8/aarch64/appstream/debug/repodata/abc123-comps.xml"]),
-        (worker.publish.CommitPhase2, [
-            "/content/dist/rhel8/8.5/aarch64/appstream/debug/repodata/abc123-comps.xml"])
+        (
+            worker.publish.CommitPhase1,
+            [
+                "/content/dist/rhel8/8.5/aarch64/appstream/debug/repodata/abc123-comps.xml",
+                "/content/dist/rhel8/8/aarch64/appstream/debug/repodata/abc123-comps.xml",
+            ],
+        ),
+        (
+            worker.publish.CommitPhase2,
+            [
+                "/content/dist/rhel8/8.5/aarch64/appstream/debug/repodata/abc123-comps.xml"
+            ],
+        ),
     ],
-    ids=["phase1", "phase2"]
+    ids=["phase1", "phase2"],
 )
-def test_phase2_wont_mirror(mock_get_msg, fake_publish, db, commit_class, expected):
+def test_phase2_wont_mirror(
+    mock_get_msg, fake_publish, db, commit_class, expected
+):
     """
     Phase2 is set up to not mirror aliases. Test shows a url that would be mirrored by
     Phase1 is not mirrored in Phase2. In reality, different phases work on
@@ -785,17 +795,19 @@ def test_phase2_wont_mirror(mock_get_msg, fake_publish, db, commit_class, expect
         message_id=task.id, kwargs={"publish_id": fake_publish.id}
     )
     item = models.Item(
-            web_uri="/content/dist/rhel8/8/aarch64/appstream/debug/repodata/abc123-comps.xml",
-            link_to="/some/link-dest",
-            publish_id=fake_publish.id,
-            updated=datetime(2023, 10, 4, 3, 52, 0),
-        )
+        web_uri="/content/dist/rhel8/8/aarch64/appstream/debug/repodata/abc123-comps.xml",
+        link_to="/some/link-dest",
+        publish_id=fake_publish.id,
+        updated=datetime(2023, 10, 4, 3, 52, 0),
+    )
     db.add(fake_publish)
     db.add(task)
     # Caller would've set publish state to COMMITTING.
     fake_publish.state = "COMMITTING"
     db.commit()
-    commit_instance = commit_class(fake_publish.id, fake_publish.env, NOW_UTC, task.id, load_settings())
+    commit_instance = commit_class(
+        fake_publish.id, fake_publish.env, NOW_UTC, task.id, load_settings()
+    )
 
     item_uris = commit_instance.dynamodb.uris_for_item(item)
 
