@@ -1221,9 +1221,9 @@ pycron==3.1.2 \
     --hash=sha256:114c71bc61002b850a416e33e72a8c6de75b9f5c4228e86d7babd8a7ea232d94 \
     --hash=sha256:30e4a01889dfb471e80cc76a5c0ab87e675146a7f6d2d66a2e4bdb4e2975ef3d
     # via -r requirements.in
-pydantic==2.10.5 \
-    --hash=sha256:278b38dbbaec562011d659ee05f63346951b3a248a6f3642e1bc68894ea2b4ff \
-    --hash=sha256:4dd4e322dbe55472cb7ca7e73f4b63574eecccf2835ffa2af9021ce113c83c53
+pydantic==2.10.6 \
+    --hash=sha256:427d664bf0b8a2b34ff5dd0f5a18df00591adcee7198fbd71981054cef37b584 \
+    --hash=sha256:ca5daa827cce33de7a42be142548b0096bf05a7e7b365aebfa5f8eeec7128236
     # via
     #   -r requirements.in
     #   fastapi
