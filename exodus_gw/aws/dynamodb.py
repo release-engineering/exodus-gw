@@ -25,7 +25,7 @@ class DynamoDB:
         from_date: str,
         env_obj: Environment | None = None,
         deadline: datetime | None = None,
-        mirror_writes: bool = False
+        mirror_writes: bool = False,
     ):
         self.env = env
         self.settings = settings
@@ -227,10 +227,11 @@ class DynamoDB:
         # We only want to mirror writes for release ver aliases. Recalculating
         # the aliases completely is a bit inefficient, but I'd rather not
         # duplicate any alias logic.
-        if self.mirror_writes and \
-                uri_alias(
-                    item.web_uri, self._aliases(["releasever_alias"])
-                )[0] != item.web_uri:
+        if (
+            self.mirror_writes
+            and uri_alias(item.web_uri, self._aliases(["releasever_alias"]))[0]
+            != item.web_uri
+        ):
             uris.append(item.web_uri)
         return uris
 
@@ -366,7 +367,10 @@ class DynamoDB:
         current_batch_size = 0
         for item in it:
             item_weight = len(self.uris_for_item(item))
-            if current_batch_size + item_weight > self.settings.write_batch_size:
+            if (
+                current_batch_size + item_weight
+                > self.settings.write_batch_size
+            ):
                 batches.append(current_batch)
                 current_batch = []
                 current_batch_size = 0
