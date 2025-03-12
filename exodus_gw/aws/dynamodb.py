@@ -1,8 +1,8 @@
+import functools
 import gzip
 import json
 import logging
 from datetime import datetime
-from itertools import islice
 from threading import Lock
 from typing import Any
 
@@ -25,12 +25,14 @@ class DynamoDB:
         from_date: str,
         env_obj: Environment | None = None,
         deadline: datetime | None = None,
+        mirror_writes: bool = False,
     ):
         self.env = env
         self.settings = settings
         self.from_date = from_date
         self.env_obj = env_obj or get_environment(env)
         self.deadline = deadline
+        self.mirror_writes = mirror_writes
         self.client = DynamoDBClientWrapper(self.env_obj.aws_profile).client
         self._lock = Lock()
         self._definitions = None
@@ -208,6 +210,31 @@ class DynamoDB:
             out = json.loads(item_json)
         return out
 
+    @functools.lru_cache(maxsize=2500)
+    def uris_for_item(self, item) -> list[str]:
+        """Returns all URIs to be written for the given item.
+
+        In practice, always returns either one or two URIs depending on
+        configured aliases and other settings, though the caller should
+        assume any number of URIs.
+        """
+
+        # Resolve aliases. We only write to the deepest path
+        # after all alias resolution, hence only using the
+        # first result from uri_alias.
+        uris = [uri_alias(item.web_uri, self.aliases_for_write)[0]]
+
+        # We only want to mirror writes for release ver aliases. Recalculating
+        # the aliases completely is a bit inefficient, but I'd rather not
+        # duplicate any alias logic.
+        if (
+            self.mirror_writes
+            and uri_alias(item.web_uri, self._aliases(["releasever_alias"]))[0]
+            != item.web_uri
+        ):
+            uris.append(item.web_uri)
+        return uris
+
     def create_request(
         self,
         items: list[models.Item],
@@ -216,8 +243,6 @@ class DynamoDB:
         """Create the dictionary structure expected by batch_write_item."""
         table_name = self.env_obj.table
         request: dict[str, list[Any]] = {table_name: []}
-        uri_aliases = self.aliases_for_write
-
         for item in items:
             # Items carry their own from_date. This effectively resolves
             # conflicts in the case of two publishes updating the same web_uri
@@ -226,35 +251,32 @@ class DynamoDB:
             # updated timestamp.
             from_date = str(item.updated)
 
-            # Resolve aliases. We only write to the deepest path
-            # after all alias resolution, hence only using the
-            # first result from uri_alias.
-            web_uri = uri_alias(item.web_uri, uri_aliases)[0]
+            for web_uri in self.uris_for_item(item):
+                if delete:
+                    request[table_name].append(
+                        {
+                            "DeleteRequest": {
+                                "Key": {
+                                    "from_date": {"S": from_date},
+                                    "web_uri": {"S": web_uri},
+                                }
+                            }
+                        }
+                    )
+                else:
+                    request[table_name].append(
+                        {
+                            "PutRequest": {
+                                "Item": {
+                                    "from_date": {"S": from_date},
+                                    "web_uri": {"S": web_uri},
+                                    "object_key": {"S": item.object_key},
+                                    "content_type": {"S": item.content_type},
+                                }
+                            }
+                        }
+                    )
 
-            if delete:
-                request[table_name].append(
-                    {
-                        "DeleteRequest": {
-                            "Key": {
-                                "from_date": {"S": from_date},
-                                "web_uri": {"S": web_uri},
-                            }
-                        }
-                    }
-                )
-            else:
-                request[table_name].append(
-                    {
-                        "PutRequest": {
-                            "Item": {
-                                "from_date": {"S": from_date},
-                                "web_uri": {"S": web_uri},
-                                "object_key": {"S": item.object_key},
-                                "content_type": {"S": item.content_type},
-                            }
-                        }
-                    }
-                )
         return request
 
     def create_config_request(self, config):
@@ -332,11 +354,30 @@ class DynamoDB:
         return _batch_write(request)
 
     def get_batches(self, items: list[models.Item]):
-        """Divide the publish items into batches of size 'write_batch_size'."""
+        """
+        Divide the publish items into batches of size 'write_batch_size'.
+
+        Due to mirroring, an item might have multiple write requests. We need
+        to account for this when splitting items into batches. We memoize the
+        results of uri_for_item to avoid recalculating aliases.
+        """
         it = iter(items)
-        batches = list(
-            iter(lambda: tuple(islice(it, self.settings.write_batch_size)), ())
-        )
+        batches: list[list[models.Item]] = []
+        current_batch: list[models.Item] = []
+        current_batch_size = 0
+        for item in it:
+            item_weight = len(self.uris_for_item(item))
+            if (
+                current_batch_size + item_weight
+                > self.settings.write_batch_size
+            ):
+                batches.append(current_batch)
+                current_batch = []
+                current_batch_size = 0
+            current_batch.append(item)
+            current_batch_size += item_weight
+        if current_batch:
+            batches.append(current_batch)
         return batches
 
     def write_batch(self, items: list[models.Item], delete: bool = False):
