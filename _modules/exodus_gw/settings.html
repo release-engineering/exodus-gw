@@ -510,6 +510,10 @@
     <span class="n">s3_pool_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Number of S3 clients to cache&quot;&quot;&quot;</span>
 
+    <span class="n">mirror_writes_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether both the original url and releasever alias are written during</span>
+<span class="sd">     phase 1 commits.&quot;&quot;&quot;</span>
+
     <span class="n">model_config</span> <span class="o">=</span> <span class="n">SettingsConfigDict</span><span class="p">(</span><span class="n">env_prefix</span><span class="o">=</span><span class="s2">&quot;exodus_gw_&quot;</span><span class="p">)</span></div>
 
 
