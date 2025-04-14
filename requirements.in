@@ -1,28 +1,25 @@
 fastapi
-starlette>=0.21.0
-pydantic==2.10.6
+starlette
+# Pydantic locked to resolve conflict between requirements and test-requirements.
+pydantic==2.11.3
 pydantic-settings
 aioboto3
 defusedxml
 uvicorn[standard]
 gunicorn
 psycopg2
-# Need to do RHELDST-15252 in order to upgrade sqlalchemy
-sqlalchemy>=2.0
+sqlalchemy
 jsonschema
 alembic
 backoff
 dramatiq[watch]
 pycron
 cryptography
-repo-autoindex>=1.2.0
+asgi-correlation-id
+repo-autoindex
+packaging
 fastpurge
-# Needed to get compatible idna between requirements.txt and test-requirements.txt,
-# consider removing when 'requests' no longer requires <4
-idna==3.7
+idna
 # Required by alembic but not resolved by pip-compile.
 importlib-metadata
 importlib-resources
-# safety requires packaging<22.0 and >=21.0.
-packaging==21.3
-asgi-correlation-id
