@@ -172,10 +172,8 @@ def deploy_config(
             # have been treated as an alias, thus cache flushing would be
             # unnecessary.
             if any(
-                [
-                    re.search(exclusion, published_path.web_uri)
-                    for exclusion in original_exclusions.get(src, [])
-                ]
+                re.search(exclusion, published_path.web_uri)
+                for exclusion in original_exclusions.get(src, [])
             ):
                 continue
             LOG.info(

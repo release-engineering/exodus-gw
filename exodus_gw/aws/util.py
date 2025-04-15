@@ -223,7 +223,7 @@ def uri_alias_recurse(
         if uri.startswith(src + "/") or uri == src:
             # Used to replicate old NetStorage-compatible behaviour. This will
             # typically match non-rpm paths, such as /isos/
-            if any([re.search(exclusion, uri) for exclusion in exclude_paths]):
+            if any(re.search(exclusion, uri) for exclusion in exclude_paths):
                 LOG.debug(
                     "Aliasing for %s was not applied as it matches one "
                     "of the following exclusion paths: %s.",
