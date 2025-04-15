@@ -178,7 +178,7 @@ class ItemBase(BaseModel):
 
         # Additionally, every object_key must either be "absent" or equal to the full sha256sum
         # present in the web_uri.
-        if not self.object_key in ("absent", parts[1]):
+        if self.object_key not in ("absent", parts[1]):
             policy_error(
                 f"Invalid object_key {self.object_key} for web_uri {self.web_uri}"
             )

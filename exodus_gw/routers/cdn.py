@@ -326,7 +326,7 @@ def flush_cdn_cache(
 
     **Required roles**: `{env}-cdn-flusher`
     """
-    paths = sorted(set([item.web_uri for item in items]))
+    paths = sorted({item.web_uri for item in items})
 
     msg = worker.flush_cdn_cache.send(
         env=env.name,

@@ -393,10 +393,8 @@ def update_publish_items(
         for entrypoint_basename in settings.entry_point_files:
             if basename == entrypoint_basename:
                 if any(
-                    [
-                        exclude in item.web_uri
-                        for exclude in settings.autoindex_partial_excludes
-                    ]
+                    exclude in item.web_uri
+                    for exclude in settings.autoindex_partial_excludes
                 ):
                     # Not eligible for partial autoindex, e.g. /kickstart/ repos
                     # because the kickstart and yum repodata might arrive separately.
@@ -487,7 +485,7 @@ def commit_publish(
         db.query(models.Publish)
         # Publish should be locked, but if doing a phase1 commit we will only
         # be reading from the publish and not writing to it.
-        .with_for_update(read=(commit_mode_str == models.CommitModes.phase1))
+        .with_for_update(read=commit_mode_str == models.CommitModes.phase1)
         .filter(
             models.Publish.id == publish_id,
             models.Publish.env == env.name,
