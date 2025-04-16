@@ -71,6 +71,7 @@ bucket.upload_file('/tmp/hello.txt',
 import logging
 import textwrap
 
+from botocore.exceptions import ClientError
 from fastapi import (
     APIRouter,
     Depends,
@@ -307,6 +308,25 @@ async def multipart_put(
     reader = RequestReader.get_reader(request)
 
     validate_object_key(key)
+
+    # Ensure object isn't already uploaded.
+    try:
+        response = await s3.head_object(Bucket=env.bucket, Key=key)  # type: ignore
+        LOG.debug(
+            "canceling multipart upload %s, object %s already exists",
+            uploadId,
+            key,
+            extra={"event": "upload"},
+        )
+        await s3.abort_multipart_upload(  # type: ignore
+            Bucket=env.bucket, Key=key, UploadId=uploadId
+        )
+        return Response(headers={"ETag": response["ETag"]})
+    except ClientError as e:
+        err_code = e.response["Error"]["Code"]
+        if err_code in ("404", "NoSuchKey"):
+            # Object doesn't exist, continue with upload.
+            pass
 
     response = await s3.upload_part(  # type: ignore
         Body=reader,
