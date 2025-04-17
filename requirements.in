@@ -1,10 +1,13 @@
 fastapi
-# Starlette locked as 0.45.1 introduces breaking changes.
+# starlette locked as 0.45.1 introduces breaking changes.
 starlette==0.45.0
-# Pydantic locked to resolve conflict between requirements and test-requirements.
+# pydantic locked to resolve conflict between requirements and
+# test-requirements.
 pydantic==2.11.3
 pydantic-settings
-aioboto3
+# aioboto3 locked as 13.4 upgrades boto3 to 1.36 (via aiobotocore), which
+# introduced breaking changes for s3.
+aioboto3==13.3
 defusedxml
 uvicorn[standard]
 gunicorn
