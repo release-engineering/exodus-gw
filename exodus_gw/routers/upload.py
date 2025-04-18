@@ -71,6 +71,7 @@ bucket.upload_file('/tmp/hello.txt',
 import logging
 import textwrap
 
+from botocore.exceptions import ClientError
 from fastapi import (
     APIRouter,
     Depends,
@@ -204,6 +205,21 @@ async def upload(
     - retain the `ETag` from the response, as it will be required to complete the upload
     - see also: https://docs.aws.amazon.com/AmazonS3/latest/API/API_UploadPart.html
     """
+
+    # Ensure object isn't already uploaded.
+    try:
+        response = await s3.get_object(Bucket=env.bucket, Key=key)  # type: ignore
+        LOG.debug(
+            "upload attempted for %s but is already complete",
+            key,
+            extra={"event": "upload"},
+        )
+        return Response(headers={"ETag": response["ETag"]})
+    except ClientError as e:
+        err_code = e.response["Error"]["Code"]
+        if err_code == "404" or err_code == "NoSuchKey":
+            # Object doesn't exist, continue with upload.
+            pass
 
     if uploadId is None and partNumber is None:
         # Single-part upload

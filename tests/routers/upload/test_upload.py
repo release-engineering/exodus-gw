@@ -7,6 +7,19 @@ from exodus_gw.main import app
 
 TEST_KEY = "b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c"
 
+# Uploads will first check object's existence with a get.
+# Use this error to simulate non-existence, allow test uploads.
+NoSuchKey = ClientError(
+    {
+        "Error": {
+            "Code": "NoSuchKey",
+            "Message": "The specified key does not exist.",
+        },
+        "ResponseMetadata": {"HTTPStatusCode": 404},
+    },
+    "GetObject",
+)
+
 
 async def test_full_upload(
     mock_aws_client, mock_request_reader, auth_header, monkeypatch
@@ -26,6 +39,7 @@ async def test_full_upload(
 
     mock_request_reader.return_value = b"some bytes"
     mock_aws_client.put_object.return_value = {"ETag": "a1b2c3"}
+    mock_aws_client.get_object.side_effect = NoSuchKey
 
     with TestClient(app) as client:
         r = client.put("/upload/test/%s" % TEST_KEY, headers=headers)
@@ -60,6 +74,7 @@ async def test_part_upload(mock_aws_client, mock_request_reader, auth_header):
 
     mock_request_reader.return_value = b"best bytes"
     mock_aws_client.upload_part.return_value = {"ETag": "a1b2c3"}
+    mock_aws_client.get_object.side_effect = NoSuchKey
 
     with TestClient(app) as client:
         r = client.put(
@@ -107,6 +122,7 @@ async def test_upload_invalid_metadata(
 
     mock_request_reader.return_value = b"some bytes"
     mock_aws_client.put_object.return_value = {"ETag": "a1b2c3"}
+    mock_aws_client.get_object.side_effect = NoSuchKey
 
     with TestClient(app) as client:
         r = client.put(
@@ -138,6 +154,7 @@ async def test_put_error(mock_aws_client, mock_request_reader, auth_header):
         },
         "PutObject",
     )
+    mock_aws_client.get_object.side_effect = NoSuchKey
 
     with TestClient(app) as client:
         r = client.put("/upload/test/%s" % TEST_KEY, headers=headers)
@@ -155,3 +172,35 @@ async def test_put_error(mock_aws_client, mock_request_reader, auth_header):
         "<RequestId>aabbccdd</RequestId>"
         "</Error>"
     )
+
+
+async def test_upload_duplicate(mock_aws_client, auth_header, caplog):
+    """Calling the upload endpoint when the object has already been uploaded
+    will skip uploading, log a message and return a valid response."""
+
+    caplog.set_level(10, "s3")
+
+    mock_aws_client.get_object.return_value = {"ETag": "a1b2c3"}
+
+    with TestClient(app) as client:
+        r = client.put(
+            "/upload/test/%s" % TEST_KEY,
+            headers=auth_header(roles=["test-blob-uploader"]),
+        )
+
+    # S3 upload APIs were not called
+    mock_aws_client.put_object.assert_not_called()
+    mock_aws_client.upload_part.assert_not_called()
+    # S3 head API should have been called
+    mock_aws_client.get_object.assert_called()
+    # Message logged
+    assert (
+        f"upload attempted for {TEST_KEY} but is already complete"
+        in caplog.text
+    )
+    # valid response returned
+    assert r.status_code == 200
+    assert r.headers["etag"] == "a1b2c3"
+    assert r.headers["content-length"] == "0"
+    assert r.headers["x-request-id"]
+    assert r.content == b""
