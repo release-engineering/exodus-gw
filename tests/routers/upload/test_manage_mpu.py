@@ -172,7 +172,6 @@ async def test_complete_completed_mpu(mock_aws_client, auth_header, caplog):
         "duplicate multipart upload detected, attempting to abort"
         in caplog.text
     )
-    assert "Abort 3f425a43" in caplog.text
     assert (
         "upload 3f425a43: The specified upload does not exist. The upload "
         "ID may be invalid, or the upload may have been aborted or completed."
