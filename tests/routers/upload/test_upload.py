@@ -113,6 +113,7 @@ async def test_part_upload_duplicate(mock_aws_client, auth_header, caplog):
     # It should check HEAD, log message, and issue abort
     mock_aws_client.head_object.assert_called()
     assert "s3 object already exists: %s" % TEST_KEY in caplog.text
+    assert "Abort my-upload" in caplog.text
     mock_aws_client.abort_multipart_upload.assert_called()
     # It should not upload
     mock_aws_client.upload_part.assert_not_called()

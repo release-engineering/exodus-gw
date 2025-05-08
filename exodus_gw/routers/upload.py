@@ -107,14 +107,11 @@ async def _already_uploaded(
     key: str = Path(..., description="S3 object key"),
 ):
     try:
-        response = await s3.head_object(Bucket=env.bucket, Key=key)  # type: ignore
+        response = await head(env, s3, key)
         LOG.debug(
             "s3 object already exists: %s", key, extra={"event": "upload"}
         )
-        headers = {"ETag": response["ETag"]}
-        for k, v in response["Metadata"].items():
-            headers["x-amz-meta-%s" % k] = v
-        return Response(headers=headers)
+        return response
     except ClientError as e:
         if e.response["Error"]["Code"] != "NoSuchKey":
             raise e
@@ -127,9 +124,7 @@ async def _ensure_aborted(
     key: str = Path(..., description="S3 object key"),
 ):
     try:
-        await s3.abort_multipart_upload(  # type: ignore
-            Bucket=env.bucket, Key=key, UploadId=uploadId
-        )
+        await abort_multipart_upload(env, s3, key, uploadId)
     except ClientError as e:
         if e.response["Error"]["Code"] == "NoSuchUpload":
             # Upload was aborted within another process
@@ -357,7 +352,7 @@ async def multipart_put(
 
     if response := await _already_uploaded(env, s3, key):
         await _ensure_aborted(uploadId, env, s3, key)
-        return response
+        return Response(headers={"ETag": response.headers["etag"]})
 
     response = await s3.upload_part(  # type: ignore
         Body=reader,
