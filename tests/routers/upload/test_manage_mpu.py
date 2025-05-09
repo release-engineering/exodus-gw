@@ -1,6 +1,7 @@
 import textwrap
 
 import mock
+from botocore.exceptions import ClientError
 from fastapi.testclient import TestClient
 
 from exodus_gw.aws.util import xml_response
@@ -45,7 +46,16 @@ async def test_create_mpu(mock_aws_client, auth_header):
 
 async def test_complete_mpu(mock_aws_client):
     """Completing a multipart upload is delegated correctly to S3."""
-
+    mock_aws_client.head_object.side_effect = ClientError(
+        {
+            "Error": {
+                "Code": "NoSuchKey",
+                "Message": "The specified key does not exist.",
+            },
+            "ResponseMetadata": {"HTTPStatusCode": 404},
+        },
+        "GetObject",
+    )
     mock_aws_client.complete_multipart_upload.return_value = {
         "Location": "https://example.com/some-object",
         "Bucket": "my-bucket",
@@ -120,6 +130,49 @@ async def test_complete_mpu(mock_aws_client):
         ETag="my-better-etag",
     ).body
     assert response.body == expected
+
+
+async def test_complete_completed_mpu(mock_aws_client, auth_header, caplog):
+    """Completing multipart upload is canceled if it was already completed."""
+    caplog.set_level(10, "s3")
+
+    mock_aws_client.head_object.return_value = {
+        "Key": TEST_KEY,
+        "ETag": "a1b2c3",
+        "Metadata": {},
+    }
+    mock_aws_client.abort_multipart_upload.side_effect = ClientError(
+        {
+            "Error": {
+                "Code": "NoSuchUpload",
+                "Message": "The specified upload does not exist. The upload ID may be invalid, or the upload may have been aborted or completed.",
+            },
+            "ResponseMetadata": {"HTTPStatusCode": 404},
+        },
+        "AbortMultipartUpload",
+    )
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/upload/test/%s?uploadId=3f425a43" % TEST_KEY,
+            headers=auth_header(roles=["test-blob-uploader"]),
+        )
+
+    # It should have checked for object existence
+    mock_aws_client.head_object.assert_called()
+    # It should at least attempt to abort the mpu
+    mock_aws_client.abort_multipart_upload.assert_called()
+    # It should not have tried to complete the mpu
+    mock_aws_client.complete_multipart_upload.assert_not_called()
+    # It should succeed
+    assert response.status_code == 200
+    # It should log the following
+    assert "object already uploaded: %s" % TEST_KEY in caplog.text
+    assert (
+        "duplicate multipart upload detected, attempting to abort"
+        in caplog.text
+    )
+    assert "upload already aborted or completed: 3f425a43" in caplog.text
 
 
 async def test_bad_mpu_call(auth_header):
