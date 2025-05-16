@@ -71,6 +71,7 @@ bucket.upload_file('/tmp/hello.txt',
 import logging
 import textwrap
 
+from botocore.exceptions import ClientError
 from fastapi import (
     APIRouter,
     Depends,
@@ -98,6 +99,43 @@ LOG = logging.getLogger("s3")
 openapi_tag = {"name": "upload", "description": __doc__}
 
 router = APIRouter(tags=[openapi_tag["name"]])
+
+
+async def _already_uploaded(
+    env: Environment = deps.env,
+    s3: S3ClientWrapper = deps.s3_client,
+    key: str = Path(..., description="S3 object key"),
+):
+    try:
+        response = await s3.head_object(Bucket=env.bucket, Key=key)  # type: ignore
+        LOG.debug(
+            "object already uploaded: %s", key, extra={"event": "upload"}
+        )
+        return response
+    except ClientError as e:
+        if e.response["Error"]["Code"] not in ("404", "NoSuchKey"):
+            raise e
+
+
+async def _ensure_aborted(
+    uploadId: str,
+    env: Environment = deps.env,
+    s3: S3ClientWrapper = deps.s3_client,
+    key: str = Path(..., description="S3 object key"),
+):
+    try:
+        await s3.abort_multipart_upload(  # type: ignore
+            Bucket=env.bucket, Key=key, UploadId=uploadId
+        )
+    except ClientError as e:
+        if e.response["Error"]["Code"] not in ("404", "NoSuchUpload"):
+            raise e
+        LOG.debug(
+            "upload already aborted or completed: %s",
+            uploadId,
+            extra={"event": "upload"},
+        )
+    return Response()
 
 
 @router.post(
@@ -159,6 +197,15 @@ async def multipart_upload(
 
     if uploads is None and uploadId:
         # Given an existing upload to complete
+        if await _already_uploaded(env, s3, key):
+            # Upload was already completed
+            # Notify user/client and ensure this extra upload is aborted
+            LOG.debug(
+                "duplicate multipart upload detected, attempting to abort"
+            )
+            # Nothing is done in this case but it's not an error state either,
+            # return an empty response object.
+            return await _ensure_aborted(uploadId, env, s3, key)
         return await complete_multipart_upload(s3, env, key, uploadId, request)
 
     # Caller did something wrong
@@ -307,6 +354,12 @@ async def multipart_put(
     reader = RequestReader.get_reader(request)
 
     validate_object_key(key)
+
+    if response := await _already_uploaded(env, s3, key):
+        # Object already uploaded, attempt to abort the upload
+        await _ensure_aborted(uploadId, env, s3, key)
+        # And return an the expected PUT response
+        return Response(headers={"ETag": response["ETag"]})
 
     response = await s3.upload_part(  # type: ignore
         Body=reader,
