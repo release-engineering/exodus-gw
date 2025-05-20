@@ -135,7 +135,6 @@ async def _ensure_aborted(
             uploadId,
             extra={"event": "upload"},
         )
-    return Response()
 
 
 @router.post(
@@ -197,15 +196,18 @@ async def multipart_upload(
 
     if uploads is None and uploadId:
         # Given an existing upload to complete
-        if await _already_uploaded(env, s3, key):
-            # Upload was already completed
-            # Notify user/client and ensure this extra upload is aborted
+        if response := await _already_uploaded(env, s3, key):
             LOG.debug(
                 "duplicate multipart upload detected, attempting to abort"
             )
-            # Nothing is done in this case but it's not an error state either,
-            # return an empty response object.
-            return await _ensure_aborted(uploadId, env, s3, key)
+            await _ensure_aborted(uploadId, env, s3, key)
+            # For compatibility, return as if multipart upload was completed
+            # (it was, just not here) using available data/keys
+            return xml_response(
+                "CompleteMultipartUploadOutput",
+                Key=response["Key"],
+                ETag=response["ETag"],
+            )
         return await complete_multipart_upload(s3, env, key, uploadId, request)
 
     # Caller did something wrong

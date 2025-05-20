@@ -138,7 +138,7 @@ async def test_complete_completed_mpu(mock_aws_client, auth_header, caplog):
 
     mock_aws_client.head_object.return_value = {
         "Key": TEST_KEY,
-        "ETag": "a1b2c3",
+        "ETag": "my-better-etag",
         "Metadata": {},
     }
     mock_aws_client.abort_multipart_upload.side_effect = ClientError(
@@ -152,27 +152,73 @@ async def test_complete_completed_mpu(mock_aws_client, auth_header, caplog):
         "AbortMultipartUpload",
     )
 
-    with TestClient(app) as client:
-        response = client.post(
-            "/upload/test/%s?uploadId=3f425a43" % TEST_KEY,
-            headers=auth_header(roles=["test-blob-uploader"]),
-        )
+    env = get_environment("test")
+    settings = load_settings()
+
+    # Need some valid request body to complete an MPU
+    async def fake_body():
+        return textwrap.dedent(
+            """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <CompleteMultipartUpload xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+                    <Part>
+                        <ETag>tagA</ETag>
+                        <PartNumber>1</PartNumber>
+                    </Part>
+                    <Part>
+                        <ETag>tagB</ETag>
+                        <PartNumber>2</PartNumber>
+                    </Part>
+                </CompleteMultipartUpload>
+            """
+        ).strip()
+
+    request = mock.Mock()
+    request.body = fake_body
+    request.app.state.settings = settings
+    request.app.state.s3_queues = {}
+
+    s3_client = await get_s3_client(
+        request=request, env=env, settings=settings
+    ).__anext__()
+
+    response = await multipart_upload(
+        request=request,
+        env=env,
+        s3=s3_client,
+        key=TEST_KEY,
+        uploadId="my-better-upload",
+        uploads=None,
+    )
 
     # It should have checked for object existence
     mock_aws_client.head_object.assert_called()
-    # It should at least attempt to abort the mpu
+    # It should attempt to abort the mpu
     mock_aws_client.abort_multipart_upload.assert_called()
     # It should not have tried to complete the mpu
     mock_aws_client.complete_multipart_upload.assert_not_called()
-    # It should succeed
+
+    # It should succeed anyway
     assert response.status_code == 200
+    # Response should be XML
+    assert response.headers["content-type"] == "application/xml"
+    # Response should include the appropriate data
+    expected = xml_response(
+        "CompleteMultipartUploadOutput",
+        Key=TEST_KEY,
+        ETag="my-better-etag",
+    ).body
+    assert response.body == expected
+
     # It should log the following
     assert "object already uploaded: %s" % TEST_KEY in caplog.text
     assert (
         "duplicate multipart upload detected, attempting to abort"
         in caplog.text
     )
-    assert "upload already aborted or completed: 3f425a43" in caplog.text
+    assert (
+        "upload already aborted or completed: my-better-upload" in caplog.text
+    )
 
 
 async def test_bad_mpu_call(auth_header):
