@@ -205,7 +205,7 @@ async def multipart_upload(
             # (it was, just not here) using available data/keys
             return xml_response(
                 "CompleteMultipartUploadOutput",
-                Key=response["Key"],
+                Key=key,
                 ETag=response["ETag"],
             )
         return await complete_multipart_upload(s3, env, key, uploadId, request)

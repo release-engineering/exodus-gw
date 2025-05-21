@@ -137,7 +137,6 @@ async def test_complete_completed_mpu(mock_aws_client, auth_header, caplog):
     caplog.set_level(10, "s3")
 
     mock_aws_client.head_object.return_value = {
-        "Key": TEST_KEY,
         "ETag": "my-better-etag",
         "Metadata": {},
     }
