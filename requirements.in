@@ -27,3 +27,8 @@ asgi-correlation-id
 # Required by alembic but not resolved by pip-compile.
 importlib-metadata
 importlib-resources
+# pip raises error that setuptools should be pinned in --require-hashes mode.
+# So lock it here and add --allow-unsafe to pip-compile.
+setuptools==80
+# Test dependencies require an older version than the app dependency
+click==8.1.8
