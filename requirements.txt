@@ -158,9 +158,9 @@ botocore==1.35.81 \
     #   aiobotocore
     #   boto3
     #   s3transfer
-certifi==2025.7.9 \
-    --hash=sha256:c1d2ec05395148ee10cf672ffc28cd37ea0ab0d99f9cc74c43e588cbd111b079 \
-    --hash=sha256:d842783a14f8fdd646895ac26f719a061408834473cfc10203f6a575beb15d39
+certifi==2025.7.14 \
+    --hash=sha256:6b31f564a415d79ee77df69d757bb49a5bb53bd9f756cbbe24394ffd6fc1f4b2 \
+    --hash=sha256:8ea99dbdfaaf2ba2f9bac77b9249ef62ec5218e7c2b2e903378ed5fccf765995
     # via requests
 cffi==1.17.1 \
     --hash=sha256:045d61c734659cc045141be4bae381a41d89b741f795af1dd018bfb532fd0df8 \
@@ -380,9 +380,9 @@ dramatiq[watch]==1.18.0 \
     --hash=sha256:5ea436b6e50dae64d4de04f1eb519ad239a6b1ba6315ba1dce1c0c4c1ebedfaf \
     --hash=sha256:d360f608aa3cd06f5db714bfcd23825dc7098bacfee52aca536b0bb0faae3c69
     # via -r requirements.in
-edgegrid-python==2.0.1 \
-    --hash=sha256:8884b9505d04405ad848d7a11d40d146a968204372f6ac75a48c43c7ab057ab9 \
-    --hash=sha256:d5f739823b05f9a55d7cecc33d18909fd50e586e176349c5aa681dbec683541f
+edgegrid-python==2.0.2 \
+    --hash=sha256:c1705c2208cf559b590ff985382e6f7ea1e891ee16bc1ca5d3482fd4e6968ef4 \
+    --hash=sha256:fc6edb0a428820af2c82d2a8782cb3b269d561dcb578e193e90e8909fea1574e
     # via fastpurge
 fastapi==0.116.1 \
     --hash=sha256:c46ac7c312df840f0c9e220f7964bada936781bc4e2e6eb71f1c4d7553786565 \
@@ -678,9 +678,9 @@ jmespath==1.0.1 \
     # via
     #   boto3
     #   botocore
-jsonschema==4.24.0 \
-    --hash=sha256:0b4e8069eb12aedfa881333004bccaec24ecef5a8a6a4b6df142b2cc9599d196 \
-    --hash=sha256:a462455f19f5faf404a7902952b6f0e3ce868f3ee09a359b05eca6673bd8412d
+jsonschema==4.25.0 \
+    --hash=sha256:24c2e8da302de79c8b9382fee3e76b355e44d2a4364bb207159ce10b517bd716 \
+    --hash=sha256:e63acf5c11762c0e6672ffb61482bdf57f0876684d8d249c0fe2d730d48bc55f
     # via -r requirements.in
 jsonschema-specifications==2025.4.1 \
     --hash=sha256:4653bffbd6584f7de83a67e0d620ef16900b390ddc7939d56684d6c81e33f1af \
