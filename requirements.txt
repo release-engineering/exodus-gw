@@ -1428,9 +1428,9 @@ sqlalchemy==2.0.41 \
     # via
     #   -r requirements.in
     #   alembic
-starlette==0.45.0 \
-    --hash=sha256:c911ba0e86eed5b336931623f45e56a8c6d76c618f2749d9f5ed9ee55a5bf1bb \
-    --hash=sha256:ca7ee855c243a058a2f24bc832b8072bade47fbc2672ce4b98de66c7f6c924f0
+starlette==0.47.2 \
+    --hash=sha256:6ae9aa5db235e4846decc1e7b79c4f346adf41e9777aebeb49dfd09bbd7023d8 \
+    --hash=sha256:c5847e96134e5c5371ee9fac6fdf1a67336d5815e09eb2a01fdb57a351ef915b
     # via
     #   -r requirements.in
     #   asgi-correlation-id
@@ -1447,6 +1447,7 @@ typing-extensions==4.14.1 \
     #   pydantic-core
     #   referencing
     #   sqlalchemy
+    #   starlette
     #   typing-inspection
 typing-inspection==0.4.1 \
     --hash=sha256:389055682238f53b04f7badcb49b989835495a96700ced5dab2d8feae4b26f51 \
