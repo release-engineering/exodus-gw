@@ -151,6 +151,13 @@ def test_deploy_config_with_flush(
             updated=datetime.now(tz=timezone.utc),
         )
     )
+    db.add(
+        PublishedPath(
+            env="test",
+            web_uri="/content/testproduct/1.2.0/iso/file4",
+            updated=datetime.now(tz=timezone.utc),
+        )
+    )
 
     # This path will be flushed as it was not part of the original alias
     # exclusions.
@@ -288,8 +295,11 @@ def test_deploy_config_with_flush_only_necessary(
             updated=datetime.now(tz=timezone.utc),
         )
     )
-    # The original and new destinations for the updated alias shouldn't need
-    # flushing.
+    # The original and new destinations ("dest") for the updated alias shouldn't need
+    # flushing, BUT the source ("src") side of the updated alias should be flushed.
+    # In practice, the DOT repos are populated with content on the "dest" side of the
+    # alias prior to the GA, then the releasever alias is updated (which is meant to
+    # expose content on the src side of the alias after a cache flush).
     db.add(
         PublishedPath(
             env="test",
@@ -301,9 +311,30 @@ def test_deploy_config_with_flush_only_necessary(
         PublishedPath(
             env="test",
             web_uri="/content/dist/rhel8/8.6/file4",
+            # Should flush /content/dist/rhel8/8/file4
             updated=datetime.now(tz=timezone.utc),
         )
     )
+
+    # Content which is published to the "dest" side of an alias should trigger
+    # a cache flush for the alias's corresponding "src" path.
+    db.add(
+        PublishedPath(
+            env="test",
+            web_uri="/content/dist/rhel8/8.6/kickstart/treeinfo",
+            # Should flush /content/dist/rhel8/8/kickstart/treeinfo
+            updated=datetime.now(tz=timezone.utc),
+        )
+    )
+    db.add(
+        PublishedPath(
+            env="test",
+            web_uri="/content/dist/rhel8/8.6/os/repodata/repomd.xml",
+            # Should flush /content/dist/rhel8/8/os/repodata/repomd.xml
+            updated=datetime.now(tz=timezone.utc),
+        )
+    )
+
     # The config has two aliases that point to the same dest. In the previous
     # version of the deployment code this would have been flushed even though
     # the aliases weren't updated.
@@ -370,6 +401,9 @@ def test_deploy_config_with_flush_only_necessary(
         "/content/dist/rhel/server/8/listing",
         "/content/dist/rhel/server/listing",
         "/content/dist/rhel8/8/file1",
+        "/content/dist/rhel8/8/file4",
+        "/content/dist/rhel8/8/kickstart/treeinfo",
+        "/content/dist/rhel8/8/os/repodata/repomd.xml",
         "/content/dist/rhel8/rhui/8/file2",
     ]
 
