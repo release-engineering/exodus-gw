@@ -159,11 +159,14 @@ def deploy_config(
         and alias[0] not in updated_prefixes
     ]
 
+    updated_aliases = {src: dest for (src, dest, _) in ddb.aliases_for_flush}
+
     updated_prefixes.update(
         uris_with_aliases(updated_prefixes, aliases_to_expand)
     )
 
     for src in updated_prefixes:
+        # Flush cache for content published on the src side of the alias
         for published_path in db.query(models.PublishedPath).filter(
             models.PublishedPath.env == env,
             models.PublishedPath.web_uri.like(f"{src}/%"),
@@ -183,6 +186,39 @@ def deploy_config(
                 extra={"event": "deploy"},
             )
             flush_paths.add(published_path.web_uri)
+
+        # Separately, check for additional content that was only published
+        # on the destination side of the alias (e.g., kickstarts), and flush
+        # the corresponding src path.
+        #
+        # If the content at the src side of the alias has already been flushed,
+        # it will not be flushed twice, because flush_paths is a set.
+        resolved_alias = updated_aliases.get(src)
+        if resolved_alias:
+            for published_path in db.query(models.PublishedPath).filter(
+                models.PublishedPath.env == env,
+                models.PublishedPath.web_uri.like(f"{resolved_alias}/%"),
+            ):
+                # If any original exclusion matches the uri, the uri wouldn't
+                # have been treated as an alias, thus cache flushing would be
+                # unnecessary.
+                if any(
+                    re.search(exclusion, published_path.web_uri)
+                    for exclusion in original_exclusions.get(src, [])
+                ):
+                    continue
+
+                resolved_uri = published_path.web_uri.replace(
+                    resolved_alias, src
+                )
+
+                LOG.info(
+                    "Updated alias %s will flush cache for %s",
+                    src,
+                    resolved_uri,
+                    extra={"event": "deploy"},
+                )
+                flush_paths.add(resolved_uri)
 
     # Need to expand the matched aliases to other aliases that'd be populated
     # during publish
