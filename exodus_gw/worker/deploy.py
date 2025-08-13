@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from exodus_gw import models, schemas
 from exodus_gw.aws.dynamodb import DynamoDB
-from exodus_gw.aws.util import uris_with_aliases
+from exodus_gw.aws.util import uri_alias, uris_with_aliases
 from exodus_gw.database import db_engine
 from exodus_gw.settings import Settings
 
@@ -179,6 +179,7 @@ def deploy_config(
                 for exclusion in original_exclusions.get(src, [])
             ):
                 continue
+
             LOG.info(
                 "Updated alias %s will flush cache for %s",
                 src,
@@ -193,11 +194,13 @@ def deploy_config(
         #
         # If the content at the src side of the alias has already been flushed,
         # it will not be flushed twice, because flush_paths is a set.
-        resolved_alias = updated_aliases.get(src)
-        if resolved_alias:
+        resolved_alias_prefix = updated_aliases.get(src)
+        if resolved_alias_prefix:
             for published_path in db.query(models.PublishedPath).filter(
                 models.PublishedPath.env == env,
-                models.PublishedPath.web_uri.like(f"{resolved_alias}/%"),
+                models.PublishedPath.web_uri.like(
+                    f"{resolved_alias_prefix}/%"
+                ),
             ):
                 # If any original exclusion matches the uri, the uri wouldn't
                 # have been treated as an alias, thus cache flushing would be
@@ -208,17 +211,25 @@ def deploy_config(
                 ):
                     continue
 
-                resolved_uri = published_path.web_uri.replace(
-                    resolved_alias, src
-                )
-
-                LOG.info(
-                    "Updated alias %s will flush cache for %s",
-                    src,
-                    resolved_uri,
-                    extra={"event": "deploy"},
-                )
-                flush_paths.add(resolved_uri)
+                # Check to see if the path contains additional aliases
+                # (e.g., RHUI)
+                for resolved_alias in uri_alias(
+                    published_path.web_uri, ddb.aliases_for_flush
+                ):
+                    # Only flush the path if it is prefixed by an applicable src path
+                    # (e.g., we don't want to flush the path if it is prefixed by a
+                    # dest path such as /content/dist/rhel8/8.10)
+                    if any(
+                        re.search(f"{updated_prefix}/", resolved_alias)
+                        for updated_prefix in updated_prefixes
+                    ):
+                        LOG.info(
+                            "Updated alias %s will flush cache for %s",
+                            src,
+                            resolved_alias,
+                            extra={"event": "deploy"},
+                        )
+                        flush_paths.add(resolved_alias)
 
     # Need to expand the matched aliases to other aliases that'd be populated
     # during publish
