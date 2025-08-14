@@ -310,8 +310,24 @@ def test_deploy_config_with_flush_only_necessary(
     db.add(
         PublishedPath(
             env="test",
+            web_uri="/content/dist/rhel8/rhui/8.5/file3",
+            updated=datetime.now(tz=timezone.utc),
+        )
+    )
+
+    db.add(
+        PublishedPath(
+            env="test",
             web_uri="/content/dist/rhel8/8.6/file4",
             # Should flush /content/dist/rhel8/8/file4
+            updated=datetime.now(tz=timezone.utc),
+        )
+    )
+    db.add(
+        PublishedPath(
+            env="test",
+            web_uri="/content/dist/rhel8/rhui/8.6/file4",
+            # Should flush /content/dist/rhel8/rhui/8/file4
             updated=datetime.now(tz=timezone.utc),
         )
     )
@@ -329,8 +345,24 @@ def test_deploy_config_with_flush_only_necessary(
     db.add(
         PublishedPath(
             env="test",
+            web_uri="/content/dist/rhel8/rhui/8.6/kickstart/treeinfo",
+            # Should flush /content/dist/rhel8/rhui/8/kickstart/treeinfo
+            updated=datetime.now(tz=timezone.utc),
+        )
+    )
+    db.add(
+        PublishedPath(
+            env="test",
             web_uri="/content/dist/rhel8/8.6/os/repodata/repomd.xml",
             # Should flush /content/dist/rhel8/8/os/repodata/repomd.xml
+            updated=datetime.now(tz=timezone.utc),
+        )
+    )
+    db.add(
+        PublishedPath(
+            env="test",
+            web_uri="/content/dist/rhel8/rhui/8.6/os/repodata/repomd.xml",
+            # Should flush /content/dist/rhel8/rhui/8/os/repodata/repomd.xml
             updated=datetime.now(tz=timezone.utc),
         )
     )
@@ -352,7 +384,7 @@ def test_deploy_config_with_flush_only_necessary(
     updated_config["releasever_alias"] = [
         a
         for a in updated_config["releasever_alias"]
-        if a["dest"] != "/content/dist/rhel8/8.6"
+        if a["dest"] != "/content/dist/rhel8/8.5"
     ]
     updated_config["releasever_alias"].append(
         {
@@ -405,6 +437,9 @@ def test_deploy_config_with_flush_only_necessary(
         "/content/dist/rhel8/8/kickstart/treeinfo",
         "/content/dist/rhel8/8/os/repodata/repomd.xml",
         "/content/dist/rhel8/rhui/8/file2",
+        "/content/dist/rhel8/rhui/8/file4",
+        "/content/dist/rhel8/rhui/8/kickstart/treeinfo",
+        "/content/dist/rhel8/rhui/8/os/repodata/repomd.xml",
     ]
 
 
