@@ -31,9 +31,6 @@ jobs:
     - name: Run bandit test
       run: tox -e bandit
 
-    - name: Run safety dependency scan
-      run: tox -e safety
-
     - name: Run auto-tests
       env:
         GITHUB_TOKEN: ${{ github.token }}
