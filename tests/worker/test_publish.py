@@ -1,7 +1,6 @@
+import datetime
 import logging
 import queue
-import uuid
-from datetime import datetime, timedelta
 
 import mock
 import pytest
@@ -9,13 +8,13 @@ import sqlalchemy.orm
 from sqlalchemy import not_
 
 from exodus_gw import models, worker
-from exodus_gw.models import Item, Publish
+from exodus_gw.models import Publish
 from exodus_gw.models.path import PublishedPath
 from exodus_gw.settings import load_settings
 
 pytestmark = pytest.mark.usefixtures("mock_boto3_client")
 
-NOW_UTC = datetime.utcnow()
+NOW_UTC = datetime.datetime.now(datetime.UTC)
 
 
 def _task(publish_id):
@@ -23,7 +22,7 @@ def _task(publish_id):
         id="8d8a4692-c89b-4b57-840f-b3f0166148d2",
         publish_id=publish_id,
         state="NOT_STARTED",
-        deadline=NOW_UTC + timedelta(hours=2),
+        deadline=NOW_UTC + datetime.timedelta(hours=2),
     )
 
 
@@ -35,19 +34,19 @@ def add_kickstart(publish: Publish):
                 web_uri="/content/testproduct/1/kickstart/extra_files.json",
                 object_key="cee38a35950f3f9465378b1548c4495882da0bfbe217999add63cb3a8e2c4d75",
                 publish_id=publish.id,
-                updated=datetime(2023, 10, 4, 3, 52, 2),
+                updated=datetime.datetime(2023, 10, 4, 3, 52, 2),
             ),
             models.Item(
                 web_uri="/content/testproduct/1/kickstart/EULA",
                 object_key="6c92384cdbf1a8c448278aaffaf7d8c3f048749e201d504ffaab07d85f6b1a03",
                 publish_id=publish.id,
-                updated=datetime(2023, 10, 4, 3, 52, 2),
+                updated=datetime.datetime(2023, 10, 4, 3, 52, 2),
             ),
             models.Item(
                 web_uri="/content/testproduct/1/kickstart/Packages/example.rpm",
                 object_key="88a2831543aaca1355a725ad2f5969c7a180643beddfe94281343a2ba361c979",
                 publish_id=publish.id,
-                updated=datetime(2023, 10, 4, 3, 52, 2),
+                updated=datetime.datetime(2023, 10, 4, 3, 52, 2),
             ),
         ]
     )
@@ -567,7 +566,7 @@ def test_commit_phase1(
             web_uri="/some/path/to/link-src",
             link_to="/some/link-dest",
             publish_id=fake_publish.id,
-            updated=datetime(2023, 10, 4, 3, 52, 0),
+            updated=datetime.datetime(2023, 10, 4, 3, 52, 0),
         )
     )
 
@@ -726,7 +725,7 @@ def test_commit_missing_object_key(
             web_uri="/some/path/to/link-src",
             link_to="/some/link-dest",
             publish_id=fake_publish.id,
-            updated=datetime(2023, 10, 4, 3, 52, 0),
+            updated=datetime.datetime(2023, 10, 4, 3, 52, 0),
         )
     )
 
@@ -798,7 +797,7 @@ def test_phase2_wont_mirror(
         web_uri="/content/dist/rhel8/8/aarch64/appstream/debug/repodata/abc123-comps.xml",
         link_to="/some/link-dest",
         publish_id=fake_publish.id,
-        updated=datetime(2023, 10, 4, 3, 52, 0),
+        updated=datetime.datetime(2023, 10, 4, 3, 52, 0),
     )
     db.add(fake_publish)
     db.add(task)

@@ -39,6 +39,7 @@ of an operation.
 
 import logging
 import re
+from contextlib import asynccontextmanager
 from uuid import uuid4
 
 import backoff
@@ -53,6 +54,7 @@ from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from . import docs
 from .auth import log_login
@@ -63,47 +65,9 @@ from .migrate import db_migrate
 from .routers import cdn, config, deploy, publish, service, upload
 from .settings import load_settings
 
-app = FastAPI(
-    title="exodus-gw",
-    description=docs.format_docs(__doc__),
-    openapi_tags=[
-        service.openapi_tag,
-        upload.openapi_tag,
-        publish.openapi_tag,
-        deploy.openapi_tag,
-        cdn.openapi_tag,
-        config.openapi_tag,
-    ],
-    dependencies=[Depends(log_login)],
-)
-
-app.include_router(service.router)
-app.include_router(upload.router)
-app.include_router(publish.router)
-app.include_router(deploy.router)
-app.include_router(cdn.router)
-app.include_router(config.router)
-
-# Hide version because we do not version our API.
-#
-# Note that FastAPI constructor above does not allow an empty string
-# to be set as the version, but the openapi schema does actually
-# allow it, and redoc is designed to support hiding the version in
-# this case:
-# https://redocly.com/docs/openapi-visual-reference/info/#info
-#
-# Setting the version directly in the openapi schema like this
-# works fine - openapi() method documents that it's OK to modify
-# the returned schema when you need to.
-#
-# This has to happen AFTER all calls to include_router, because
-# the schema is only generated once!
-app.openapi()["info"]["version"] = ""
-
 LOG = logging.getLogger("exodus-gw")
 
 
-@app.exception_handler(Exception)
 async def unhandled_exception_handler(request, exc):
     return await http_exception_handler(
         request,
@@ -115,7 +79,6 @@ async def unhandled_exception_handler(request, exc):
     )
 
 
-@app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):
     # When validating requests, multiple violations are possible.
     # Let's return them all to expedite troubleshooting.
@@ -123,7 +86,6 @@ async def validation_exception_handler(request, exc):
     return JSONResponse(status_code=400, content={"detail": msgs})
 
 
-@app.exception_handler(StarletteHTTPException)
 async def custom_http_exception_handler(request, exc):
     # Override HTTPException to produce XML error responses for the
     # given endpoints.
@@ -149,7 +111,6 @@ async def custom_http_exception_handler(request, exc):
     return await http_exception_handler(request, exc)
 
 
-@app.exception_handler(botocore.exceptions.ClientError)
 async def boto_exception_handler(
     request, exc: botocore.exceptions.ClientError
 ):
@@ -226,20 +187,6 @@ async def s3_queues_shutdown() -> None:
             await client.__aexit__(None, None, None)
 
 
-@app.on_event("startup")
-def on_startup() -> None:
-    settings_init()
-    loggers_init(app.state.settings)
-    db_init()
-    s3_queues_init()
-
-
-@app.on_event("shutdown")
-async def on_shutdown() -> None:
-    db_shutdown()
-    await s3_queues_shutdown()
-
-
 def new_db_session(engine):
     # Make a new DB session for use in the current request.
     #
@@ -247,7 +194,6 @@ def new_db_session(engine):
     return Session(bind=engine, autoflush=False, autocommit=False)
 
 
-@app.middleware("http")
 def db_session(request: Request, call_next):
     """Maintain a DB session around each request, which is also shared
     with the dramatiq broker.
@@ -287,8 +233,79 @@ def request_id_validator(short_uuid: str):
     return re.match(r"^[0-9a-f]{8}$", short_uuid)
 
 
-app.add_middleware(
-    CorrelationIdMiddleware,
-    generator=lambda: uuid4().hex[:8],
-    validator=request_id_validator,
-)
+@asynccontextmanager
+async def startup_shutdown(_app: FastAPI):
+    # Start-up tasks
+    settings_init()
+    loggers_init(_app.state.settings)
+    db_init()
+    s3_queues_init()
+
+    yield
+
+    # Shutdown tasks
+    db_shutdown()
+    await s3_queues_shutdown()
+
+
+def create_app():
+    _app = FastAPI(
+        title="exodus-gw",
+        description=docs.format_docs(__doc__),
+        openapi_tags=[
+            service.openapi_tag,
+            upload.openapi_tag,
+            publish.openapi_tag,
+            deploy.openapi_tag,
+            cdn.openapi_tag,
+            config.openapi_tag,
+        ],
+        dependencies=[Depends(log_login)],
+        lifespan=startup_shutdown,
+    )
+
+    _app.include_router(service.router)
+    _app.include_router(upload.router)
+    _app.include_router(publish.router)
+    _app.include_router(deploy.router)
+    _app.include_router(cdn.router)
+    _app.include_router(config.router)
+
+    # Hide version because we do not version our API.
+    #
+    # Note that FastAPI constructor above does not allow an empty string
+    # to be set as the version, but the openapi schema does actually
+    # allow it, and redoc is designed to support hiding the version in
+    # this case:
+    # https://redocly.com/docs/openapi-visual-reference/info/#info
+    #
+    # Setting the version directly in the openapi schema like this
+    # works fine - openapi() method documents that it's OK to modify
+    # the returned schema when you need to.
+    #
+    # This has to happen AFTER all calls to include_router, because
+    # the schema is only generated once!
+    _app.openapi()["info"]["version"] = ""
+
+    _app.add_exception_handler(Exception, unhandled_exception_handler)
+    _app.add_exception_handler(
+        RequestValidationError, validation_exception_handler
+    )
+    _app.add_exception_handler(
+        StarletteHTTPException, custom_http_exception_handler
+    )
+    _app.add_exception_handler(
+        botocore.exceptions.ClientError, boto_exception_handler
+    )
+
+    _app.add_middleware(BaseHTTPMiddleware, dispatch=db_session)
+    _app.add_middleware(
+        CorrelationIdMiddleware,
+        generator=lambda: uuid4().hex[:8],
+        validator=request_id_validator,
+    )
+
+    return _app
+
+
+app = create_app()

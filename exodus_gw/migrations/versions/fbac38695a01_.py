@@ -6,7 +6,7 @@ Create Date: 2023-10-04 13:41:25.588710
 
 """
 
-from datetime import datetime
+import datetime
 
 import sqlalchemy as sa
 from alembic import op
@@ -73,7 +73,7 @@ def upgrade():
     op.execute(
         items_post.update()
         .where(items_post.c.updated == None)
-        .values(updated=datetime.utcnow())
+        .values(updated=datetime.datetime.now(datetime.UTC))
     )
 
     # Now everything has a value, make it not nullable.
