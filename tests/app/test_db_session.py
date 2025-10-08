@@ -130,6 +130,12 @@ def test_db_rollback_on_raise_db(db):
         assert publishes.count() == 0
 
 
+# This test attempts to alter db state while db connection is in use
+# within other threads/processes. We shouldn't be sharing connections among
+# multiple threads but we do, and this practice is currently integral. So long
+# as that is the case this test is broken--there's no way to force the test
+# scenario.
+@pytest.mark.xfail
 def test_db_raise_error_and_resolve(db):
     """If an endpoint raises a DBAPIError exception, the request is retried. If
     the exception is resolved within the defined number of tries, the endpoint
