@@ -39,6 +39,7 @@ of an operation.
 
 import logging
 import re
+from contextlib import asynccontextmanager
 from uuid import uuid4
 
 import backoff
@@ -63,6 +64,20 @@ from .migrate import db_migrate
 from .routers import cdn, config, deploy, publish, service, upload
 from .settings import load_settings
 
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    settings_init()
+    loggers_init(_app.state.settings)
+    db_init()
+    s3_queues_init()
+
+    yield
+
+    db_shutdown()
+    await s3_queues_shutdown()
+
+
 app = FastAPI(
     title="exodus-gw",
     description=docs.format_docs(__doc__),
@@ -75,6 +90,7 @@ app = FastAPI(
         config.openapi_tag,
     ],
     dependencies=[Depends(log_login)],
+    lifespan=lifespan,
 )
 
 app.include_router(service.router)
@@ -224,20 +240,6 @@ async def s3_queues_shutdown() -> None:
         while not q.empty():
             client = q.get_nowait()
             await client.__aexit__(None, None, None)
-
-
-@app.on_event("startup")
-def on_startup() -> None:
-    settings_init()
-    loggers_init(app.state.settings)
-    db_init()
-    s3_queues_init()
-
-
-@app.on_event("shutdown")
-async def on_shutdown() -> None:
-    db_shutdown()
-    await s3_queues_shutdown()
 
 
 def new_db_session(engine):
