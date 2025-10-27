@@ -20,7 +20,11 @@ LOG = logging.getLogger("exodus-gw")
 
 def exclude_path(path: str) -> bool:
     # Returns True for certain paths which should be excluded from cache flushing.
-    if path.endswith("/treeinfo") and not path.endswith("/kickstart/treeinfo"):
+    if (
+        path.endswith("/.treeinfo")
+        or path.endswith("/treeinfo")
+        and not path.endswith("/kickstart/treeinfo")
+    ):
         # RHELDST-24308: paths matching these conditions get a forced 404 response
         # without going to the CDN origin. This has the side-effect of breaking
         # cache flushing for those paths - if we request flush for these paths
