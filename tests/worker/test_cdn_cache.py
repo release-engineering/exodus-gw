@@ -242,13 +242,14 @@ excludes =
             # - different TTL values for different types of file
             # - leading "/" vs no leading "/" - both should be tolerated
             # - alias resolution
-            # - treeinfo special case
+            # - treeinfo and .treeinfo special cases
             "/path/one/repodata/repomd.xml",
             "path/not-cdn1/repodata/repomd.xml",
             "path/also-not-cdn1/repodata/repomd.xml",
             "path/rhui/two/listing",
             "third/path",
             "/some/misc/treeinfo",
+            "/some/kickstart/.treeinfo",
             "/some/kickstart/treeinfo",
         ],
         env="cachetest",
