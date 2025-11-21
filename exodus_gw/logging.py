@@ -44,7 +44,10 @@ class GWHandler(logging.Handler):  # type: ignore
                 # only need to touch the file so the changed date is updated.
                 # What is written shouldn't matter either, but we'll record the
                 # time of the write, as it may be interesting while debugging.
-                healthy.write(str(datetime.datetime.utcnow()))
+                # TODO: remove +00:00
+                healthy.write(
+                    str(datetime.datetime.now(datetime.timezone.utc))
+                )
         finally:
             self.release()
 

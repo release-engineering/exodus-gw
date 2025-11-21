@@ -28,14 +28,14 @@ def test_cdn_access_typical(
             "CloudFront-Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cDovL2xvY2FsaG9zdDo4MDQ5LyoiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE2ODcxMzI4MDB9fX1dfQ__; "
             "CloudFront-Signature=P-6pNRKHOOoK6~mKgK~bOb2LXLtepgJuFO4rwzUPKBrrTO2bBhmhAyIzA~W3rOFGWbd~IJ8ZHAKvYKXeg0e4-KI5lkPhM1uzyoqLdmewnfvKUB4TIesEms7JBBabSaiA6plc5cHLN08nql9TGUApBWYM6oycF-0tVBWr4AzBdxU_"
         ),
-        "expires": "2023-06-19T00:00Z",
+        "expires": "2023-06-19T00:00:00Z",
         "url": "http://localhost:8049",
     }
 
     # It should have logged about the cookie generation.
     expected_message = (
         "Generated cookie for: user=fake-user, key=XXXXXXXXXXXXXX, "
-        "resource=http://localhost:8049/*, expires=2023-06-19 00:00:00, "
+        "resource=http://localhost:8049/*, expires=2023-06-19 00:00:00+00:00, "
         "policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cDovL2xvY2FsaG9zdDo4MDQ5LyoiLCJDb25kaXRpb24iOnsiRGF0ZUxlc3NUaGFuIjp7IkFXUzpFcG9jaFRpbWUiOjE2ODcxMzI4MDB9fX1dfQ__"
     )
     assert expected_message in caplog.text
@@ -74,7 +74,7 @@ def test_cdn_access_resource(
             "Q158PV2CicLZ1hFkqsdu-BtBiZGvOBFfX~FB1-T6s9trZG-x0~hOIUE2vTnY~FUaWuxJkS5fRIRuRbJLvWm8a"
             "RS~8gvEu9ormVSpWIXTGq0_"
         ),
-        "expires": "2023-06-19T00:00Z",
+        "expires": "2023-06-19T00:00:00Z",
         "url": "http://localhost:8049",
     }
 
@@ -82,7 +82,7 @@ def test_cdn_access_resource(
     expected_message = (
         "Generated cookie for: user=fake-user, key=XXXXXXXXXXXXXX, "
         "resource=http://localhost:8049/content/dist/rhel8/8.2/x86_64/baseos/iso/PULP_MANIFEST, "
-        "expires=2023-06-19 00:00:00, "
+        "expires=2023-06-19 00:00:00+00:00, "
         "policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cDovL2xvY2FsaG9zdDo4MDQ5L2NvbnRlbnQvZGlzdC"
         "9yaGVsOC84LjIveDg2XzY0L2Jhc2Vvcy9pc28vUFVMUF9NQU5JRkVTVCIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1R"
         "oYW4iOnsiQVdTOkVwb2NoVGltZSI6MTY4NzEzMjgwMH19fV19"

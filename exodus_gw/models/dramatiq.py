@@ -1,10 +1,12 @@
 import datetime
 from typing import Any
 
-from sqlalchemy import DateTime, String
+from sqlalchemy import String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import Uuid
+
+from exodus_gw.types import UTCDateTime
 
 from .base import Base
 
@@ -63,4 +65,4 @@ class DramatiqConsumer(Base):
     )
 
     # Last time this consumer reported itself to be alive.
-    last_alive: Mapped[datetime.datetime] = mapped_column(DateTime)
+    last_alive: Mapped[datetime.datetime] = mapped_column(UTCDateTime)

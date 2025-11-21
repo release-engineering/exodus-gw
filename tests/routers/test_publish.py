@@ -1,6 +1,6 @@
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import mock
 import pytest
@@ -463,7 +463,7 @@ def test_update_publish_items_existing_uri(db, auth_header):
 
     publish_id = "11224567-e89b-12d3-a456-426614174000"
 
-    new_updated = datetime(2023, 4, 26, 14, 43, 13)
+    new_updated = datetime(2023, 4, 26, 14, 43, 13, tzinfo=timezone.utc)
     prev_updated = new_updated - timedelta(hours=2)
 
     publish = Publish(
@@ -930,8 +930,7 @@ def test_commit_publish(deadline, commit_mode, auth_header, db, caplog):
     assert json_r["links"]["self"] == "/task/%s" % json_r["id"]
     assert json_r["publish_id"] == "11224567-e89b-12d3-a456-426614174000"
     if deadline:
-        # 'Z' suffix is dropped when stored as datetime in the database
-        assert json_r["deadline"] == "2022-07-25T15:47:47"
+        assert json_r["deadline"] == "2022-07-25T15:47:47Z"
 
     for message, event in [
         (
@@ -1039,7 +1038,7 @@ def test_commit_publish_bad_deadline(auth_header, db):
     assert r.status_code == 400
     assert r.json()["detail"] == (
         "ValueError(\"time data '07/25/2022 3:47:47 PM' does not match "
-        "format '%Y-%m-%dT%H:%M:%SZ'\")"
+        "format '%Y-%m-%dT%H:%M:%S%z'\")"
     )
 
 

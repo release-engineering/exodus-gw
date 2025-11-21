@@ -283,12 +283,12 @@ class AccessResponse(BaseModel):
         description="Base URL of this CDN environment.",
         examples=["https://abc123.cloudfront.net"],
     )
-    expires: str = Field(
+    expires: datetime = Field(
         description=(
             "Expiration time of access information included in this "
             "response. ISO8601 UTC timestamp."
         ),
-        examples=["2024-04-18T05:30Z"],
+        examples=["2024-04-18T05:30:00Z"],
     )
     cookie: str = Field(
         description="A cookie granting access to this CDN environment.",

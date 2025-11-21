@@ -3,7 +3,7 @@
 import logging
 import sys
 from asyncio import LifoQueue
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import Depends, HTTPException, Path, Query, Request
 
@@ -100,11 +100,11 @@ async def get_deadline_from_query(
     ),
     settings: Settings = Depends(get_settings),
 ) -> datetime:
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     if isinstance(deadline, str):
         try:
-            deadline_obj = datetime.strptime(deadline, "%Y-%m-%dT%H:%M:%SZ")
+            deadline_obj = datetime.strptime(deadline, "%Y-%m-%dT%H:%M:%S%z")
         except Exception as exc_info:
             raise HTTPException(
                 status_code=400, detail=repr(exc_info)

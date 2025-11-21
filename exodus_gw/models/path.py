@@ -1,7 +1,9 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, Integer, String, UniqueConstraint
+from sqlalchemy import Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
+
+from exodus_gw.types import UTCDateTime
 
 from .base import Base
 
@@ -33,5 +35,5 @@ class PublishedPath(Base):
     web_uri: Mapped[str] = mapped_column(String)
     """An updated path, e.g. /content/dist/some/repodata/repomd.xml"""
 
-    updated: Mapped[datetime] = mapped_column(DateTime)
+    updated: Mapped[datetime] = mapped_column(UTCDateTime)
     """Last time this path was updated."""

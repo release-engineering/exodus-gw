@@ -2,7 +2,7 @@ import logging
 import time
 import uuid
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import dramatiq
 from dramatiq import Message, MessageProxy
@@ -68,7 +68,7 @@ class Consumer(dramatiq.Consumer):
                 .filter(DramatiqConsumer.id == self.__consumer_id)
                 .one()
             )
-            db_consumer.last_alive = datetime.utcnow()
+            db_consumer.last_alive = datetime.now(timezone.utc)
 
             # Master also performs additional maintenance:
             if self.__master:
@@ -101,7 +101,7 @@ class Consumer(dramatiq.Consumer):
             message.consumer_id = None
 
     def __clean_dead_consumers(self, db):
-        timeout = datetime.utcnow() - timedelta(
+        timeout = datetime.now(timezone.utc) - timedelta(
             seconds=self.__settings.worker_keepalive_timeout
         )
 
@@ -121,7 +121,7 @@ class Consumer(dramatiq.Consumer):
         # We're starting up, add a record of ourselves to the DB.
         with self.__db_session() as db:
             db_consumer = DramatiqConsumer(
-                id=self.__consumer_id, last_alive=datetime.utcnow()
+                id=self.__consumer_id, last_alive=datetime.now(timezone.utc)
             )
             db.add(db_consumer)
             db.commit()
@@ -259,7 +259,7 @@ class Consumer(dramatiq.Consumer):
             ).update(
                 {
                     Task.state: TaskStates.failed.value,
-                    Task.updated: datetime.utcnow(),
+                    Task.updated: datetime.now(timezone.utc),
                 }
             )
 
