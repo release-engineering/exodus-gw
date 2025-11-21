@@ -197,7 +197,7 @@ class CommitBase:
     @property
     def task_ready(self) -> bool:
         task = self.task
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         if task.state in (TaskStates.complete, TaskStates.failed):
             LOG.warning(
                 "Task %s in unexpected state, '%s'",

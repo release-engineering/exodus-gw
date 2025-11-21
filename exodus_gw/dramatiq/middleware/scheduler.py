@@ -2,7 +2,7 @@ import functools
 import logging
 import uuid
 from collections.abc import Callable
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pycron
 from dramatiq import Middleware
@@ -79,7 +79,7 @@ class SchedulerMiddleware(Middleware):
         @functools.wraps(unscheduled_fn)
         def new_fn(last_run: float | None = None):
             cron_rule = getattr(settings, settings_key)
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
 
             if not last_run:
                 # If we are being invoked for the first time, there is no obvious
@@ -87,7 +87,7 @@ class SchedulerMiddleware(Middleware):
                 # pick 30 minutes somewhat arbitrarily.
                 last_run = now.timestamp() - 60 * 30
 
-            since = datetime.fromtimestamp(last_run)
+            since = datetime.fromtimestamp(last_run, timezone.utc)
 
             if pycron.has_been(cron_rule, since, now):
                 LOG.info(
