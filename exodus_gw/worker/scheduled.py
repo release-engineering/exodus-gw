@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import dramatiq
 from sqlalchemy.orm import Session, noload
@@ -16,7 +16,7 @@ class Janitor:
     def __init__(self):
         self.settings = Settings()
         self.db = Session(bind=db_engine(self.settings))
-        self.now = datetime.utcnow()
+        self.now = datetime.now(timezone.utc)
 
     def run(self):
         self.fix_timestamps()

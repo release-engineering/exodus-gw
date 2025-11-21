@@ -2,7 +2,7 @@ import functools
 import gzip
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from threading import Lock
 from typing import Any
 
@@ -315,7 +315,7 @@ class DynamoDB:
             # time. github.com/litl/backoff/blob/master/backoff/_common.py#L34
 
             if self.deadline is not None:
-                now = datetime.utcnow()
+                now = datetime.now(timezone.utc)
                 diff = self.deadline.timestamp() - now.timestamp()
                 LOG.debug("Remaining time for batch_write: %ds", diff)
                 return diff

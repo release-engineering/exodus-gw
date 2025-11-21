@@ -1,7 +1,7 @@
 """APIs for inspecting the state of the exodus-gw service."""
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Header, HTTPException, Response
 from sqlalchemy.orm import Session
@@ -57,7 +57,7 @@ def healthcheck_worker(
     """Returns a successful response if background workers are running."""
 
     # consumer is alive if it was last seen at least this recently.
-    threshold = datetime.utcnow() - timedelta(
+    threshold = datetime.now(timezone.utc) - timedelta(
         seconds=settings.worker_keepalive_timeout
     )
 

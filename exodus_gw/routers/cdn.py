@@ -274,14 +274,14 @@ def cdn_access(
     base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
 
     policy_url = f"{base_url}{resource}"
-    expires = datetime.utcnow() + timedelta(days=expire_days)
+    expires = datetime.now(timezone.utc) + timedelta(days=expire_days)
 
     cookie = cf_cookie(policy_url, env, expires, username)
     cookie_str = "; ".join(f"{key}={value}" for (key, value) in cookie.items())
 
     return {
         "url": base_url,
-        "expires": expires.isoformat(timespec="minutes") + "Z",
+        "expires": expires,
         "cookie": cookie_str,
     }
 

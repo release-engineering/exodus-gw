@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest import mock
 
 import dramatiq
@@ -21,7 +21,7 @@ def mock_utcnow():
         "exodus_gw.dramatiq.middleware.scheduler.datetime"
     ) as mock_datetime:
         mock_datetime.fromtimestamp.side_effect = datetime.fromtimestamp
-        yield mock_datetime.utcnow
+        yield mock_datetime.now
 
 
 def test_scheduled_actor_invoked_on_rule_match(db, mock_utcnow):
@@ -37,7 +37,7 @@ def test_scheduled_actor_invoked_on_rule_match(db, mock_utcnow):
     def schedule_test1():
         calls.append(True)
 
-    now = datetime(1999, 1, 1)
+    now = datetime(1999, 1, 1, tzinfo=timezone.utc)
     mock_utcnow.return_value = now
 
     # First call does not match the cron rule
