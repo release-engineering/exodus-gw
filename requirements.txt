@@ -469,17 +469,17 @@ defusedxml==0.7.1 \
     # via
     #   -r requirements.in
     #   repo-autoindex
-dramatiq[watch]==1.18.0 \
-    --hash=sha256:5ea436b6e50dae64d4de04f1eb519ad239a6b1ba6315ba1dce1c0c4c1ebedfaf \
-    --hash=sha256:d360f608aa3cd06f5db714bfcd23825dc7098bacfee52aca536b0bb0faae3c69
+dramatiq[watch]==2.0.0 \
+    --hash=sha256:732eff33f9080338b528f2dff7336a5145687cf9efb57a6a0bbd42ca937f1a30 \
+    --hash=sha256:85ff840bcc1393812e0079bb310036f647e011036124a7a1492692da7966a093
     # via -r requirements.in
-edgegrid-python==2.0.2 \
-    --hash=sha256:c1705c2208cf559b590ff985382e6f7ea1e891ee16bc1ca5d3482fd4e6968ef4 \
-    --hash=sha256:fc6edb0a428820af2c82d2a8782cb3b269d561dcb578e193e90e8909fea1574e
+edgegrid-python==2.0.3 \
+    --hash=sha256:4df6c1677d04131f49aa0d66d050ce9f8d795d6a6a0d96dd4cd09f379a8420dc \
+    --hash=sha256:b2d1f7808aa0f64170afb47d23322b20775eab106ba57099b0adfbc3026f12ea
     # via fastpurge
-fastapi==0.121.2 \
-    --hash=sha256:ca8e932b2b823ec1721c641e3669472c855ad9564a2854c9899d904c2848b8b9 \
-    --hash=sha256:f2d80b49a86a846b70cc3a03eb5ea6ad2939298bf6a7fe377aa9cd3dd079d358
+fastapi==0.121.3 \
+    --hash=sha256:0055bc24fe53e56a40e9e0ad1ae2baa81622c406e548e501e717634e2dfbc40b \
+    --hash=sha256:0c78fc87587fcd910ca1bbf5bc8ba37b80e119b388a7206b39f0ecc95ebf53e9
     # via -r requirements.in
 fastpurge==1.0.6 \
     --hash=sha256:650ca73b28e64d46a198e3d7ea3f7ee79bfd0404a3030d057addd11e79ef80e3 \
@@ -1079,10 +1079,6 @@ packaging==25.0 \
     #   -r requirements.in
     #   asgi-correlation-id
     #   gunicorn
-prometheus-client==0.23.1 \
-    --hash=sha256:6ae8f9081eaaaf153a2e959d2e6c4f4fb57b12ef76c8c7980202f1e57b48b2ce \
-    --hash=sha256:dd1913e6e76b59cfe44e7a4b83e01afc9873c1bdfd2ed8739f1e76aeca115f99
-    # via dramatiq
 propcache==0.4.1 \
     --hash=sha256:0002004213ee1f36cfb3f9a42b5066100c44276b9b72b4e1504cddd3d692e86e \
     --hash=sha256:0013cb6f8dde4b2a2f66903b8ba740bdfe378c943c4377a200551ceb27f379e4 \
