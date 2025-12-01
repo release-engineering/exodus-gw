@@ -108,7 +108,7 @@ indefinitely.
 import logging
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from fastapi import APIRouter, Body, HTTPException, Query
@@ -330,7 +330,7 @@ def update_publish_items(
     # Each item's 'dirty' and 'updated' are refreshed to ensure it's
     # written to DynamoDB with the current update, even if it was already
     # written before.
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     items_data = [
         {
             **item.model_dump(),
@@ -479,7 +479,7 @@ def commit_publish(
     at whichever item was updated most recently.
     """
     commit_mode_str = (commit_mode or models.CommitModes.phase2).value
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     db_publish = (
         db.query(models.Publish)

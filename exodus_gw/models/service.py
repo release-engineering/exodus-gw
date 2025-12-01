@@ -1,9 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
-from sqlalchemy import DateTime, ForeignKey, String, event
+from sqlalchemy import ForeignKey, String, event
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.types import Uuid
+
+from exodus_gw.types import UTCDateTime
 
 from .base import Base
 
@@ -23,8 +25,8 @@ class Task(Base):
     id: Mapped[str] = mapped_column(Uuid(as_uuid=False), primary_key=True)
     type: Mapped[str]
     state: Mapped[str] = mapped_column(String)
-    updated: Mapped[datetime | None] = mapped_column(DateTime())
-    deadline: Mapped[datetime | None] = mapped_column(DateTime())
+    updated: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    deadline: Mapped[datetime | None] = mapped_column(UTCDateTime())
 
 
 class CommitTask(Task):
@@ -43,4 +45,4 @@ class CommitTask(Task):
 @event.listens_for(Task, "before_update")
 @event.listens_for(CommitTask, "before_update")
 def task_before_update(_mapper, _connection, task: Task):
-    task.updated = datetime.utcnow()
+    task.updated = datetime.now(timezone.utc)

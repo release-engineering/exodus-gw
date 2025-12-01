@@ -1,12 +1,11 @@
 import uuid
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Union
 
 from fastapi import HTTPException
 from sqlalchemy import (
     Boolean,
-    DateTime,
     ForeignKey,
     String,
     UniqueConstraint,
@@ -18,6 +17,7 @@ from sqlalchemy.orm import Bundle, Mapped, mapped_column, relationship
 from sqlalchemy.types import Uuid
 
 from exodus_gw.schemas import ItemBase
+from exodus_gw.types import UTCDateTime
 
 from .base import Base
 
@@ -33,7 +33,7 @@ class Publish(Base):
     )
     env: Mapped[str] = mapped_column(String)
     state: Mapped[str] = mapped_column(String)
-    updated: Mapped[datetime | None] = mapped_column(DateTime())
+    updated: Mapped[datetime | None] = mapped_column(UTCDateTime())
     items = relationship(
         "Item", back_populates="publish", cascade="all, delete-orphan"
     )
@@ -163,7 +163,8 @@ class Item(Base):
     """True if item still needs to be written to DynamoDB."""
 
     updated: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow
+        UTCDateTime,
+        default=lambda: datetime.now(timezone.utc),
     )
     """Last modification/creation time of the item.
 
@@ -181,4 +182,4 @@ class Item(Base):
 @event.listens_for(Publish, "before_update")
 @event.listens_for(Item, "before_update")
 def set_updated(_mapper, _connection, entity: Publish | Item):
-    entity.updated = datetime.utcnow()
+    entity.updated = datetime.now(timezone.utc)

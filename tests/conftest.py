@@ -2,7 +2,7 @@ import base64
 import gzip
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 import dramatiq
@@ -230,25 +230,25 @@ def fake_publish():
             web_uri="/some/path",
             object_key="0bacfc5268f9994065dd858ece3359fd7a99d82af5be84202b8e84c2a5b07ffa",
             publish_id=publish.id,
-            updated=datetime(2023, 10, 4, 3, 52, 0),
+            updated=datetime(2023, 10, 4, 3, 52, 0, tzinfo=timezone.utc),
         ),
         models.Item(
             web_uri="/other/path",
             object_key="e448a4330ff79a1b20069d436fae94806a0e2e3a6b309cd31421ef088c6439fb",
             publish_id=publish.id,
-            updated=datetime(2023, 10, 4, 3, 52, 1),
+            updated=datetime(2023, 10, 4, 3, 52, 1, tzinfo=timezone.utc),
         ),
         models.Item(
             web_uri="/content/testproduct/1/repo/repomd.xml",
             object_key="3f449eb3b942af58e9aca4c1cffdef89c3f1552c20787ae8c966767a1fedd3a5",
             publish_id=publish.id,
-            updated=datetime(2023, 10, 4, 3, 52, 2),
+            updated=datetime(2023, 10, 4, 3, 52, 2, tzinfo=timezone.utc),
         ),
         models.Item(
             web_uri="/content/testproduct/1/repo/.__exodus_autoindex",
             object_key="5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03",
             publish_id=publish.id,
-            updated=datetime(2023, 10, 4, 3, 52, 2),
+            updated=datetime(2023, 10, 4, 3, 52, 2, tzinfo=timezone.utc),
         ),
     ]
     yield publish

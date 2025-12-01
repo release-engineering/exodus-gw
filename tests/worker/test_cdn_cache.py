@@ -1,6 +1,6 @@
 import json
 import pathlib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import fastpurge
 import pytest
@@ -77,7 +77,7 @@ def test_flush_cdn_cache_expired_task(
     settings = load_settings()
 
     task = Task(id=fake_message_id)
-    task.deadline = datetime.utcnow() - timedelta(hours=3)
+    task.deadline = datetime.now(timezone.utc) - timedelta(hours=3)
     task.state = "NOT_STARTED"
     db.add(task)
     db.commit()

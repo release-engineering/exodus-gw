@@ -1,7 +1,7 @@
 import logging
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 
 import dramatiq
 import fastpurge
@@ -180,7 +180,7 @@ def flush_cdn_cache(
         )
         return
 
-    if task.deadline and task.deadline < datetime.utcnow():
+    if task.deadline and task.deadline < datetime.now(timezone.utc):
         LOG.error("Task exceeded deadline of %s", task.deadline)
         task.state = TaskStates.failed
         db.commit()
@@ -190,7 +190,7 @@ def flush_cdn_cache(
     ddb = DynamoDB(
         env=env,
         settings=settings,
-        from_date=str(datetime.utcnow()),
+        from_date=str(datetime.now(timezone.utc)),
         env_obj=get_environment(env, settings),
     )
 

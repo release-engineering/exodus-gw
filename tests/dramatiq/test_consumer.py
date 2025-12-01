@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import dramatiq
 from fastapi.testclient import TestClient
@@ -122,14 +122,14 @@ def test_rescue_dead_messages(db):
         db.add(
             DramatiqConsumer(
                 id="this-consumer-is-stale",
-                last_alive=datetime(1999, 2, 27),
+                last_alive=datetime(1999, 2, 27, tzinfo=timezone.utc),
             )
         )
 
         # Reassign another to a consumer which appears to be alive
         db.add(
             DramatiqConsumer(
-                id="some-other-consumer", last_alive=datetime.utcnow()
+                id="some-other-consumer", last_alive=datetime.now(timezone.utc)
             )
         )
         db_messages[2].consumer_id = "some-other-consumer"
