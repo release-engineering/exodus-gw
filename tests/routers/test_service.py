@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi.testclient import TestClient
 
@@ -16,7 +16,9 @@ def test_healthcheck_worker_healthy(db):
     with TestClient(app) as client:
         # Ensure there's some live consumer.
         db.add(
-            DramatiqConsumer(id="some-consumer", last_alive=datetime.utcnow())
+            DramatiqConsumer(
+                id="some-consumer", last_alive=datetime.now(timezone.utc)
+            )
         )
         db.commit()
 
@@ -34,7 +36,8 @@ def test_healthcheck_worker_unhealthy(db):
         # The only consumer we have is stale.
         db.add(
             DramatiqConsumer(
-                id="some-consumer", last_alive=datetime(1999, 1, 1)
+                id="some-consumer",
+                last_alive=datetime(1999, 1, 1, tzinfo=timezone.utc),
             )
         )
         db.commit()

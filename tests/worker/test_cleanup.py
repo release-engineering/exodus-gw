@@ -1,6 +1,6 @@
 import logging
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from sqlalchemy.orm.exc import ObjectDeletedError
@@ -41,7 +41,7 @@ def test_cleanup_mixed(caplog, db):
     # Note: datetimes in this test assume the default timeout values
     # are used.
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     half_day_ago = now - timedelta(hours=12)
     two_days_ago = now - timedelta(days=2)
     eight_days_ago = now - timedelta(days=8)

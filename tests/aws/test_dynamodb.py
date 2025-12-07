@@ -31,7 +31,9 @@ NOW_UTC = str(datetime.now(timezone.utc))
                                 },
                                 # Note these timestamps come from the canned values
                                 # on fake_publish.items
-                                "from_date": {"S": "2023-10-04 03:52:00"},
+                                "from_date": {
+                                    "S": "2023-10-04 03:52:00+00:00"
+                                },
                                 "content_type": {"S": None},
                             }
                         }
@@ -44,7 +46,9 @@ NOW_UTC = str(datetime.now(timezone.utc))
                                     "S": "e448a4330ff79a1b20069d436fae9480"
                                     "6a0e2e3a6b309cd31421ef088c6439fb"
                                 },
-                                "from_date": {"S": "2023-10-04 03:52:01"},
+                                "from_date": {
+                                    "S": "2023-10-04 03:52:01+00:00"
+                                },
                                 "content_type": {"S": None},
                             }
                         }
@@ -59,7 +63,9 @@ NOW_UTC = str(datetime.now(timezone.utc))
                                     "S": "3f449eb3b942af58e9aca4c1cffdef89"
                                     "c3f1552c20787ae8c966767a1fedd3a5"
                                 },
-                                "from_date": {"S": "2023-10-04 03:52:02"},
+                                "from_date": {
+                                    "S": "2023-10-04 03:52:02+00:00"
+                                },
                                 "content_type": {"S": None},
                             }
                         }
@@ -74,7 +80,9 @@ NOW_UTC = str(datetime.now(timezone.utc))
                                     "S": "3f449eb3b942af58e9aca4c1cffdef89"
                                     "c3f1552c20787ae8c966767a1fedd3a5"
                                 },
-                                "from_date": {"S": "2023-10-04 03:52:02"},
+                                "from_date": {
+                                    "S": "2023-10-04 03:52:02+00:00"
+                                },
                                 "content_type": {"S": None},
                             }
                         }
@@ -89,7 +97,9 @@ NOW_UTC = str(datetime.now(timezone.utc))
                                     "S": "5891b5b522d5df086d0ff0b110fbd9d2"
                                     "1bb4fc7163af34d08286a2e846f6be03"
                                 },
-                                "from_date": {"S": "2023-10-04 03:52:02"},
+                                "from_date": {
+                                    "S": "2023-10-04 03:52:02+00:00"
+                                },
                                 "content_type": {"S": None},
                             }
                         }
@@ -104,7 +114,9 @@ NOW_UTC = str(datetime.now(timezone.utc))
                                     "S": "5891b5b522d5df086d0ff0b110fbd9d2"
                                     "1bb4fc7163af34d08286a2e846f6be03"
                                 },
-                                "from_date": {"S": "2023-10-04 03:52:02"},
+                                "from_date": {
+                                    "S": "2023-10-04 03:52:02+00:00"
+                                },
                                 "content_type": {"S": None},
                             }
                         }
@@ -120,7 +132,9 @@ NOW_UTC = str(datetime.now(timezone.utc))
                         "DeleteRequest": {
                             "Key": {
                                 "web_uri": {"S": "/some/path"},
-                                "from_date": {"S": "2023-10-04 03:52:00"},
+                                "from_date": {
+                                    "S": "2023-10-04 03:52:00+00:00"
+                                },
                             }
                         }
                     },
@@ -128,7 +142,9 @@ NOW_UTC = str(datetime.now(timezone.utc))
                         "DeleteRequest": {
                             "Key": {
                                 "web_uri": {"S": "/other/path"},
-                                "from_date": {"S": "2023-10-04 03:52:01"},
+                                "from_date": {
+                                    "S": "2023-10-04 03:52:01+00:00"
+                                },
                             }
                         }
                     },
@@ -138,7 +154,9 @@ NOW_UTC = str(datetime.now(timezone.utc))
                                 "web_uri": {
                                     "S": "/content/testproduct/1.1.0/repo/repomd.xml"
                                 },
-                                "from_date": {"S": "2023-10-04 03:52:02"},
+                                "from_date": {
+                                    "S": "2023-10-04 03:52:02+00:00"
+                                },
                             }
                         }
                     },
@@ -148,7 +166,9 @@ NOW_UTC = str(datetime.now(timezone.utc))
                                 "web_uri": {
                                     "S": "/content/testproduct/1/repo/repomd.xml"
                                 },
-                                "from_date": {"S": "2023-10-04 03:52:02"},
+                                "from_date": {
+                                    "S": "2023-10-04 03:52:02+00:00"
+                                },
                             }
                         }
                     },
@@ -158,7 +178,9 @@ NOW_UTC = str(datetime.now(timezone.utc))
                                 "web_uri": {
                                     "S": "/content/testproduct/1.1.0/repo/.__exodus_autoindex"
                                 },
-                                "from_date": {"S": "2023-10-04 03:52:02"},
+                                "from_date": {
+                                    "S": "2023-10-04 03:52:02+00:00"
+                                },
                             }
                         }
                     },
@@ -168,7 +190,9 @@ NOW_UTC = str(datetime.now(timezone.utc))
                                 "web_uri": {
                                     "S": "/content/testproduct/1/repo/.__exodus_autoindex"
                                 },
-                                "from_date": {"S": "2023-10-04 03:52:02"},
+                                "from_date": {
+                                    "S": "2023-10-04 03:52:02+00:00"
+                                },
                             }
                         }
                     },
@@ -213,7 +237,9 @@ def test_batch_write(
                                 },
                                 # Note these timestamps come from the canned values
                                 # on fake_publish.items
-                                "from_date": {"S": "2023-10-04 03:52:00"},
+                                "from_date": {
+                                    "S": "2023-10-04 03:52:00+00:00"
+                                },
                                 "content_type": {"S": None},
                             }
                         }
@@ -226,7 +252,9 @@ def test_batch_write(
                                     "S": "e448a4330ff79a1b20069d436fae9480"
                                     "6a0e2e3a6b309cd31421ef088c6439fb"
                                 },
-                                "from_date": {"S": "2023-10-04 03:52:01"},
+                                "from_date": {
+                                    "S": "2023-10-04 03:52:01+00:00"
+                                },
                                 "content_type": {"S": None},
                             }
                         }
@@ -241,7 +269,9 @@ def test_batch_write(
                                     "S": "3f449eb3b942af58e9aca4c1cffdef89"
                                     "c3f1552c20787ae8c966767a1fedd3a5"
                                 },
-                                "from_date": {"S": "2023-10-04 03:52:02"},
+                                "from_date": {
+                                    "S": "2023-10-04 03:52:02+00:00"
+                                },
                                 "content_type": {"S": None},
                             }
                         }
@@ -256,7 +286,9 @@ def test_batch_write(
                                     "S": "3f449eb3b942af58e9aca4c1cffdef89"
                                     "c3f1552c20787ae8c966767a1fedd3a5"
                                 },
-                                "from_date": {"S": "2023-10-04 03:52:02"},
+                                "from_date": {
+                                    "S": "2023-10-04 03:52:02+00:00"
+                                },
                                 "content_type": {"S": None},
                             }
                         }
@@ -271,7 +303,9 @@ def test_batch_write(
                                     "S": "5891b5b522d5df086d0ff0b110fbd9d2"
                                     "1bb4fc7163af34d08286a2e846f6be03"
                                 },
-                                "from_date": {"S": "2023-10-04 03:52:02"},
+                                "from_date": {
+                                    "S": "2023-10-04 03:52:02+00:00"
+                                },
                                 "content_type": {"S": None},
                             }
                         }
@@ -286,7 +320,9 @@ def test_batch_write(
                                     "S": "5891b5b522d5df086d0ff0b110fbd9d2"
                                     "1bb4fc7163af34d08286a2e846f6be03"
                                 },
-                                "from_date": {"S": "2023-10-04 03:52:02"},
+                                "from_date": {
+                                    "S": "2023-10-04 03:52:02+00:00"
+                                },
                                 "content_type": {"S": None},
                             }
                         }
@@ -308,7 +344,9 @@ def test_batch_write(
                                 },
                                 # Note these timestamps come from the canned values
                                 # on fake_publish.items
-                                "from_date": {"S": "2023-10-04 03:52:00"},
+                                "from_date": {
+                                    "S": "2023-10-04 03:52:00+00:00"
+                                },
                                 "content_type": {"S": None},
                             }
                         }
@@ -321,7 +359,9 @@ def test_batch_write(
                                     "S": "e448a4330ff79a1b20069d436fae9480"
                                     "6a0e2e3a6b309cd31421ef088c6439fb"
                                 },
-                                "from_date": {"S": "2023-10-04 03:52:01"},
+                                "from_date": {
+                                    "S": "2023-10-04 03:52:01+00:00"
+                                },
                                 "content_type": {"S": None},
                             }
                         }
@@ -336,7 +376,9 @@ def test_batch_write(
                                     "S": "3f449eb3b942af58e9aca4c1cffdef89"
                                     "c3f1552c20787ae8c966767a1fedd3a5"
                                 },
-                                "from_date": {"S": "2023-10-04 03:52:02"},
+                                "from_date": {
+                                    "S": "2023-10-04 03:52:02+00:00"
+                                },
                                 "content_type": {"S": None},
                             }
                         }
@@ -351,7 +393,9 @@ def test_batch_write(
                                     "S": "5891b5b522d5df086d0ff0b110fbd9d2"
                                     "1bb4fc7163af34d08286a2e846f6be03"
                                 },
-                                "from_date": {"S": "2023-10-04 03:52:02"},
+                                "from_date": {
+                                    "S": "2023-10-04 03:52:02+00:00"
+                                },
                                 "content_type": {"S": None},
                             }
                         }
@@ -387,7 +431,7 @@ def test_write_mirror(mock_boto3_client):
             {
                 "PutRequest": {
                     "Item": {
-                        "from_date": {"S": "2023-10-04 03:52:00"},
+                        "from_date": {"S": "2023-10-04 03:52:00+00:00"},
                         "web_uri": {
                             "S": "/content/dist/rhel8/8.5/x86_64/baseos/os/repodata/abc123-primary.xml.gz"
                         },
@@ -401,7 +445,7 @@ def test_write_mirror(mock_boto3_client):
             {
                 "PutRequest": {
                     "Item": {
-                        "from_date": {"S": "2023-10-04 03:52:00"},
+                        "from_date": {"S": "2023-10-04 03:52:00+00:00"},
                         "web_uri": {
                             "S": "/content/dist/rhel8/8/x86_64/baseos/os/repodata/abc123-primary.xml.gz"
                         },
@@ -416,7 +460,7 @@ def test_write_mirror(mock_boto3_client):
             {
                 "PutRequest": {
                     "Item": {
-                        "from_date": {"S": "2023-10-04 03:52:01"},
+                        "from_date": {"S": "2023-10-04 03:52:01+00:00"},
                         "web_uri": {
                             "S": "/content/dist/rhel9/9/x86_64/baseos/os/repodata/abc-primary.xml.gz"
                         },
@@ -431,7 +475,7 @@ def test_write_mirror(mock_boto3_client):
             {
                 "PutRequest": {
                     "Item": {
-                        "from_date": {"S": "2023-10-04 03:52:02"},
+                        "from_date": {"S": "2023-10-04 03:52:02+00:00"},
                         "web_uri": {
                             "S": "/content/dist/rhel8/8.5/aarch64/appstream/debug/repodata/xyz-primary.xml.gz"
                         },
@@ -446,7 +490,7 @@ def test_write_mirror(mock_boto3_client):
             {
                 "PutRequest": {
                     "Item": {
-                        "from_date": {"S": "2023-10-04 03:52:02"},
+                        "from_date": {"S": "2023-10-04 03:52:02+00:00"},
                         "web_uri": {
                             "S": "/content/dist/rhel8/rhui/8/aarch64/appstream/debug/repodata/ijk-primary.xml.gz"
                         },
@@ -470,21 +514,21 @@ def test_write_mirror(mock_boto3_client):
             web_uri="/content/dist/rhel8/8/x86_64/baseos/os/repodata/abc123-primary.xml.gz",
             object_key="0bacfc5268f9994065dd858ece3359fd7a99d82af5be84202b8e84c2a5b07ffa",
             publish_id=publish.id,
-            updated=datetime(2023, 10, 4, 3, 52, 0),
+            updated=datetime(2023, 10, 4, 3, 52, 0, tzinfo=timezone.utc),
         ),
         # Doesn't match any aliases, so no mirroring.
         Item(
             web_uri="/content/dist/rhel9/9/x86_64/baseos/os/repodata/abc-primary.xml.gz",
             object_key="e448a4330ff79a1b20069d436fae94806a0e2e3a6b309cd31421ef088c6439fb",
             publish_id=publish.id,
-            updated=datetime(2023, 10, 4, 3, 52, 1),
+            updated=datetime(2023, 10, 4, 3, 52, 1, tzinfo=timezone.utc),
         ),
         # The destination side of 8 => 8.5, should not mirror.
         Item(
             web_uri="/content/dist/rhel8/8.5/aarch64/appstream/debug/repodata/xyz-primary.xml.gz",
             object_key="3f449eb3b942af58e9aca4c1cffdef89c3f1552c20787ae8c966767a1fedd3a5",
             publish_id=publish.id,
-            updated=datetime(2023, 10, 4, 3, 52, 2),
+            updated=datetime(2023, 10, 4, 3, 52, 2, tzinfo=timezone.utc),
         ),
         # RHUI aliases are not aliased on write, so we expect the same uri
         # with no mirroring. rhsm-pulp is configured upstream to block
@@ -494,7 +538,7 @@ def test_write_mirror(mock_boto3_client):
             web_uri="/content/dist/rhel8/rhui/8/aarch64/appstream/debug/repodata/ijk-primary.xml.gz",
             object_key="5891b5b522d5df086d0ff0b110fbd9d21bb4fc7163af34d08286a2e846f6be03",
             publish_id=publish.id,
-            updated=datetime(2023, 10, 4, 3, 52, 2),
+            updated=datetime(2023, 10, 4, 3, 52, 2, tzinfo=timezone.utc),
         ),
     ]
     ddb = dynamodb.DynamoDB("test", Settings(), NOW_UTC, mirror_writes=True)
@@ -546,7 +590,7 @@ def test_batch_write_deadline(mock_boto3_client, fake_publish, caplog):
     caplog.set_level(logging.DEBUG, logger="exodus-gw")
 
     # Set deadline to 2 seconds from the start of the test.
-    deadline = datetime.utcnow() + timedelta(seconds=2)
+    deadline = datetime.now(timezone.utc) + timedelta(seconds=2)
 
     ddb = dynamodb.DynamoDB(
         env="test",
@@ -574,7 +618,9 @@ def test_batch_write_deadline(mock_boto3_client, fake_publish, caplog):
     last_rec = json.loads(caplog.text.splitlines()[-1])
     assert "Giving up _batch_write(...)" in last_rec["message"]
     # ...and it should've given up immediately past the deadline.
-    giveup_time = datetime.strptime(last_rec["time"], "%Y-%m-%d %H:%M:%S.%f")
+    giveup_time = datetime.strptime(
+        last_rec["time"], "%Y-%m-%d %H:%M:%S.%f"
+    ).replace(tzinfo=timezone.utc)
     assert (giveup_time.timestamp() - deadline.timestamp()) < 0.1
 
 
