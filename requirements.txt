@@ -152,9 +152,9 @@ aiosignal==1.4.0 \
     --hash=sha256:053243f8b92b990551949e63930a839ff0cf0b0ebbe0597b0f3fb19e1a0fe82e \
     --hash=sha256:f47eecd9468083c2029cc99945502cb7708b082c232f9aca65da147157b251c7
     # via aiohttp
-alembic==1.18.0 \
-    --hash=sha256:0c4c03c927dc54d4c56821bdcc988652f4f63bf7b9017fd9d78d63f09fd22b48 \
-    --hash=sha256:3993fcfbc371aa80cdcf13f928b7da21b1c9f783c914f03c3c6375f58efd9250
+alembic==1.18.1 \
+    --hash=sha256:83ac6b81359596816fb3b893099841a0862f2117b2963258e965d70dc62fb866 \
+    --hash=sha256:f1c3b0920b87134e851c25f1f7f236d8a332c34b75416802d06971df5d1b7810
     # via -r requirements.in
 annotated-doc==0.0.4 \
     --hash=sha256:571ac1dc6991c450b25a9c2d84a3705e2ae7a53467b5d111c24fa8baabbed320 \
@@ -469,9 +469,9 @@ defusedxml==0.7.1 \
     # via
     #   -r requirements.in
     #   repo-autoindex
-dramatiq[watch]==2.0.0 \
-    --hash=sha256:732eff33f9080338b528f2dff7336a5145687cf9efb57a6a0bbd42ca937f1a30 \
-    --hash=sha256:85ff840bcc1393812e0079bb310036f647e011036124a7a1492692da7966a093
+dramatiq[watch]==2.0.1 \
+    --hash=sha256:0cdfe5fdd1028adf65c6f3b2f0c5e6909053d6e41cf6556ff4def991d2419c89 \
+    --hash=sha256:3caa0587057eee67bd3a0e6d439d78d6cf88b300b5185dad1f4044a0c5f57fc2
     # via -r requirements.in
 edgegrid-python==2.0.4 \
     --hash=sha256:4272cb8ec1ac1919c08895529fda3ad5f9b9884c11963576551632eecfc7e8b9 \
