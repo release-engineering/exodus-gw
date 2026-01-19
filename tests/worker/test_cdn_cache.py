@@ -142,8 +142,7 @@ def test_flush_cdn_cache_typical(
 
     # Write an ini file with some fastpurge stuff under our control.
     conf_path = tmp_path / "exodus-gw.ini"
-    conf_path.write_text(
-        """
+    conf_path.write_text("""
 
 [env.cachetest]
 aws_profile = cachetest
@@ -181,8 +180,7 @@ includes =
     /repomd\\.xml$
 excludes =
     /also
-"""
-    )
+""")
 
     # Make load_settings use our config file above.
     monkeypatch.setenv("EXODUS_GW_INI_PATH", str(conf_path))
@@ -338,8 +336,7 @@ def test_flush_cdn_cache_legacy_config(
 
     # Write an ini file with some fastpurge stuff under our control.
     conf_path = tmp_path / "exodus-gw.ini"
-    conf_path.write_text(
-        """
+    conf_path.write_text("""
 [env.cachetest]
 aws_profile = cachetest
 bucket = my-bucket
@@ -356,8 +353,7 @@ cache_flush_urls =
 cache_flush_arl_templates =
     S/=/234/6677/{ttl}/cdn1.example.com/other/{path} x/y/z
     S/=/234/6677/{ttl}/cdn2.example.com/other/{path} x/y/z
-"""
-    )
+""")
 
     # Make load_settings use our config file above.
     monkeypatch.setenv("EXODUS_GW_INI_PATH", str(conf_path))

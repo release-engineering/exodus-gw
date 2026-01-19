@@ -68,8 +68,7 @@ async def test_complete_mpu(mock_aws_client):
 
     # Need some valid request body to complete an MPU
     async def fake_body():
-        return textwrap.dedent(
-            """
+        return textwrap.dedent("""
                 <?xml version="1.0" encoding="UTF-8"?>
                 <CompleteMultipartUpload xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
                     <Part>
@@ -81,8 +80,7 @@ async def test_complete_mpu(mock_aws_client):
                         <PartNumber>2</PartNumber>
                     </Part>
                 </CompleteMultipartUpload>
-            """
-        ).strip()
+            """).strip()
 
     request = mock.Mock()
     request.body = fake_body
@@ -156,8 +154,7 @@ async def test_complete_completed_mpu(mock_aws_client, auth_header, caplog):
 
     # Need some valid request body to complete an MPU
     async def fake_body():
-        return textwrap.dedent(
-            """
+        return textwrap.dedent("""
                 <?xml version="1.0" encoding="UTF-8"?>
                 <CompleteMultipartUpload xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
                     <Part>
@@ -169,8 +166,7 @@ async def test_complete_completed_mpu(mock_aws_client, auth_header, caplog):
                         <PartNumber>2</PartNumber>
                     </Part>
                 </CompleteMultipartUpload>
-            """
-        ).strip()
+            """).strip()
 
     request = mock.Mock()
     request.body = fake_body

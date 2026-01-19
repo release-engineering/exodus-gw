@@ -150,25 +150,21 @@ async def multipart_upload(
     key: str = Path(..., description="S3 object key"),
     uploadId: str | None = Query(
         None,
-        description=textwrap.dedent(
-            """
+        description=textwrap.dedent("""
             ID of an existing multi-part upload.
 
             If this argument is provided, it must be the ID of a multi-part upload
             created previously. The upload will be validated and completed.
 
-            Must not be passed together with ``uploads``."""
-        ),
+            Must not be passed together with ``uploads``."""),
     ),
     uploads: str | None = Query(
         None,
-        description=textwrap.dedent(
-            """
+        description=textwrap.dedent("""
             If this argument is provided, a new multi-part upload will be created
             and its ID returned. The provided value should be an empty string.
 
-            Must not be passed together with ``uploadId``."""
-        ),
+            Must not be passed together with ``uploadId``."""),
     ),
     settings: Settings = deps.settings,
     caller_name: str = Depends(auth.caller_name),
