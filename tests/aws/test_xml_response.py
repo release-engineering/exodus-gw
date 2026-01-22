@@ -16,10 +16,8 @@ def test_typical_response():
 
     # It should look like this
     body = response.body.decode("utf-8")
-    expected = textwrap.dedent(
-        """
+    expected = textwrap.dedent("""
             <?xml version='1.0' encoding='UTF-8'?>
             <SomeOperation><Foo>Bar</Foo><Baz>123</Baz></SomeOperation>
-        """
-    ).strip()
+        """).strip()
     assert body == expected

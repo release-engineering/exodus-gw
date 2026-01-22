@@ -97,7 +97,7 @@ class Listener:
             c = connection.connection.connection
 
             while self.running:
-                (readable, _, _) = select.select([c], [], [], self.interval)
+                readable, _, _ = select.select([c], [], [], self.interval)
                 if readable:
                     # Got some notifications
                     c.poll()

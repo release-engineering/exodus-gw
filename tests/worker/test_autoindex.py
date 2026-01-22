@@ -73,7 +73,7 @@ class FakeS3Getter:
     def __call__(self, Bucket: str, Key: str):
         assert Bucket == self.expected_bucket
 
-        (content, headers) = self.responses[Key]
+        content, headers = self.responses[Key]
 
         reader = StreamReader()
         reader.feed_data(content)

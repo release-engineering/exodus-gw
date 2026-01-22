@@ -87,12 +87,10 @@ def upgrade():
 
     # With the commit_tasks table being created, we should now move over
     # all publish_id values to that table.
-    op.execute(
-        """
+    op.execute("""
         INSERT INTO commit_tasks (id, publish_id)
         SELECT id, publish_id FROM tasks WHERE tasks.type='commit'
-        """
-    )
+        """)
 
     op.drop_column("tasks", "publish_id")
 
