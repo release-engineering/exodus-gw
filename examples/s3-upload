@@ -97,7 +97,7 @@ def main():
             # default if user didn't pass a value
             kv = kv + "=1"
 
-        (k, v) = kv.split("=", 1)
+        k, v = kv.split("=", 1)
         metadata[k] = v
 
     uploaded = {}

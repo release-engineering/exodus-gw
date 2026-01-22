@@ -67,7 +67,13 @@ def test_requires_auth(api_route):
 
     # In any other case, the endpoint must declare some dependency on the
     # role checker.
-    assert "Depends(check_roles)" in repr(api_route.dependencies)
+    dependencies = [
+        getattr(
+            depends.dependency, "__name__", type(depends.dependency).__name__
+        )
+        for depends in api_route.dependencies
+    ]
+    assert "check_roles" in dependencies
 
 
 @freeze_time("2023-07-28 13:24:03.597+00:00")
