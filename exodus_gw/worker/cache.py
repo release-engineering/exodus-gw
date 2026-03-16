@@ -78,6 +78,11 @@ class Flusher:
         # URL-encode a path, preserving only forward slashes.
         return quote(path, safe="/")
 
+    def _lowercase_percent_encoding(self, path: str) -> str:
+        # Convert percent-encoded hex digits to lowercase.
+        # E.g., "%2B" -> "%2b"
+        return re.sub(r"%[0-9A-F]{2}", lambda m: m.group(0).lower(), path)
+
     @property
     def urls_for_flush(self):
         out: list[str] = []
@@ -91,14 +96,22 @@ class Flusher:
         ]
 
         for path in path_list:
-            # Generate URL-encoded path
+            # Generate URL-encoded path (uppercase by default)
             encoded_path = self._encode_path(path)
 
-            # Only include both paths if encoding changes the path
-            if path == encoded_path:
-                paths_to_flush = [path]
-            else:
-                paths_to_flush = [path, encoded_path]
+            # Start with the original path
+            paths_to_flush = [path]
+
+            # If encoding changes the path, add both uppercase and lowercase variants.
+            # Akamai's cache flush requests are case-sensitive, and some clients (e.g., dnf)
+            # request the lowercase percent-encoded path.
+            if path != encoded_path:
+                paths_to_flush.extend(
+                    [
+                        encoded_path,
+                        self._lowercase_percent_encoding(encoded_path),
+                    ]
+                )
 
             for path_variant in paths_to_flush:
                 # Figure out the templates applicable to this path
