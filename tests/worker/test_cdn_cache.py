@@ -319,22 +319,31 @@ excludes =
             "https://cdn2.example.com/root/some/kickstart/treeinfo",
             "https://cdn2.example.com/root/third/path",
             # Flush both encoded and non-encoded paths for modular RPMs
+            # Includes both uppercase (%2B) and lowercase (%2b) percent-encoding
             "https://cdn1.example.com/path/one-dest/galera-26.4.20-1.module+el9.5.0+22578+dc54e53f.x86_64.rpm",
             "https://cdn1.example.com/path/one-dest/galera-26.4.20-1.module%2Bel9.5.0%2B22578%2Bdc54e53f.x86_64.rpm",
+            "https://cdn1.example.com/path/one-dest/galera-26.4.20-1.module%2bel9.5.0%2b22578%2bdc54e53f.x86_64.rpm",
             "https://cdn1.example.com/path/one/galera-26.4.20-1.module+el9.5.0+22578+dc54e53f.x86_64.rpm",
             "https://cdn1.example.com/path/one/galera-26.4.20-1.module%2Bel9.5.0%2B22578%2Bdc54e53f.x86_64.rpm",
+            "https://cdn1.example.com/path/one/galera-26.4.20-1.module%2bel9.5.0%2b22578%2bdc54e53f.x86_64.rpm",
             "https://cdn2.example.com/root/path/one-dest/galera-26.4.20-1.module+el9.5.0+22578+dc54e53f.x86_64.rpm",
             "https://cdn2.example.com/root/path/one-dest/galera-26.4.20-1.module%2Bel9.5.0%2B22578%2Bdc54e53f.x86_64.rpm",
+            "https://cdn2.example.com/root/path/one-dest/galera-26.4.20-1.module%2bel9.5.0%2b22578%2bdc54e53f.x86_64.rpm",
             "https://cdn2.example.com/root/path/one/galera-26.4.20-1.module+el9.5.0+22578+dc54e53f.x86_64.rpm",
             "https://cdn2.example.com/root/path/one/galera-26.4.20-1.module%2Bel9.5.0%2B22578%2Bdc54e53f.x86_64.rpm",
+            "https://cdn2.example.com/root/path/one/galera-26.4.20-1.module%2bel9.5.0%2b22578%2bdc54e53f.x86_64.rpm",
             "S/=/123/4567/30d/cdn1.example.com/path/one-dest/galera-26.4.20-1.module+el9.5.0+22578+dc54e53f.x86_64.rpm cid=///",
             "S/=/123/4567/30d/cdn1.example.com/path/one-dest/galera-26.4.20-1.module%2Bel9.5.0%2B22578%2Bdc54e53f.x86_64.rpm cid=///",
+            "S/=/123/4567/30d/cdn1.example.com/path/one-dest/galera-26.4.20-1.module%2bel9.5.0%2b22578%2bdc54e53f.x86_64.rpm cid=///",
             "S/=/123/4567/30d/cdn1.example.com/path/one/galera-26.4.20-1.module+el9.5.0+22578+dc54e53f.x86_64.rpm cid=///",
             "S/=/123/4567/30d/cdn1.example.com/path/one/galera-26.4.20-1.module%2Bel9.5.0%2B22578%2Bdc54e53f.x86_64.rpm cid=///",
+            "S/=/123/4567/30d/cdn1.example.com/path/one/galera-26.4.20-1.module%2bel9.5.0%2b22578%2bdc54e53f.x86_64.rpm cid=///",
             "S/=/234/6677/30d/cdn2.example.com/other/path/one-dest/galera-26.4.20-1.module+el9.5.0+22578+dc54e53f.x86_64.rpm x/y/z",
             "S/=/234/6677/30d/cdn2.example.com/other/path/one-dest/galera-26.4.20-1.module%2Bel9.5.0%2B22578%2Bdc54e53f.x86_64.rpm x/y/z",
+            "S/=/234/6677/30d/cdn2.example.com/other/path/one-dest/galera-26.4.20-1.module%2bel9.5.0%2b22578%2bdc54e53f.x86_64.rpm x/y/z",
             "S/=/234/6677/30d/cdn2.example.com/other/path/one/galera-26.4.20-1.module+el9.5.0+22578+dc54e53f.x86_64.rpm x/y/z",
             "S/=/234/6677/30d/cdn2.example.com/other/path/one/galera-26.4.20-1.module%2Bel9.5.0%2B22578%2Bdc54e53f.x86_64.rpm x/y/z",
+            "S/=/234/6677/30d/cdn2.example.com/other/path/one/galera-26.4.20-1.module%2bel9.5.0%2b22578%2bdc54e53f.x86_64.rpm x/y/z",
         ]
     )
 
