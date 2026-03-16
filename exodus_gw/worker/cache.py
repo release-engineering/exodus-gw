@@ -2,6 +2,7 @@ import logging
 import os
 import re
 from datetime import datetime, timezone
+from urllib.parse import quote
 
 import dramatiq
 import fastpurge
@@ -73,6 +74,10 @@ class Flusher:
 
         return ttl
 
+    def _encode_path(self, path: str) -> str:
+        # URL-encode a path, preserving only forward slashes.
+        return quote(path, safe="/")
+
     @property
     def urls_for_flush(self):
         out: list[str] = []
@@ -86,24 +91,40 @@ class Flusher:
         ]
 
         for path in path_list:
-            # Figure out the templates applicable to this path
-            templates: list[str] = []
-            for rule in self.env.cache_flush_rules:
-                if rule.matches(path):
-                    templates.extend(rule.templates)
+            # Generate URL-encoded path
+            encoded_path = self._encode_path(path)
 
-            for template in templates:
-                if "{path}" in template:
-                    # interpret as a template with placeholders
-                    out.append(
-                        template.format(
-                            path=path.removeprefix("/"),
-                            ttl=self.arl_ttl(path),
+            # Only include both paths if encoding changes the path
+            if path == encoded_path:
+                paths_to_flush = [path]
+            else:
+                paths_to_flush = [path, encoded_path]
+
+            for path_variant in paths_to_flush:
+                # Figure out the templates applicable to this path
+                # NOTE: We match templates based on the original path,
+                # not the encoded variant, to ensure consistent rule application
+                templates: list[str] = []
+                for rule in self.env.cache_flush_rules:
+                    if rule.matches(
+                        path
+                    ):  # Always use original path for matching
+                        templates.extend(rule.templates)
+
+                for template in templates:
+                    if "{path}" in template:
+                        # interpret as a template with placeholders
+                        out.append(
+                            template.format(
+                                path=path_variant,  # Use the variant (encoded or not)
+                                ttl=self.arl_ttl(
+                                    path
+                                ),  # TTL based on original path
+                            )
                         )
-                    )
-                else:
-                    # no {path} placeholder, interpret as a root URL
-                    out.append(os.path.join(template, path))
+                    else:
+                        # no {path} placeholder, interpret as a root URL
+                        out.append(os.path.join(template, path_variant))
 
         return out
 
