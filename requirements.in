@@ -10,6 +10,15 @@ pydantic-settings
 aioboto3==13.3
 defusedxml
 uvicorn[standard]
+# aiohttp 3.13.5+ includes fix for duplicate Server headers (PR #12302)
+#
+# LocalStack sends duplicate Server headers (Werkzeug + Hypercorn) on S3 API
+# responses, which causes aiohttp 3.13.4 to reject the response with:
+# "HTTPClientError: 400, message='Duplicate 'Server' header found.'"
+#
+# The use of aiohttp 3.13.4 breaks exodus-gw S3 operations in PiAAS test
+# environments.
+aiohttp>=3.13.5
 gunicorn
 psycopg2
 sqlalchemy
