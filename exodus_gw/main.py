@@ -50,6 +50,7 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.routing import APIRoute
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
@@ -93,12 +94,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-app.include_router(service.router)
-app.include_router(upload.router)
-app.include_router(publish.router)
-app.include_router(deploy.router)
-app.include_router(cdn.router)
-app.include_router(config.router)
 
 # Hide version because we do not version our API.
 #
@@ -250,39 +245,73 @@ def new_db_session(engine):
 
 
 @app.middleware("http")
-def db_session(request: Request, call_next):
+async def db_session(request, call_next):
     """Maintain a DB session around each request, which is also shared
     with the dramatiq broker.
 
     An implicit commit occurs if and only if the request succeeds.
     """
 
-    max_tries = app.state.settings.db_session_max_tries
+    request.state.db = new_db_session(app.state.db_engine)
 
-    @backoff.on_exception(backoff.expo, DBAPIError, max_tries=max_tries)
-    async def db_session_wrap():
-        request.state.db = new_db_session(app.state.db_engine)
+    # Any dramatiq operations should also make use of this session.
+    broker = dramatiq.get_broker()
+    broker.set_session(request.state.db)
+    response = await call_next(request)
 
-        # Any dramatiq operations should also make use of this session.
-        broker = dramatiq.get_broker()
-        broker.set_session(request.state.db)
+    if response.status_code >= 200 and response.status_code < 300:
+        await run_in_threadpool(request.state.db.commit)
 
-        try:
-            response = await call_next(request)
-        except DBAPIError:
-            await run_in_threadpool(request.state.db.rollback)
-            raise
-        else:
-            if response.status_code >= 200 and response.status_code < 300:
-                await run_in_threadpool(request.state.db.commit)
-        finally:
-            broker.set_session(None)
-            await run_in_threadpool(request.state.db.close)
-            request.state.db = None
+    broker.set_session(None)
+    await run_in_threadpool(request.state.db.close)
+    request.state.db = None
 
-        return response
+    return response
 
-    return db_session_wrap()
+
+class RetryRoute(APIRoute):
+    def get_route_handler(self):
+        original_route_handler = super().get_route_handler()
+
+        async def retry_route_handler(request: Request):
+            max_tries = request.app.state.settings.db_session_max_tries
+
+            @backoff.on_exception(
+                backoff.expo, DBAPIError, max_tries=max_tries
+            )
+            async def retry_wrapper():
+                broker = dramatiq.get_broker()
+                if request.state.db is None:
+                    # Create new DB session if last one had an error
+                    request.state.db = new_db_session(
+                        request.app.state.db_engine
+                    )
+                    broker.set_session(request.state.db)
+
+                try:
+                    return await original_route_handler(request)
+
+                except DBAPIError:
+                    # Rollback and clear DB session
+                    await run_in_threadpool(request.state.db.rollback)
+                    broker.set_session(None)
+                    await run_in_threadpool(request.state.db.close)
+                    request.state.db = None
+                    raise
+
+            return await retry_wrapper()
+
+        return retry_route_handler
+
+
+app.router.route_class = RetryRoute
+
+app.include_router(service.router)
+app.include_router(upload.router)
+app.include_router(publish.router)
+app.include_router(deploy.router)
+app.include_router(cdn.router)
+app.include_router(config.router)
 
 
 def request_id_validator(short_uuid: str):
