@@ -1,6 +1,5 @@
 fastapi
-# starlette locked as 0.45.1 introduces breaking changes.
-starlette==0.45.0
+starlette
 # pydantic locked to resolve conflict between requirements and
 # test-requirements.
 pydantic==2.11.3
