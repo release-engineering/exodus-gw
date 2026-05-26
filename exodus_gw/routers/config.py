@@ -11,13 +11,14 @@ from sqlalchemy.orm import Session
 from exodus_gw.aws.dynamodb import DynamoDB
 
 from .. import auth, deps, models, schemas, worker
+from ..retry import RetryRoute
 from ..settings import Environment, Settings
 
 LOG = logging.getLogger("exodus-gw")
 
 openapi_tag = {"name": "config", "description": __doc__}
 
-router = APIRouter(tags=[openapi_tag["name"]])
+router = APIRouter(tags=[openapi_tag["name"]], route_class=RetryRoute)
 
 # Paths segments (e.g., "/dist" in "/content/dist/rhel") may contain
 # any number of alphanumeric characters, dollars ($), hyphens (-), or

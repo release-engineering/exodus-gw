@@ -19,13 +19,14 @@ from sqlalchemy.orm import Session
 from exodus_gw import auth, models, schemas, worker
 
 from .. import deps
+from ..retry import RetryRoute
 from ..settings import Environment, Settings
 
 LOG = logging.getLogger("exodus-gw")
 
 openapi_tag = {"name": "cdn", "description": __doc__}
 
-router = APIRouter(tags=[openapi_tag["name"]])
+router = APIRouter(tags=[openapi_tag["name"]], route_class=RetryRoute)
 
 
 def build_policy(url: str, expiration: datetime):

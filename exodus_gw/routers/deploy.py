@@ -7,13 +7,14 @@ from fastapi import APIRouter, Body
 from sqlalchemy.orm import Session
 
 from .. import auth, deps, models, schemas, settings
+from ..retry import RetryRoute
 from .config import CONFIG_SCHEMA, config_post
 
 LOG = logging.getLogger("exodus-gw")
 
 openapi_tag = {"name": "deploy", "description": __doc__}
 
-router = APIRouter(tags=[openapi_tag["name"]])
+router = APIRouter(tags=[openapi_tag["name"]], route_class=RetryRoute)
 
 
 @router.post(

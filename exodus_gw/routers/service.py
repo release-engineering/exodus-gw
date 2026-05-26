@@ -9,13 +9,14 @@ from sqlalchemy.orm import Session
 from .. import deps, models, schemas
 from ..auth import CallContext
 from ..models import DramatiqConsumer
+from ..retry import RetryRoute
 from ..settings import Settings
 
 LOG = logging.getLogger("exodus-gw")
 
 openapi_tag = {"name": "service", "description": __doc__}
 
-router = APIRouter(tags=[openapi_tag["name"]])
+router = APIRouter(tags=[openapi_tag["name"]], route_class=RetryRoute)
 
 
 @router.get(
