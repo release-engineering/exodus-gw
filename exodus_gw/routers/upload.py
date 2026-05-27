@@ -92,13 +92,14 @@ from ..aws.util import (
     validate_object_key,
     xml_response,
 )
+from ..retry import RetryRoute
 from ..settings import Environment, Settings
 
 LOG = logging.getLogger("s3")
 
 openapi_tag = {"name": "upload", "description": __doc__}
 
-router = APIRouter(tags=[openapi_tag["name"]])
+router = APIRouter(tags=[openapi_tag["name"]], route_class=RetryRoute)
 
 
 async def _already_uploaded(

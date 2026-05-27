@@ -13,6 +13,7 @@ from sqlalchemy.orm.session import Session
 
 from exodus_gw import database, main, models, settings  # noqa
 from exodus_gw.dramatiq import Broker
+from exodus_gw.retry import new_db_session
 
 from .async_utils import BlockDetector
 
@@ -208,13 +209,13 @@ def db_session_block_detector():
     """Wrap DB sessions created by the app with an object to detect
     incorrect async/non-async mixing blocking the main thread.
     """
-    old_ctor = main.new_db_session
+    old_ctor = new_db_session
 
     def new_ctor(engine):
         real_session = old_ctor(engine)
         return BlockDetector(real_session)
 
-    with mock.patch("exodus_gw.main.new_db_session", new=new_ctor):
+    with mock.patch("exodus_gw.retry.new_db_session", new=new_ctor):
         yield
 
 

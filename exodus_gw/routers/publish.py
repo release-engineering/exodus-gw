@@ -116,13 +116,14 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, noload
 
 from .. import auth, deps, models, schemas, worker
+from ..retry import RetryRoute
 from ..settings import Environment, Settings
 
 LOG = logging.getLogger("exodus-gw")
 
 openapi_tag = {"name": "publish", "description": __doc__}
 
-router = APIRouter(tags=[openapi_tag["name"]])
+router = APIRouter(tags=[openapi_tag["name"]], route_class=RetryRoute)
 
 
 @router.post(

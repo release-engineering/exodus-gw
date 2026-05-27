@@ -8,6 +8,7 @@ import sqlalchemy.orm
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from freezegun import freeze_time
+from sqlalchemy.exc import OperationalError
 
 from exodus_gw import routers, schemas
 from exodus_gw.main import app
@@ -1721,3 +1722,70 @@ def test_update_publish_items_origin_paths_invalid_link_to(db, auth_header):
             "/content/origin/files/sha256/03/0344062dca731c0d5c24148722537e181d752ca8cda0097005f9268a51658b0a/test-3.rpm",
         )
     }
+
+
+def test_update_publish_items_deadlock_retry(db, auth_header):
+    """Ensure that deadlock errors are retried and eventually succeed.
+
+    When a database deadlock occurs during a publish item update, the retry
+    mechanism should catch the DBAPIError and retry the operation. If the
+    deadlock is resolved on retry, the operation should succeed.
+    """
+
+    publish_id = "11224567-e89b-12d3-a456-426614174000"
+
+    publish = Publish(id=publish_id, env="test", state="PENDING")
+
+    db.add(publish)
+    db.commit()
+
+    # Track the number of calls to simulate a deadlock on first attempt only
+    call_count = {"count": 0}
+
+    # We need to mock at the SQLAlchemy Session level where execute is called
+    # during the insert operation
+    original_session_execute = sqlalchemy.orm.Session.execute
+
+    def mock_execute_with_deadlock(self, *args, **kwargs):
+        # Only intercept INSERT statements on Item table
+        if args and hasattr(args[0], "compile"):
+            statement_str = str(args[0].compile())
+            if "INSERT INTO item" in statement_str:
+                call_count["count"] += 1
+                # Raise a deadlock error on the first call only
+                if call_count["count"] == 1:
+                    # Simulate a PostgreSQL deadlock error
+                    raise OperationalError(
+                        "deadlock detected",
+                        "INSERT INTO item ...",
+                        orig=Exception("deadlock detected"),
+                    )
+        # On subsequent calls or other statements, use the original execute
+        return original_session_execute(self, *args, **kwargs)
+
+    with mock.patch.object(
+        sqlalchemy.orm.Session, "execute", mock_execute_with_deadlock
+    ):
+        with TestClient(app) as client:
+            r = client.put(
+                "/test/publish/%s" % publish_id,
+                json=[
+                    {
+                        "web_uri": "/uri1",
+                        "object_key": "1" * 64,
+                        "content_type": "application/octet-stream",
+                    },
+                ],
+                headers=auth_header(roles=["test-publisher"]),
+            )
+
+    # Should succeed after retry
+    assert r.status_code == 200
+
+    # Should have been called twice (first attempt + one retry)
+    assert call_count["count"] == 2
+
+    # Item should be in the database
+    db.refresh(publish)
+    assert len(publish.items) == 1
+    assert publish.items[0].web_uri == "/uri1"
