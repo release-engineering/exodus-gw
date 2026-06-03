@@ -17,7 +17,7 @@ uvicorn[standard]
 #
 # The use of aiohttp 3.13.4 breaks exodus-gw S3 operations in PiAAS test
 # environments.
-aiohttp>=3.13.5
+aiohttp>=3.14.0
 gunicorn
 psycopg2
 sqlalchemy
