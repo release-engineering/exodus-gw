@@ -1,5 +1,4 @@
 alabaster
-coveralls
 mock
 mypy
 pylint
