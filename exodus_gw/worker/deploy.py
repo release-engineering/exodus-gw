@@ -63,13 +63,28 @@ def complete_deploy_config_task(
     )
 
 
-def _listing_paths_for_flush(config: dict[str, Any]) -> set[str]:
+def _listing_paths_for_flush(
+    config: dict[str, Any],
+    original_listing: dict[str, Any] | None = None,
+) -> set[str]:
     # extract listing paths from config that might have
     # updated values influencing the response of /listing
     # endpoint
-    listing_paths: set[str] = set()
+    new_listing = config.get("listing") or {}
+    original_listing = original_listing or {}
 
-    for path in config.get("listing", {}).keys():
+    if not original_listing:
+        # First-time deploy / empty previous listing: flush all (existing behavior).
+        paths_to_flush = new_listing.keys()
+    else:
+        paths_to_flush = (
+            path
+            for path in set(new_listing) | set(original_listing)
+            if new_listing.get(path) != original_listing.get(path)
+        )
+
+    listing_paths: set[str] = set()
+    for path in paths_to_flush:
         lpath = path + "/listing"
         LOG.info(
             "Listing %s will flush cache for %s",
@@ -97,6 +112,8 @@ def deploy_config(
 
     original_aliases = {src: dest for (src, dest, _) in ddb.aliases_for_flush}
     original_exclusions = {src: exc for (src, _, exc) in ddb.aliases_for_flush}
+    # Capture before write_config replaces local definitions.
+    original_listing = ddb.definitions.get("listing") or {}
 
     message = CurrentMessage.get_current_message()
     assert message
@@ -233,9 +250,9 @@ def deploy_config(
 
     # Need to expand the matched aliases to other aliases that'd be populated
     # during publish
-    # Include all the listing paths for flush when enabled in settings
+    # Include listing paths that changed (or all on first-time) when enabled
     flush_paths = (
-        flush_paths.union(_listing_paths_for_flush(config))
+        flush_paths.union(_listing_paths_for_flush(config, original_listing))
         if settings.cdn_listing_flush
         else flush_paths
     )
