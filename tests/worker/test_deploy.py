@@ -248,8 +248,7 @@ def test_deploy_config_with_flush(
     assert body["kwargs"]["env"] == "test"
     assert body["kwargs"]["flush_paths"] == [
         # It figured out that cache will need to be flushed for these.
-        "/content/dist/rhel/server/8/listing",
-        "/content/dist/rhel/server/listing",
+        # Listing paths are omitted: listing section was unchanged.
         "/content/testproduct/1/file1",
         "/content/testproduct/1/file2",
         "/content/testproduct/1/newExclusion/file5",
@@ -430,8 +429,7 @@ def test_deploy_config_with_flush_only_necessary(
 
     assert body["kwargs"]["flush_paths"] == [
         # It figured out that cache will need to be flushed for these.
-        "/content/dist/rhel/server/8/listing",
-        "/content/dist/rhel/server/listing",
+        # Listing paths are omitted: listing section was unchanged.
         "/content/dist/rhel8/8/file1",
         "/content/dist/rhel8/8/file4",
         "/content/dist/rhel8/8/kickstart/treeinfo",
@@ -440,6 +438,88 @@ def test_deploy_config_with_flush_only_necessary(
         "/content/dist/rhel8/rhui/8/file4",
         "/content/dist/rhel8/rhui/8/kickstart/treeinfo",
         "/content/dist/rhel8/rhui/8/os/repodata/repomd.xml",
+    ]
+
+
+@mock.patch("exodus_gw.worker.deploy.CurrentMessage.get_current_message")
+def test_deploy_config_no_listing_change_skips_listing_flush(
+    mock_get_message, db, fake_config, mock_boto3_client
+):
+    t = _task()
+    mock_get_message.return_value = mock.MagicMock(message_id=t.id)
+    mock_boto3_client.batch_write_item.return_value = {"UnprocessedItems": {}}
+
+    db.add(t)
+    db.commit()
+
+    # Redeploy identical config (same listing and aliases).
+    worker.deploy_config(fake_config, "test", NOW_UTC)
+
+    messages = db.query(models.DramatiqMessage).all()
+    assert len(messages) == 1
+    flush_paths = messages[0].body["kwargs"]["flush_paths"]
+
+    assert flush_paths == []
+    assert not any(path.endswith("/listing") for path in flush_paths)
+
+
+@mock.patch("exodus_gw.worker.deploy.CurrentMessage.get_current_message")
+def test_deploy_config_partial_listing_change_flushes_only_changed(
+    mock_get_message, db, fake_config, mock_boto3_client
+):
+    t = _task()
+    mock_get_message.return_value = mock.MagicMock(message_id=t.id)
+    mock_boto3_client.batch_write_item.return_value = {"UnprocessedItems": {}}
+
+    db.add(t)
+    db.commit()
+
+    updated_config = json.loads(json.dumps(fake_config))
+    # Change one listing entry; leave the other unchanged.
+    updated_config["listing"]["/content/dist/rhel/server"] = {
+        "values": ["8", "9"],
+        "var": "releasever",
+    }
+    # Also remove one listing key — removals must be flushed.
+    del updated_config["listing"]["/content/dist/rhel/server/8"]
+    # Add a new listing key.
+    updated_config["listing"]["/content/dist/rhel/server/9"] = {
+        "values": ["x86_64"],
+        "var": "basearch",
+    }
+
+    worker.deploy_config(updated_config, "test", NOW_UTC)
+
+    messages = db.query(models.DramatiqMessage).all()
+    assert len(messages) == 1
+    assert messages[0].body["kwargs"]["flush_paths"] == [
+        "/content/dist/rhel/server/8/listing",
+        "/content/dist/rhel/server/9/listing",
+        "/content/dist/rhel/server/listing",
+    ]
+
+
+@mock.patch("exodus_gw.worker.deploy.CurrentMessage.get_current_message")
+def test_deploy_config_empty_original_listing_flushes_all(
+    mock_get_message, db, fake_config, mock_boto3_client_empty_config
+):
+    t = _task()
+    mock_get_message.return_value = mock.MagicMock(message_id=t.id)
+    mock_boto3_client_empty_config.batch_write_item.return_value = {
+        "UnprocessedItems": {}
+    }
+
+    db.add(t)
+    db.commit()
+
+    # Empty prior config (first-time): flush all new listing paths.
+    worker.deploy_config(fake_config, "test", NOW_UTC)
+
+    messages = db.query(models.DramatiqMessage).all()
+    assert len(messages) == 1
+    assert messages[0].body["kwargs"]["flush_paths"] == [
+        "/content/dist/rhel/server/8/listing",
+        "/content/dist/rhel/server/listing",
     ]
 
 
