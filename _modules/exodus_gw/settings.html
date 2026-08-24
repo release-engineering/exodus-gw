@@ -55,41 +55,41 @@
     <span class="c1">#      foo</span>
     <span class="c1">#      bar</span>
     <span class="c1">#</span>
-    <span class="c1"># =&gt; returns [&quot;foo&quot;, &quot;bar&quot;]</span>
+    <span class="c1"># =&gt; returns ["foo", "bar"]</span>
 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">raw</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
 
-    <span class="k">return</span> <span class="p">[</span><span class="n">elem</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">raw</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">elem</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">elem</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">raw</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span> <span class="k">if</span> <span class="n">elem</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span>
 
 
 <span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">CacheFlushRule</span><span class="p">:</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Name of this rule (from the config file).&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Name of this rule (from the config file)."""</span>
 
     <span class="n">templates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;List of URL/ARL templates.</span>
+<span class="w">    </span><span class="sd">"""List of URL/ARL templates.</span>
 
 <span class="sd">    Each template may be either:</span>
-<span class="sd">    - a base URL, e.g. &quot;https://cdn.example.com/cdn-root&quot;</span>
-<span class="sd">    - an ARL template, e.g. &quot;S/=/123/22334455/{ttl}/cdn1.example.com/{path}&quot;</span>
+<span class="sd">    - a base URL, e.g. "https://cdn.example.com/cdn-root"</span>
+<span class="sd">    - an ARL template, e.g. "S/=/123/22334455/{ttl}/cdn1.example.com/{path}"</span>
 
-<span class="sd">    Templates may contain &#39;ttl&#39; and &#39;path&#39; placeholders to be substituted</span>
+<span class="sd">    Templates may contain 'ttl' and 'path' placeholders to be substituted</span>
 <span class="sd">    when calculating cache keys for flush.</span>
-<span class="sd">    When there is no &#39;path&#39; in a template, the path will instead be</span>
+<span class="sd">    When there is no 'path' in a template, the path will instead be</span>
 <span class="sd">    appended.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">includes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">Pattern</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;List of patterns applied to decide whether this rule is</span>
+<span class="w">    </span><span class="sd">"""List of patterns applied to decide whether this rule is</span>
 <span class="sd">    applicable to any given path.</span>
 
 <span class="sd">    Patterns are non-anchored regular expressions.</span>
 <span class="sd">    A path must match at least one pattern in order for cache flush</span>
 <span class="sd">    to occur for that path.</span>
 
-<span class="sd">    There is a default pattern of &quot;.*&quot;, meaning that all paths will</span>
+<span class="sd">    There is a default pattern of ".*", meaning that all paths will</span>
 <span class="sd">    be included by default.</span>
 
 <span class="sd">    Note that these includes are evaluated *after* the set of paths</span>
@@ -97,33 +97,33 @@
 <span class="sd">    (e.g. repomd.xml and other mutable paths). It is not possible to</span>
 <span class="sd">    use this mechanism to enable cache flushing of non-entry-point</span>
 <span class="sd">    paths.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">excludes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">Pattern</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;List of patterns applied to decide whether this rule should</span>
+<span class="w">    </span><span class="sd">"""List of patterns applied to decide whether this rule should</span>
 <span class="sd">    be skipped for any given path.</span>
 
 <span class="sd">    Patterns are non-anchored regular expressions.</span>
-<span class="sd">    If a path matches any pattern, cache flush won&#39;t occur.</span>
+<span class="sd">    If a path matches any pattern, cache flush won't occur.</span>
 
 <span class="sd">    excludes are applied after includes.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">matches</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;True if this rule matches the given path.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""True if this rule matches the given path."""</span>
 
         <span class="c1"># We always match against absolute paths with a leading /,</span>
         <span class="c1"># regardless of how the input was formatted.</span>
-        <span class="n">path</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">path</span><span class="o">.</span><span class="n">removeprefix</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="s2">"/"</span> <span class="o">+</span> <span class="n">path</span><span class="o">.</span><span class="n">removeprefix</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
 
-        <span class="c1"># Must match at least one &#39;includes&#39;.</span>
+        <span class="c1"># Must match at least one 'includes'.</span>
         <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">includes</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
                 <span class="k">break</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">False</span>
 
-        <span class="c1"># Must not match any &#39;excludes&#39;.</span>
+        <span class="c1"># Must not match any 'excludes'.</span>
         <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">excludes</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">pattern</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
                 <span class="k">return</span> <span class="kc">False</span>
@@ -132,26 +132,26 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">load_all</span><span class="p">(</span>
-        <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="s2">&quot;CacheFlushRule&quot;</span><span class="p">],</span>
+        <span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="s2">"CacheFlushRule"</span><span class="p">],</span>
         <span class="n">config</span><span class="p">:</span> <span class="n">configparser</span><span class="o">.</span><span class="n">ConfigParser</span><span class="p">,</span>
         <span class="n">env_section</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">names</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="s2">&quot;CacheFlushRule&quot;</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="s2">"CacheFlushRule"</span><span class="p">]:</span>
 
         <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CacheFlushRule</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">rule_name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
-            <span class="n">section_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;cache_flush.</span><span class="si">{</span><span class="n">rule_name</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="n">templates</span> <span class="o">=</span> <span class="n">split_ini_list</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">section_name</span><span class="p">,</span> <span class="s2">&quot;templates&quot;</span><span class="p">))</span>
+            <span class="n">section_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"cache_flush.</span><span class="si">{</span><span class="n">rule_name</span><span class="si">}</span><span class="s2">"</span>
+            <span class="n">templates</span> <span class="o">=</span> <span class="n">split_ini_list</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">section_name</span><span class="p">,</span> <span class="s2">"templates"</span><span class="p">))</span>
             <span class="n">includes</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">split_ini_list</span><span class="p">(</span>
-                    <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">section_name</span><span class="p">,</span> <span class="s2">&quot;includes&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s2">&quot;.*&quot;</span><span class="p">)</span>
+                    <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">section_name</span><span class="p">,</span> <span class="s2">"includes"</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s2">".*"</span><span class="p">)</span>
                 <span class="p">)</span>
             <span class="p">]</span>
             <span class="n">excludes</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
                 <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">split_ini_list</span><span class="p">(</span>
-                    <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">section_name</span><span class="p">,</span> <span class="s2">&quot;excludes&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+                    <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">section_name</span><span class="p">,</span> <span class="s2">"excludes"</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
                 <span class="p">)</span>
             <span class="p">]</span>
             <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -165,27 +165,27 @@
 
         <span class="c1"># backwards-compatibility: if no rules were defined, but old-style</span>
         <span class="c1"># cache flush config was specified, read it into a rule with default</span>
-        <span class="c1"># &#39;includes&#39; and &#39;excludes&#39;.</span>
+        <span class="c1"># 'includes' and 'excludes'.</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">names</span> <span class="ow">and</span> <span class="p">(</span>
-            <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="n">env_section</span><span class="p">,</span> <span class="s2">&quot;cache_flush_urls&quot;</span><span class="p">)</span>
-            <span class="ow">or</span> <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="n">env_section</span><span class="p">,</span> <span class="s2">&quot;cache_flush_arl_templates&quot;</span><span class="p">)</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="n">env_section</span><span class="p">,</span> <span class="s2">"cache_flush_urls"</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="n">config</span><span class="o">.</span><span class="n">has_option</span><span class="p">(</span><span class="n">env_section</span><span class="p">,</span> <span class="s2">"cache_flush_arl_templates"</span><span class="p">)</span>
         <span class="p">):</span>
             <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="bp">cls</span><span class="p">(</span>
-                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">env_section</span><span class="si">}</span><span class="s2">-legacy&quot;</span><span class="p">,</span>
+                    <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">env_section</span><span class="si">}</span><span class="s2">-legacy"</span><span class="p">,</span>
                     <span class="n">templates</span><span class="o">=</span><span class="n">split_ini_list</span><span class="p">(</span>
                         <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-                            <span class="n">env_section</span><span class="p">,</span> <span class="s2">&quot;cache_flush_urls&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span>
+                            <span class="n">env_section</span><span class="p">,</span> <span class="s2">"cache_flush_urls"</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span>
                         <span class="p">)</span>
                     <span class="p">)</span>
                     <span class="o">+</span> <span class="n">split_ini_list</span><span class="p">(</span>
                         <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
                             <span class="n">env_section</span><span class="p">,</span>
-                            <span class="s2">&quot;cache_flush_arl_templates&quot;</span><span class="p">,</span>
+                            <span class="s2">"cache_flush_arl_templates"</span><span class="p">,</span>
                             <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                         <span class="p">)</span>
                     <span class="p">),</span>
-                    <span class="n">includes</span><span class="o">=</span><span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;.*&quot;</span><span class="p">)],</span>
+                    <span class="n">includes</span><span class="o">=</span><span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">".*"</span><span class="p">)],</span>
                     <span class="n">excludes</span><span class="o">=</span><span class="p">[],</span>
                 <span class="p">)</span>
             <span class="p">)</span>
@@ -216,15 +216,15 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">cdn_private_key</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;EXODUS_GW_CDN_PRIVATE_KEY_</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"EXODUS_GW_CDN_PRIVATE_KEY_</span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">fastpurge_enabled</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;True if this environment has fastpurge-based cache flushing enabled.</span>
+<span class="w">        </span><span class="sd">"""True if this environment has fastpurge-based cache flushing enabled.</span>
 
 <span class="sd">        When True, it is guaranteed that all needed credentials for fastpurge</span>
 <span class="sd">        are available for this environment.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="c1"># There must be at least one cache flush rule in config...</span>
             <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cache_flush_rules</span><span class="p">)</span>
@@ -238,30 +238,30 @@
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">fastpurge_client_secret</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span>
-            <span class="s2">&quot;EXODUS_GW_FASTPURGE_CLIENT_SECRET_</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+            <span class="s2">"EXODUS_GW_FASTPURGE_CLIENT_SECRET_</span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
         <span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">fastpurge_host</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;EXODUS_GW_FASTPURGE_HOST_</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"EXODUS_GW_FASTPURGE_HOST_</span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">fastpurge_access_token</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span>
-            <span class="s2">&quot;EXODUS_GW_FASTPURGE_ACCESS_TOKEN_</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+            <span class="s2">"EXODUS_GW_FASTPURGE_ACCESS_TOKEN_</span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
         <span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">fastpurge_client_token</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span>
-            <span class="s2">&quot;EXODUS_GW_FASTPURGE_CLIENT_TOKEN_</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+            <span class="s2">"EXODUS_GW_FASTPURGE_CLIENT_TOKEN_</span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
         <span class="p">)</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">MigrationMode</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
-    <span class="n">upgrade</span> <span class="o">=</span> <span class="s2">&quot;upgrade&quot;</span>
-    <span class="n">model</span> <span class="o">=</span> <span class="s2">&quot;model&quot;</span>
-    <span class="n">none</span> <span class="o">=</span> <span class="s2">&quot;none&quot;</span>
+    <span class="n">upgrade</span> <span class="o">=</span> <span class="s2">"upgrade"</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="s2">"model"</span>
+    <span class="n">none</span> <span class="o">=</span> <span class="s2">"none"</span>
 
 
 <div class="viewcode-block" id="Settings">
@@ -270,65 +270,65 @@
     <span class="c1"># Settings for the server.</span>
     <span class="c1">#</span>
     <span class="c1"># Most settings defined here can be overridden by an environment variable</span>
-    <span class="c1"># of the same name, prefixed with &quot;EXODUS_GW_&quot;. Please add doc strings only</span>
-    <span class="c1"># for those (and not for other computed fields, like &#39;environments&#39;.)</span>
+    <span class="c1"># of the same name, prefixed with "EXODUS_GW_". Please add doc strings only</span>
+    <span class="c1"># for those (and not for other computed fields, like 'environments'.)</span>
 
-    <span class="n">call_context_header</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;X-RhApiPlatform-CallContext&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Name of the header from which to extract call context (for authentication</span>
+    <span class="n">call_context_header</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"X-RhApiPlatform-CallContext"</span>
+<span class="w">    </span><span class="sd">"""Name of the header from which to extract call context (for authentication</span>
 <span class="sd">    and authorization).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">upload_meta_fields</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Permitted metadata field names for s3 uploads and their regex</span>
-<span class="sd">    for validation. E.g., &quot;exodus-migration-md5&quot;: &quot;^[0-9a-f]{32}$&quot;</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Permitted metadata field names for s3 uploads and their regex</span>
+<span class="sd">    for validation. E.g., "exodus-migration-md5": "^[0-9a-f]{32}$"</span>
+<span class="sd">    """</span>
 
     <span class="n">publish_paths</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A set of user or service accounts which are only authorized to publish to a</span>
+<span class="w">    </span><span class="sd">"""A set of user or service accounts which are only authorized to publish to a</span>
 <span class="sd">    particular set of path(s) in a given CDN environment and the regex(es) describing</span>
 <span class="sd">    the paths to which the user or service account is authorized to publish. The user or</span>
 <span class="sd">    service account will be prevented from publishing to any paths that do not match the</span>
 <span class="sd">    defined regular expression(s).</span>
-<span class="sd">    E.g., &#39;{&quot;pre&quot;: {&quot;fake-user&quot;:</span>
-<span class="sd">    [&quot;^(/content)?/origin/files/sha256/[0-f]{2}/[0-f]{64}/[^/]{1,300}$&quot;]}}&#39;</span>
+<span class="sd">    E.g., '{"pre": {"fake-user":</span>
+<span class="sd">    ["^(/content)?/origin/files/sha256/[0-f]{2}/[0-f]{64}/[^/]{1,300}$"]}}'</span>
 
 <span class="sd">    Any user or service account not included in this configuration is considered to have</span>
 <span class="sd">    unrestricted publish access (i.e., can publish to any path).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">log_config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-        <span class="s2">&quot;incremental&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="s2">&quot;disable_existing_loggers&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">"version"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="s2">"incremental"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">"disable_existing_loggers"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">}</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Logging configuration in dictConfig schema.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Logging configuration in dictConfig schema."""</span>
 
     <span class="n">ini_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Path to an exodus-gw.ini config file with additional settings.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Path to an exodus-gw.ini config file with additional settings."""</span>
 
     <span class="n">environments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Environment</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="c1"># List of environment objects derived from exodus-gw.ini.</span>
 
-    <span class="n">db_service_user</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;exodus-gw&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;db service user name&quot;&quot;&quot;</span>
-    <span class="n">db_service_pass</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;exodus-gw&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;db service user password&quot;&quot;&quot;</span>
-    <span class="n">db_service_host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;exodus-gw-db&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;db service host&quot;&quot;&quot;</span>
-    <span class="n">db_service_port</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;5432&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;db service port&quot;&quot;&quot;</span>
+    <span class="n">db_service_user</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"exodus-gw"</span>
+<span class="w">    </span><span class="sd">"""db service user name"""</span>
+    <span class="n">db_service_pass</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"exodus-gw"</span>
+<span class="w">    </span><span class="sd">"""db service user password"""</span>
+    <span class="n">db_service_host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"exodus-gw-db"</span>
+<span class="w">    </span><span class="sd">"""db service host"""</span>
+    <span class="n">db_service_port</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"5432"</span>
+<span class="w">    </span><span class="sd">"""db service port"""</span>
 
     <span class="n">db_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Connection string for database. If set, overrides the ``db_service_*`` settings.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Connection string for database. If set, overrides the ``db_service_*`` settings."""</span>
 
     <span class="n">db_reset</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;If set to True, drop all DB tables during startup.</span>
+<span class="w">    </span><span class="sd">"""If set to True, drop all DB tables during startup.</span>
 
 <span class="sd">    This setting is intended for use during development.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">db_migration_mode</span><span class="p">:</span> <span class="n">MigrationMode</span> <span class="o">=</span> <span class="n">MigrationMode</span><span class="o">.</span><span class="n">upgrade</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adjusts the DB migration behavior when the exodus-gw service starts.</span>
+<span class="w">    </span><span class="sd">"""Adjusts the DB migration behavior when the exodus-gw service starts.</span>
 
 <span class="sd">    Valid values are:</span>
 
@@ -340,85 +340,85 @@
 <span class="sd">            production use.</span>
 
 <span class="sd">        model</span>
-<span class="sd">            Don&#39;t use migrations. Instead, attempt to initialize the database</span>
+<span class="sd">            Don't use migrations. Instead, attempt to initialize the database</span>
 <span class="sd">            from the current version of the internal sqlalchemy model.</span>
 
 <span class="sd">            This is intended for use during development while prototyping</span>
 <span class="sd">            schema changes.</span>
 
 <span class="sd">        none</span>
-<span class="sd">            Don&#39;t perform any DB initialization at all.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">            Don't perform any DB initialization at all.</span>
+<span class="sd">    """</span>
 
-    <span class="n">db_migration_revision</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;head&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;If ``db_migration_mode`` is ``upgrade``, this setting can be used to override</span>
+    <span class="n">db_migration_revision</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"head"</span>
+<span class="w">    </span><span class="sd">"""If ``db_migration_mode`` is ``upgrade``, this setting can be used to override</span>
 <span class="sd">    the target revision when migrating the DB.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">db_session_max_tries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The maximum number of attempts to recreate a DB session within a request.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""The maximum number of attempts to recreate a DB session within a request."""</span>
 
     <span class="n">item_yield_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5000</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Number of publish items to load from the service DB at one time.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Number of publish items to load from the service DB at one time."""</span>
 
     <span class="n">write_batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">25</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum number of items to write to the DynamoDB table at one time.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Maximum number of items to write to the DynamoDB table at one time."""</span>
     <span class="n">write_max_tries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum write attempts to the DynamoDB table.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Maximum write attempts to the DynamoDB table."""</span>
     <span class="n">write_max_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum number of worker threads used in the DynamoDB batch writes.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Maximum number of worker threads used in the DynamoDB batch writes."""</span>
     <span class="n">write_queue_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum number of items the queue can hold at one time.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Maximum number of items the queue can hold at one time."""</span>
     <span class="n">write_queue_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">10</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum amount of time (in seconds) to wait for queue items.</span>
+<span class="w">    </span><span class="sd">"""Maximum amount of time (in seconds) to wait for queue items.</span>
 <span class="sd">    Defaults to 10 minutes.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">publish_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">24</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum amount of time (in hours) between updates to a pending publish before</span>
+<span class="w">    </span><span class="sd">"""Maximum amount of time (in hours) between updates to a pending publish before</span>
 <span class="sd">    it will be considered abandoned. Defaults to one day.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">history_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">24</span> <span class="o">*</span> <span class="mi">14</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum amount of time (in hours) to retain historical data for publishes and</span>
+<span class="w">    </span><span class="sd">"""Maximum amount of time (in hours) to retain historical data for publishes and</span>
 <span class="sd">    tasks. Publishes and tasks in a terminal state will be erased after this time has</span>
 <span class="sd">    passed. Defaults to two weeks.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">path_history_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">700</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum amount of time (in days) to retain data on published paths for</span>
+<span class="w">    </span><span class="sd">"""Maximum amount of time (in days) to retain data on published paths for</span>
 <span class="sd">    the purpose of cache flushing.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">task_deadline</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum amount of time (in hours) a task should remain viable. Defaults to two</span>
+<span class="w">    </span><span class="sd">"""Maximum amount of time (in hours) a task should remain viable. Defaults to two</span>
 <span class="sd">    hours.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">actor_time_limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span> <span class="o">*</span> <span class="mi">60000</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum amount of time (in milliseconds) actors may run. Defaults to 30</span>
+<span class="w">    </span><span class="sd">"""Maximum amount of time (in milliseconds) actors may run. Defaults to 30</span>
 <span class="sd">    minutes.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">actor_max_backoff</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">*</span> <span class="mi">60000</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum amount of time (in milliseconds) actors may use while backing</span>
+<span class="w">    </span><span class="sd">"""Maximum amount of time (in milliseconds) actors may use while backing</span>
 <span class="sd">    off retries. Defaults to five (5) minutes.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">entry_point_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="s2">&quot;repomd.xml&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;repomd.xml.asc&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;PULP_MANIFEST&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;PULP_MANIFEST.asc&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;treeinfo&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;extra_files.json&quot;</span><span class="p">,</span>
+        <span class="s2">"repomd.xml"</span><span class="p">,</span>
+        <span class="s2">"repomd.xml.asc"</span><span class="p">,</span>
+        <span class="s2">"PULP_MANIFEST"</span><span class="p">,</span>
+        <span class="s2">"PULP_MANIFEST.asc"</span><span class="p">,</span>
+        <span class="s2">"treeinfo"</span><span class="p">,</span>
+        <span class="s2">"extra_files.json"</span><span class="p">,</span>
     <span class="p">]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;List of file names that should be saved for last when publishing.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""List of file names that should be saved for last when publishing."""</span>
 
     <span class="n">phase2_patterns</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">re</span><span class="o">.</span><span class="n">Pattern</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span>
         <span class="c1"># kickstart repos; note the logic here matches</span>
         <span class="c1"># the manual workaround RHELDST-27642</span>
-        <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;/kickstart/.*(?&lt;!\.rpm)$&quot;</span><span class="p">),</span>
+        <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"/kickstart/.*(?&lt;!\.rpm)$"</span><span class="p">),</span>
     <span class="p">]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;List of patterns which, if any have matched, force a path to</span>
+<span class="w">    </span><span class="sd">"""List of patterns which, if any have matched, force a path to</span>
 <span class="sd">    be handled during phase 2 of commit.</span>
 
 <span class="sd">    These patterns are intended for use with repositories not cleanly</span>
@@ -429,112 +429,112 @@
 <span class="sd">    arbitrary files referenced by that entry point, all of which should</span>
 <span class="sd">    be processed during phase 2 of commit in order for updates to</span>
 <span class="sd">    appear atomic.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">autoindex_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.__exodus_autoindex&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Filename for indexes automatically generated during publish.</span>
+    <span class="n">autoindex_filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">".__exodus_autoindex"</span>
+<span class="w">    </span><span class="sd">"""Filename for indexes automatically generated during publish.</span>
 
 <span class="sd">    Can be set to an empty string to disable generation of indexes.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
-    <span class="n">autoindex_partial_excludes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;/kickstart/&quot;</span><span class="p">]</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Background processing of autoindexes will be disabled for paths matching</span>
+    <span class="n">autoindex_partial_excludes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"/kickstart/"</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">"""Background processing of autoindexes will be disabled for paths matching</span>
 <span class="sd">    any of these values.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">config_cache_ttl</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Time (in minutes) config is expected to live in components that consume it.</span>
+<span class="w">    </span><span class="sd">"""Time (in minutes) config is expected to live in components that consume it.</span>
 
 <span class="sd">    Determines the delay for deployment task completion to allow for</span>
 <span class="sd">    existing caches to expire and the newly deployed config to take effect.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">worker_health_filepath</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="s2">&quot;/tmp/exodus-gw-last-healthy&quot;</span>  <span class="c1"># nosec - Bandit doesn&#39;t like that /tmp is used.</span>
+        <span class="s2">"/tmp/exodus-gw-last-healthy"</span>  <span class="c1"># nosec - Bandit doesn't like that /tmp is used.</span>
     <span class="p">)</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The path to a file used to verify healthiness of a worker. Intended to be used by OCP&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""The path to a file used to verify healthiness of a worker. Intended to be used by OCP"""</span>
 
     <span class="n">worker_keepalive_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">5</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Background worker keepalive timeout, in seconds. If a worker fails to update its</span>
+<span class="w">    </span><span class="sd">"""Background worker keepalive timeout, in seconds. If a worker fails to update its</span>
 <span class="sd">    status within this time period, it is assumed dead.</span>
 
 <span class="sd">    This setting affects how quickly the system can recover from issues such as a worker</span>
 <span class="sd">    process being killed unexpectedly.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">worker_keepalive_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;How often, in seconds, should background workers update their status.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""How often, in seconds, should background workers update their status."""</span>
 
-    <span class="n">cron_cleanup</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;0 */12 * * *&quot;</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;cron-style schedule for cleanup task.</span>
+    <span class="n">cron_cleanup</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"0 */12 * * *"</span>
+<span class="w">    </span><span class="sd">"""cron-style schedule for cleanup task.</span>
 
 <span class="sd">    exodus-gw will run a cleanup task approximately according to this schedule, removing old</span>
-<span class="sd">    data from the system.&quot;&quot;&quot;</span>
+<span class="sd">    data from the system."""</span>
 
     <span class="n">scheduler_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">15</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;How often, in minutes, exodus-gw should check if a scheduled task is ready to run.</span>
+<span class="w">    </span><span class="sd">"""How often, in minutes, exodus-gw should check if a scheduled task is ready to run.</span>
 
 <span class="sd">    Note that the cron rules applied to each scheduled task are only as accurate as this</span>
 <span class="sd">    interval allows, i.e. each rule may be triggered up to ``scheduler_interval`` minutes late.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">scheduler_delay</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Delay, in minutes, after exodus-gw workers start up before any scheduled tasks</span>
-<span class="sd">    should run.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Delay, in minutes, after exodus-gw workers start up before any scheduled tasks</span>
+<span class="sd">    should run."""</span>
 
     <span class="n">cdn_flush_on_commit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether &#39;commit&#39; tasks should automatically flush CDN cache for</span>
+<span class="w">    </span><span class="sd">"""Whether 'commit' tasks should automatically flush CDN cache for</span>
 <span class="sd">    affected URLs.</span>
 
 <span class="sd">    Only takes effect for environments where cache flush credentials/settings</span>
 <span class="sd">    have been configured.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">cdn_listing_flush</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether listing paths in the config should be flushed while deploying the</span>
-<span class="sd">    config.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Whether listing paths in the config should be flushed while deploying the</span>
+<span class="sd">    config."""</span>
 
     <span class="n">cdn_cookie_ttl</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">720</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Time (in seconds) cookies generated by ``cdn-redirect`` remain valid.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Time (in seconds) cookies generated by ``cdn-redirect`` remain valid."""</span>
 
     <span class="n">cdn_signature_timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span> <span class="o">*</span> <span class="mi">30</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Time (in seconds) signed URLs remain valid.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Time (in seconds) signed URLs remain valid."""</span>
 
     <span class="n">cdn_max_expire_days</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">365</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximum permitted value for ``expire_days`` option on</span>
+<span class="w">    </span><span class="sd">"""Maximum permitted value for ``expire_days`` option on</span>
 <span class="sd">    ``cdn-access`` endpoint.</span>
 
 <span class="sd">    Clients obtaining signed cookies for CDN using ``cdn-access`` will be</span>
 <span class="sd">    forced to renew their cookies at least this frequently.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">s3_pool_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Number of S3 clients to cache&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Number of S3 clients to cache"""</span>
 
     <span class="n">mirror_writes_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whether both the original url and releasever alias are written during</span>
-<span class="sd">     phase 1 commits.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Whether both the original url and releasever alias are written during</span>
+<span class="sd">     phase 1 commits."""</span>
 
-    <span class="n">model_config</span> <span class="o">=</span> <span class="n">SettingsConfigDict</span><span class="p">(</span><span class="n">env_prefix</span><span class="o">=</span><span class="s2">&quot;exodus_gw_&quot;</span><span class="p">)</span></div>
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">SettingsConfigDict</span><span class="p">(</span><span class="n">env_prefix</span><span class="o">=</span><span class="s2">"exodus_gw_"</span><span class="p">)</span></div>
 
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">load_settings</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Settings</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the currently active settings for the server.</span>
+<span class="w">    </span><span class="sd">"""Return the currently active settings for the server.</span>
 
 <span class="sd">    This function will load settings from config files and environment</span>
 <span class="sd">    variables. It is intended to be called once at application startup.</span>
 
 <span class="sd">    Request handler functions should access settings via ``app.state.settings``.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">settings</span> <span class="o">=</span> <span class="n">Settings</span><span class="p">()</span>
     <span class="n">config</span> <span class="o">=</span> <span class="n">configparser</span><span class="o">.</span><span class="n">ConfigParser</span><span class="p">()</span>
 
     <span class="c1"># Try to find config here by default...</span>
     <span class="n">filenames</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">&quot;../exodus-gw.ini&quot;</span><span class="p">),</span>
-        <span class="s2">&quot;/opt/app/config/exodus-gw.ini&quot;</span><span class="p">,</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s2">"../exodus-gw.ini"</span><span class="p">),</span>
+        <span class="s2">"/opt/app/config/exodus-gw.ini"</span><span class="p">,</span>
     <span class="p">]</span>
 
     <span class="c1"># ...but also allow pointing at a specific config file if this path</span>
@@ -546,24 +546,24 @@
 
     <span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">filenames</span><span class="p">)</span>
 
-    <span class="k">for</span> <span class="n">logger</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;loglevels&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;loglevels&quot;</span> <span class="ow">in</span> <span class="n">config</span> <span class="k">else</span> <span class="p">[]:</span>
-        <span class="n">settings</span><span class="o">.</span><span class="n">log_config</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;loggers&quot;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="k">for</span> <span class="n">logger</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s2">"loglevels"</span><span class="p">]</span> <span class="k">if</span> <span class="s2">"loglevels"</span> <span class="ow">in</span> <span class="n">config</span> <span class="k">else</span> <span class="p">[]:</span>
+        <span class="n">settings</span><span class="o">.</span><span class="n">log_config</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"loggers"</span><span class="p">,</span> <span class="p">{})</span>
 
         <span class="n">log_config</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">log_config</span>
-        <span class="n">dest</span> <span class="o">=</span> <span class="n">log_config</span> <span class="k">if</span> <span class="n">logger</span> <span class="o">==</span> <span class="s2">&quot;root&quot;</span> <span class="k">else</span> <span class="n">log_config</span><span class="p">[</span><span class="s2">&quot;loggers&quot;</span><span class="p">]</span>
+        <span class="n">dest</span> <span class="o">=</span> <span class="n">log_config</span> <span class="k">if</span> <span class="n">logger</span> <span class="o">==</span> <span class="s2">"root"</span> <span class="k">else</span> <span class="n">log_config</span><span class="p">[</span><span class="s2">"loggers"</span><span class="p">]</span>
 
-        <span class="n">dest</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">logger</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;level&quot;</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;loglevels&quot;</span><span class="p">,</span> <span class="n">logger</span><span class="p">)}})</span>
+        <span class="n">dest</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">logger</span><span class="p">:</span> <span class="p">{</span><span class="s2">"level"</span><span class="p">:</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"loglevels"</span><span class="p">,</span> <span class="n">logger</span><span class="p">)}})</span>
 
-    <span class="k">for</span> <span class="n">env</span> <span class="ow">in</span> <span class="p">[</span><span class="n">sec</span> <span class="k">for</span> <span class="n">sec</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">sections</span><span class="p">()</span> <span class="k">if</span> <span class="n">sec</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;env.&quot;</span><span class="p">)]:</span>
-        <span class="n">aws_profile</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s2">&quot;aws_profile&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-        <span class="n">bucket</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s2">&quot;bucket&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-        <span class="n">table</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s2">&quot;table&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-        <span class="n">config_table</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s2">&quot;config_table&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-        <span class="n">cdn_url</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s2">&quot;cdn_url&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-        <span class="n">cdn_key_id</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s2">&quot;cdn_key_id&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">env</span> <span class="ow">in</span> <span class="p">[</span><span class="n">sec</span> <span class="k">for</span> <span class="n">sec</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">sections</span><span class="p">()</span> <span class="k">if</span> <span class="n">sec</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"env."</span><span class="p">)]:</span>
+        <span class="n">aws_profile</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s2">"aws_profile"</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">bucket</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s2">"bucket"</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s2">"table"</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">config_table</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s2">"config_table"</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">cdn_url</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s2">"cdn_url"</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">cdn_key_id</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s2">"cdn_key_id"</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
         <span class="n">cache_flush_rule_names</span> <span class="o">=</span> <span class="n">split_ini_list</span><span class="p">(</span>
-            <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s2">&quot;cache_flush_rules&quot;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="s2">"cache_flush_rules"</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="n">cache_flush_rules</span> <span class="o">=</span> <span class="n">CacheFlushRule</span><span class="o">.</span><span class="n">load_all</span><span class="p">(</span>
             <span class="n">config</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="n">cache_flush_rule_names</span>
@@ -571,7 +571,7 @@
 
         <span class="n">settings</span><span class="o">.</span><span class="n">environments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">Environment</span><span class="p">(</span>
-                <span class="n">name</span><span class="o">=</span><span class="n">env</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;env.&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">env</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"env."</span><span class="p">,</span> <span class="s2">""</span><span class="p">),</span>
                 <span class="n">aws_profile</span><span class="o">=</span><span class="n">aws_profile</span><span class="p">,</span>
                 <span class="n">bucket</span><span class="o">=</span><span class="n">bucket</span><span class="p">,</span>
                 <span class="n">table</span><span class="o">=</span><span class="n">table</span><span class="p">,</span>
@@ -586,9 +586,9 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">get_environment</span><span class="p">(</span><span class="n">env</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">settings</span><span class="p">:</span> <span class="n">Settings</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the corresponding environment object for the given environment</span>
+<span class="w">    </span><span class="sd">"""Return the corresponding environment object for the given environment</span>
 <span class="sd">    name.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="n">settings</span> <span class="o">=</span> <span class="n">settings</span> <span class="ow">or</span> <span class="n">load_settings</span><span class="p">()</span>
 
@@ -597,7 +597,7 @@
             <span class="k">return</span> <span class="n">env_obj</span>
 
     <span class="k">raise</span> <span class="n">HTTPException</span><span class="p">(</span>
-        <span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">&quot;Invalid environment=</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="nb">repr</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
+        <span class="n">status_code</span><span class="o">=</span><span class="mi">404</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"Invalid environment=</span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span> <span class="nb">repr</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
     <span class="p">)</span>
 </pre></div>
 

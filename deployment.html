@@ -64,15 +64,15 @@ be considered completely unsecured - all users will be able to perform all opera
 <p>This reverse-proxy must add an <code class="docutils literal notranslate"><span class="pre">X-RhApiPlatform-CallContext</span></code> header onto all incoming
 requests. This header must contain a base64-encoded form of the following JSON object:</p>
 <div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;client&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;roles&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;someRole&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;anotherRole&quot;</span><span class="p">],</span>
-<span class="w">    </span><span class="nt">&quot;authenticated&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;serviceAccountId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;clientappname&quot;</span>
+<span class="w">  </span><span class="nt">"client"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"roles"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"someRole"</span><span class="p">,</span><span class="w"> </span><span class="s2">"anotherRole"</span><span class="p">],</span>
+<span class="w">    </span><span class="nt">"authenticated"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"serviceAccountId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"clientappname"</span>
 <span class="w">  </span><span class="p">},</span>
-<span class="w">  </span><span class="nt">&quot;user&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nt">&quot;roles&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;viewer&quot;</span><span class="p">],</span>
-<span class="w">    </span><span class="nt">&quot;authenticated&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;internalUsername&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;someuser&quot;</span>
+<span class="w">  </span><span class="nt">"user"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"roles"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"viewer"</span><span class="p">],</span>
+<span class="w">    </span><span class="nt">"authenticated"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"internalUsername"</span><span class="p">:</span><span class="w"> </span><span class="s2">"someuser"</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </pre></div>
@@ -490,7 +490,7 @@ See the following example:</p>
 <span class="w">  </span><span class="na">https</span><span class="o">:</span><span class="s">//cdn1.example.com</span>
 <span class="w">  </span><span class="na">S/</span><span class="o">=</span><span class="s">/123/22334455/{ttl}/cdn1.example.com/{path}</span>
 
-<span class="c1"># Suppose that &quot;/files&quot; is restricted to cdn2, then the</span>
+<span class="c1"># Suppose that "/files" is restricted to cdn2, then the</span>
 <span class="c1"># exclusion pattern here will avoid unnecessarily flushing</span>
 <span class="c1"># cdn1 cache for paths underneath that subtree.</span>
 <span class="na">excludes</span><span class="w"> </span><span class="o">=</span>

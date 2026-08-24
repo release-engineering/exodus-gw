@@ -243,7 +243,7 @@ using those roles.</p>
 <p>For example, if we want to use <code class="docutils literal notranslate"><span class="pre">curl</span></code> to make a request to an endpoint needing
 <code class="docutils literal notranslate"><span class="pre">qa-uploader</span></code> role, we can use the following command:</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;X-RhApiPlatform-CallContext: </span><span class="k">$(</span>scripts/call-context<span class="w"> </span>qa-uploader<span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">"X-RhApiPlatform-CallContext: </span><span class="k">$(</span>scripts/call-context<span class="w"> </span>qa-uploader<span class="k">)</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>http://localhost:8000/some/qa/endpoint
 </pre></div>
 </div>
