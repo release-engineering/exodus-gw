@@ -7,6 +7,7 @@ from enum import Enum
 from typing import Any
 
 from fastapi import HTTPException
+from pydantic import PositiveInt
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -351,6 +352,11 @@ class Settings(BaseSettings):
     path_history_timeout: int = 700
     """Maximum amount of time (in days) to retain data on published paths for
     the purpose of cache flushing.
+    """
+
+    cleanup_batch_size: PositiveInt = 100
+    """Number of records to fetch and delete per batch during cleanup.
+    Keeps memory usage bounded regardless of backlog size.
     """
 
     task_deadline: int = 2

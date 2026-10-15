@@ -20,11 +20,13 @@ class Janitor:
 
     def run(self):
         self.fix_timestamps()
+        self.db.commit()
+
         self.fix_abandoned()
+        self.db.commit()
+
         self.clean_old_publishes()
         self.clean_old_paths()
-
-        self.db.commit()
 
         LOG.info(
             "Scheduled cleanup has completed",
@@ -93,36 +95,50 @@ class Janitor:
         #
         # This helps enforce the design that exodus-gw contains no persistent
         # state.
+        #
+        # Records are fetched and deleted in small batches so that:
+        # - progress is preserved if the actor is interrupted by a time limit
+        # - memory usage stays bounded regardless of backlog size
         hours = self.settings.history_timeout
         threshold = self.now - timedelta(hours=hours)
+        batch_size = self.settings.cleanup_batch_size
 
         for klass, states in [(Task, TaskStates), (Publish, PublishStates)]:
-            for instance in (
-                self.db.query(klass)
-                .options(noload("*"))
-                .filter(
-                    # Anything old enough...
-                    klass.updated < threshold,
-                    # And also in a terminal state so there will be no further updates...
-                    klass.state.in_(states.terminal()),
-                )
-            ):
-                LOG.info(
-                    "%s %s: cleaning old data (last updated: %s)",
-                    klass.__name__,
-                    instance.id,
-                    instance.updated,
-                    extra={"event": "cleanup"},
+            while True:
+                batch = (
+                    self.db.query(klass)
+                    .options(noload("*"))
+                    .filter(
+                        klass.updated < threshold,
+                        klass.state.in_(states.terminal()),
+                    )
+                    .limit(batch_size)
+                    .all()
                 )
 
-                if isinstance(instance, Publish):
-                    # Because publish items aren't loaded, they won't automatically be deleted.
-                    # Batch delete all items associated with the publish deleted above.
-                    self.db.query(Item).filter(
-                        Item.publish_id == instance.id
-                    ).delete()
+                if not batch:
+                    break
 
-                self.db.delete(instance)
+                for instance in batch:
+                    LOG.info(
+                        "%s %s: cleaning old data (last updated: %s)",
+                        klass.__name__,
+                        instance.id,
+                        instance.updated,
+                        extra={"event": "cleanup"},
+                    )
+
+                    if isinstance(instance, Publish):
+                        # Because publish items aren't loaded, they won't
+                        # automatically be deleted. Batch delete all items
+                        # associated with the publish.
+                        self.db.query(Item).filter(
+                            Item.publish_id == instance.id
+                        ).delete()
+
+                    self.db.delete(instance)
+
+                self.db.commit()
 
     def clean_old_paths(self):
         # Deletes PublishedPath history older than the configured timeout.
@@ -130,19 +146,32 @@ class Janitor:
             days=self.settings.path_history_timeout
         )
 
-        # Note: we could do this as a single SQL 'DELETE' query, but it's nice
-        # to explicitly log every record being deleted here.
-        for instance in self.db.query(PublishedPath).filter(
-            PublishedPath.updated < threshold,
-        ):
-            LOG.info(
-                "PublishedPath %s: cleaning old data (last updated: %s)",
-                (instance.env, instance.web_uri),
-                instance.updated,
-                extra={"event": "cleanup"},
+        batch_size = self.settings.cleanup_batch_size
+
+        while True:
+            batch = (
+                self.db.query(PublishedPath)
+                .filter(
+                    PublishedPath.updated < threshold,
+                )
+                .limit(batch_size)
+                .all()
             )
 
-            self.db.delete(instance)
+            if not batch:
+                break
+
+            for instance in batch:
+                LOG.info(
+                    "PublishedPath %s: cleaning old data (last updated: %s)",
+                    (instance.env, instance.web_uri),
+                    instance.updated,
+                    extra={"event": "cleanup"},
+                )
+
+                self.db.delete(instance)
+
+            self.db.commit()
 
 
 @dramatiq.actor(scheduled=True)
