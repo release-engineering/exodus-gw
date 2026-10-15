@@ -2,6 +2,7 @@ import base64
 import gzip
 import json
 import os
+import threading
 from datetime import datetime, timezone
 from typing import Any
 
@@ -9,6 +10,8 @@ import dramatiq
 import mock
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
 from sqlalchemy.orm.session import Session
 
 from exodus_gw import database, main, models, settings  # noqa
@@ -92,6 +95,49 @@ def fake_dynamodb_query_empty_config(request: pytest.FixtureRequest):
         }
 
     return side_effect
+
+
+# In-process advisory lock simulation for SQLite tests.
+# Tracks held locks per-thread, mimicking PostgreSQL's per-session
+# advisory locks closely enough to exercise the real code path.
+_advisory_locks: set[int] = set()
+_advisory_locks_mu = threading.Lock()
+
+
+@event.listens_for(Engine, "connect")
+def _register_sqlite_advisory_locks(dbapi_connection, connection_record):
+    """Register pg_try_advisory_lock/pg_advisory_unlock as SQLite
+    custom functions so the real acquire/release code path runs
+    in tests."""
+    if dbapi_connection.__class__.__module__ != "sqlite3":
+        return
+
+    def pg_try_advisory_lock(key):
+        with _advisory_locks_mu:
+            if key in _advisory_locks:
+                return 0
+            _advisory_locks.add(key)
+            return 1
+
+    def pg_advisory_unlock(key):
+        with _advisory_locks_mu:
+            _advisory_locks.discard(key)
+            return 1
+
+    dbapi_connection.create_function(
+        "pg_try_advisory_lock", 1, pg_try_advisory_lock
+    )
+    dbapi_connection.create_function(
+        "pg_advisory_unlock", 1, pg_advisory_unlock
+    )
+
+
+@pytest.fixture(autouse=True)
+def _clear_advisory_locks():
+    """Reset advisory lock state between tests."""
+    _advisory_locks.clear()
+    yield
+    _advisory_locks.clear()
 
 
 @pytest.fixture(autouse=True)
