@@ -279,6 +279,13 @@ the purpose of cache flushing.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="exodus_gw.settings.Settings.cleanup_batch_size">
+<span class="sig-name descname"><span class="pre">cleanup_batch_size</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Annotated" title="(in Python v3.15)"><span class="pre">Annotated</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Gt</span><span class="p"><span class="pre">(</span></span><span class="n"><span class="pre">gt</span></span><span class="o"><span class="pre">=</span></span><span class="m"><span class="pre">0</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#exodus_gw.settings.Settings.cleanup_batch_size" title="Link to this definition">¶</a></dt>
+<dd><p>Number of records to fetch and delete per batch during cleanup.
+Keeps memory usage bounded regardless of backlog size.</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.task_deadline">
 <span class="sig-name descname"><span class="pre">task_deadline</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><a class="headerlink" href="#exodus_gw.settings.Settings.task_deadline" title="Link to this definition">¶</a></dt>
 <dd><p>Maximum amount of time (in hours) a task should remain viable. Defaults to two
