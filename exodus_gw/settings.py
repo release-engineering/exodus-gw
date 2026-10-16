@@ -373,6 +373,17 @@ class Settings(BaseSettings):
     off retries. Defaults to five (5) minutes.
     """
 
+    commit_lock_retry_delay: int = 30000
+    """Delay in milliseconds before retrying a commit when another actor
+    holds the publish lock. Defaults to 30 seconds.
+    """
+
+    actor_max_retries: int = 60
+    """Maximum number of retries for commit actors. Must be high enough
+    to cover the full actor_time_limit during lock contention
+    (default: 60 = 30 min / 30s retry delay).
+    """
+
     entry_point_files: list[str] = [
         "repomd.xml",
         "repomd.xml.asc",
