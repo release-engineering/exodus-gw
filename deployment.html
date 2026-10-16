@@ -307,6 +307,21 @@ off retries. Defaults to five (5) minutes.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="exodus_gw.settings.Settings.commit_lock_retry_delay">
+<span class="sig-name descname"><span class="pre">commit_lock_retry_delay</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><a class="headerlink" href="#exodus_gw.settings.Settings.commit_lock_retry_delay" title="Link to this definition">¶</a></dt>
+<dd><p>Delay in milliseconds before retrying a commit when another actor
+holds the publish lock. Defaults to 30 seconds.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="exodus_gw.settings.Settings.actor_max_retries">
+<span class="sig-name descname"><span class="pre">actor_max_retries</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><span class="pre">int</span></a></span><a class="headerlink" href="#exodus_gw.settings.Settings.actor_max_retries" title="Link to this definition">¶</a></dt>
+<dd><p>Maximum number of retries for commit actors. Must be high enough
+to cover the full actor_time_limit during lock contention
+(default: 60 = 30 min / 30s retry delay).</p>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="exodus_gw.settings.Settings.entry_point_files">
 <span class="sig-name descname"><span class="pre">entry_point_files</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#list" title="(in Python v3.15)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#exodus_gw.settings.Settings.entry_point_files" title="Link to this definition">¶</a></dt>
 <dd><p>List of file names that should be saved for last when publishing.</p>

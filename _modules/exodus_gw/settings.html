@@ -409,6 +409,17 @@
 <span class="sd">    off retries. Defaults to five (5) minutes.</span>
 <span class="sd">    """</span>
 
+    <span class="n">commit_lock_retry_delay</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30000</span>
+<span class="w">    </span><span class="sd">"""Delay in milliseconds before retrying a commit when another actor</span>
+<span class="sd">    holds the publish lock. Defaults to 30 seconds.</span>
+<span class="sd">    """</span>
+
+    <span class="n">actor_max_retries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span>
+<span class="w">    </span><span class="sd">"""Maximum number of retries for commit actors. Must be high enough</span>
+<span class="sd">    to cover the full actor_time_limit during lock contention</span>
+<span class="sd">    (default: 60 = 30 min / 30s retry delay).</span>
+<span class="sd">    """</span>
+
     <span class="n">entry_point_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s2">"repomd.xml"</span><span class="p">,</span>
         <span class="s2">"repomd.xml.asc"</span><span class="p">,</span>
