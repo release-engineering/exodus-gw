@@ -3,6 +3,7 @@ import queue
 import uuid
 from datetime import datetime, timedelta, timezone
 
+import dramatiq
 import mock
 import pytest
 import sqlalchemy.orm
@@ -812,3 +813,193 @@ def test_phase2_wont_mirror(
     item_uris = commit_instance.dynamodb.uris_for_item(item)
 
     assert item_uris == expected
+
+
+@mock.patch(
+    "exodus_gw.worker.publish.CommitBase.acquire_publish_lock",
+    side_effect=dramatiq.Retry(delay=5000),
+)
+@mock.patch("exodus_gw.worker.publish.CurrentMessage.get_current_message")
+def test_commit_advisory_lock_retry(
+    mock_get_message, mock_lock, fake_publish, db
+):
+    """If another commit for the same publish is already running,
+    the advisory lock is not acquired and the task retries."""
+
+    task = _task(fake_publish.id)
+    mock_get_message.return_value = mock.MagicMock(
+        message_id=task.id, kwargs={"publish_id": fake_publish.id}
+    )
+
+    db.add(fake_publish)
+    db.add(task)
+    fake_publish.state = "COMMITTING"
+    db.commit()
+
+    with pytest.raises(dramatiq.Retry):
+        worker.commit(str(fake_publish.id), fake_publish.env, str(NOW_UTC))
+
+    # Task state should be IN_PROGRESS (the lock is acquired after
+    # the task is moved to in_progress).
+    db.refresh(task)
+    assert task.state == "IN_PROGRESS"
+
+
+def test_advisory_lock_contention(fake_publish, db):
+    """Acquiring the advisory lock twice for the same publish raises
+    Retry, and releasing it allows re-acquisition."""
+
+    db.add(fake_publish)
+    fake_publish.state = "COMMITTING"
+    db.commit()
+
+    task = _task(fake_publish.id)
+    db.add(task)
+    db.commit()
+
+    commit_obj = worker.publish.CommitPhase2(
+        fake_publish.id,
+        fake_publish.env,
+        str(NOW_UTC),
+        task.id,
+        load_settings(),
+    )
+
+    # First acquire should succeed and pin a dedicated connection.
+    commit_obj.acquire_publish_lock()
+    assert commit_obj._lock_conn is not None
+
+    # Second acquire (simulating a concurrent actor) should fail.
+    with pytest.raises(dramatiq.Retry):
+        commit_obj.acquire_publish_lock()
+
+    # After releasing, the dedicated connection should be closed and cleared.
+    commit_obj.release_publish_lock()
+    assert commit_obj._lock_conn is None
+
+    # Lock should be acquirable again.
+    commit_obj.acquire_publish_lock()
+    assert commit_obj._lock_conn is not None
+    commit_obj.release_publish_lock()
+    assert commit_obj._lock_conn is None
+
+
+def test_advisory_lock_acquire_error(fake_publish, db):
+    """If the lock SQL fails, the connection is closed and the
+    exception propagates."""
+
+    db.add(fake_publish)
+    fake_publish.state = "COMMITTING"
+    db.commit()
+
+    task = _task(fake_publish.id)
+    db.add(task)
+    db.commit()
+
+    commit_obj = worker.publish.CommitPhase2(
+        fake_publish.id,
+        fake_publish.env,
+        str(NOW_UTC),
+        task.id,
+        load_settings(),
+    )
+
+    mock_conn = mock.MagicMock()
+    mock_conn.execute.side_effect = RuntimeError("connection lost")
+
+    with mock.patch.object(
+        commit_obj.db.get_bind(), "connect", return_value=mock_conn
+    ):
+        with pytest.raises(RuntimeError, match="connection lost"):
+            commit_obj.acquire_publish_lock()
+
+    # Connection should have been closed despite the error.
+    mock_conn.invalidate.assert_called_once()
+    # No lock connection should be stored.
+    assert commit_obj._lock_conn is None
+
+
+def test_advisory_lock_release_error(fake_publish, db):
+    """If the unlock SQL fails, the error is suppressed and the
+    connection is still closed."""
+
+    db.add(fake_publish)
+    fake_publish.state = "COMMITTING"
+    db.commit()
+
+    task = _task(fake_publish.id)
+    db.add(task)
+    db.commit()
+
+    commit_obj = worker.publish.CommitPhase2(
+        fake_publish.id,
+        fake_publish.env,
+        str(NOW_UTC),
+        task.id,
+        load_settings(),
+    )
+
+    mock_conn = mock.MagicMock()
+    mock_conn.execute.side_effect = RuntimeError("connection lost")
+    commit_obj._lock_conn = mock_conn
+
+    # Should not raise.
+    commit_obj.release_publish_lock()
+
+    # Connection should have been invalidated (error path) and closed.
+    mock_conn.invalidate.assert_called_once()
+    mock_conn.close.assert_called_once()
+    assert commit_obj._lock_conn is None
+
+
+def test_advisory_lock_release_close_error(fake_publish, db):
+    """If conn.close() fails in finally, _lock_conn is still cleared."""
+
+    db.add(fake_publish)
+    fake_publish.state = "COMMITTING"
+    db.commit()
+
+    task = _task(fake_publish.id)
+    db.add(task)
+    db.commit()
+
+    commit_obj = worker.publish.CommitPhase2(
+        fake_publish.id,
+        fake_publish.env,
+        str(NOW_UTC),
+        task.id,
+        load_settings(),
+    )
+
+    mock_conn = mock.MagicMock()
+    mock_conn.close.side_effect = RuntimeError("close failed")
+    commit_obj._lock_conn = mock_conn
+
+    with pytest.raises(RuntimeError, match="close failed"):
+        commit_obj.release_publish_lock()
+
+    assert commit_obj._lock_conn is None
+
+
+def test_advisory_lock_release_without_acquire(fake_publish, db):
+    """Releasing without acquiring is a no-op."""
+
+    db.add(fake_publish)
+    fake_publish.state = "COMMITTING"
+    db.commit()
+
+    task = _task(fake_publish.id)
+    db.add(task)
+    db.commit()
+
+    commit_obj = worker.publish.CommitPhase2(
+        fake_publish.id,
+        fake_publish.env,
+        str(NOW_UTC),
+        task.id,
+        load_settings(),
+    )
+
+    # Should not raise.
+    commit_obj.release_publish_lock()
+    assert commit_obj._lock_conn is None

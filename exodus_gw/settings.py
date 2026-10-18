@@ -7,6 +7,7 @@ from enum import Enum
 from typing import Any
 
 from fastapi import HTTPException
+from pydantic import PositiveInt
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -353,6 +354,11 @@ class Settings(BaseSettings):
     the purpose of cache flushing.
     """
 
+    cleanup_batch_size: PositiveInt = 100
+    """Number of records to fetch and delete per batch during cleanup.
+    Keeps memory usage bounded regardless of backlog size.
+    """
+
     task_deadline: int = 2
     """Maximum amount of time (in hours) a task should remain viable. Defaults to two
     hours.
@@ -365,6 +371,17 @@ class Settings(BaseSettings):
     actor_max_backoff: int = 5 * 60000
     """Maximum amount of time (in milliseconds) actors may use while backing
     off retries. Defaults to five (5) minutes.
+    """
+
+    commit_lock_retry_delay: int = 30000
+    """Delay in milliseconds before retrying a commit when another actor
+    holds the publish lock. Defaults to 30 seconds.
+    """
+
+    actor_max_retries: int = 60
+    """Maximum number of retries for commit actors. Must be high enough
+    to cover the full actor_time_limit during lock contention
+    (default: 60 = 30 min / 30s retry delay).
     """
 
     entry_point_files: list[str] = [

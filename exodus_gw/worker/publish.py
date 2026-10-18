@@ -1,5 +1,6 @@
 import asyncio
 import contextvars
+import hashlib
 import logging
 from datetime import datetime, timezone
 from os.path import basename, dirname
@@ -9,7 +10,7 @@ from typing import Any
 
 import dramatiq
 from dramatiq.middleware import CurrentMessage
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, lazyload
 
@@ -176,6 +177,7 @@ class CommitBase:
         self.publish = self._query_publish(publish_id)
         self.env_obj = get_environment(env)
         self._dynamodb = None
+        self._lock_conn = None
 
     @property
     def dynamodb(self):
@@ -441,6 +443,78 @@ class CommitBase:
         # Called when commit operation has failed.
         self.task.state = TaskStates.failed
 
+    @property
+    def publish_lock_key(self):
+        return int(
+            hashlib.md5(
+                str(self.publish.id).encode(), usedforsecurity=False
+            ).hexdigest()[:15],
+            16,
+        )
+
+    def acquire_publish_lock(self):
+        """Try to acquire a per-publish advisory lock to prevent concurrent
+        commits for the same publish from deadlocking on the FOR UPDATE
+        query.
+
+        Uses a session-scoped lock (pg_try_advisory_lock) rather than a
+        transaction-scoped lock so that intermediate db.commit() calls
+        (e.g. in pre_write) don't silently release the lock.
+
+        A dedicated connection is used for the lock so that Session.commit()
+        on self.db cannot return the lock-holding connection to the pool.
+
+        Raises dramatiq.Retry if another commit for this publish is
+        already in progress.
+        """
+        conn = self.db.get_bind().connect()
+        try:
+            acquired = conn.execute(
+                text("SELECT pg_try_advisory_lock(:key)"),
+                {"key": self.publish_lock_key},
+            ).scalar()
+        except Exception:
+            conn.invalidate()
+            raise
+
+        if not acquired:
+            conn.invalidate()
+            LOG.info(
+                "Publish %s: another commit in progress, retrying",
+                self.publish.id,
+                extra={"event": "publish"},
+            )
+            raise dramatiq.Retry(delay=self.settings.commit_lock_retry_delay)
+
+        self._lock_conn = conn
+
+    def release_publish_lock(self):
+        """Release the advisory lock and close its dedicated connection.
+
+        Suppresses errors to avoid masking the primary exception when
+        called from a finally block.
+        """
+        conn = self._lock_conn
+        if conn is None:
+            return
+        try:
+            conn.execute(
+                text("SELECT pg_advisory_unlock(:key)"),
+                {"key": self.publish_lock_key},
+            )
+        except Exception:  # pylint: disable=broad-exception-caught
+            LOG.warning(
+                "Publish %s: failed to release advisory lock",
+                self.publish.id,
+                exc_info=True,
+                extra={"event": "publish"},
+            )
+            # Invalidate the connection so the server releases the lock.
+            conn.invalidate()
+        finally:
+            self._lock_conn = None
+            conn.close()
+
     def pre_write(self):
         # Any steps prior to DynamoDB write.
         # Base implementation does nothing.
@@ -588,6 +662,7 @@ class CommitPhase2(CommitBase):
 @dramatiq.actor(
     time_limit=Settings().actor_time_limit,
     max_backoff=Settings().actor_max_backoff,
+    max_retries=Settings().actor_max_retries,
 )
 def commit(
     publish_id: str,
@@ -615,23 +690,31 @@ def commit(
     commit_obj.task.state = TaskStates.in_progress
     commit_obj.db.commit()
 
-    # Do any relevant commit steps prior to the main DynamoDB writes.
-    # Anything which happens here is not covered by rollback.
-    commit_obj.pre_write()
+    # Acquire a per-publish advisory lock to prevent concurrent commits
+    # from deadlocking on the FOR UPDATE query in write_publish_items
+    # and to avoid duplicate autoindex generation in pre_write.
+    commit_obj.acquire_publish_lock()
 
     try:
-        commit_obj.write_publish_items()
-        commit_obj.on_succeeded()
-        commit_obj.db.commit()
-    except Exception as exc_info:  # pylint: disable=broad-except
-        LOG.exception(
-            "Task %s encountered an error",
-            commit_obj.task.id,
-            extra={"event": "publish", "success": False},
-        )
+        # Do any relevant commit steps prior to the main DynamoDB writes.
+        # Anything which happens here is not covered by rollback.
+        commit_obj.pre_write()
+
         try:
-            commit_obj.rollback_publish_items(exc_info)
-        finally:
-            commit_obj.on_failed()
+            commit_obj.write_publish_items()
+            commit_obj.on_succeeded()
             commit_obj.db.commit()
-        return
+        except Exception as exc_info:  # pylint: disable=broad-except
+            LOG.exception(
+                "Task %s encountered an error",
+                commit_obj.task.id,
+                extra={"event": "publish", "success": False},
+            )
+            try:
+                commit_obj.rollback_publish_items(exc_info)
+            finally:
+                commit_obj.on_failed()
+                commit_obj.db.commit()
+            return
+    finally:
+        commit_obj.release_publish_lock()
